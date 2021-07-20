@@ -1,5 +1,8 @@
+import os
 import random
 import time
+from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 import numpy as np
@@ -9,19 +12,27 @@ from torch.utils.data import TensorDataset, DataLoader
 from tqdm import tqdm
 from transformers import AdamW
 
-from src import io_utils
 from src.data.input_feature import InputFeature
 from src.model import WecEsModel
+from src.utils import io_utils
+from src.utils.tokenization import Tokenization
 
 
 def train():
-    train_examples_file = "resources/train/wec_es_train_small_qsent.json"
+    start_time = datetime.now()
+    dt_string = start_time.strftime("%d%m%Y_%H%M%S")
+
+    train_examples_file = "resources/train/wec_es_train_qsent_examples.json"
     train_passages_file = "resources/train/wec_es_train_passages.json"
-    dev_examples_file = "resources/train/wec_es_train_small_qsent.json"
-    dev_passages_file = "resources/train/wec_es_train_passages.json"
+    dev_examples_file = "resources/train/wec_es_dev_qsent_examples.json"
+    dev_passages_file = "resources/train/wec_es_dev_passages.json"
+
+    checkpoints_path = "checkpoints/" + dt_string
+    Path(checkpoints_path).mkdir(parents=True)
+    print(f"{checkpoints_path}-folder created..")
 
     cpu_only = False
-    epochs = 100
+    epochs = 50
     batch_size = 32
     lr = 1e-5
     # hidden_size = 500
@@ -36,13 +47,16 @@ def train():
     if n_gpu > 0:
         torch.cuda.manual_seed_all(1234)
 
-    model = WecEsModel()
+    tokenization = Tokenization()
+    model = WecEsModel(len(tokenization.get_tokenizer()))
     model.to(device)
-    optimizer = AdamW(model.parameters(), lr=lr)
+    if n_gpu > 1:
+        model = torch.nn.DataParallel(model)
 
-    train_data = read_and_gen_features(model, train_examples_file, train_passages_file, max_query_length, max_passage_length)
+    optimizer = AdamW(model.parameters(), lr=lr)
+    train_data = read_and_gen_features(tokenization, train_examples_file, train_passages_file, max_query_length, max_passage_length)
     train_batches = generate_train_batches(train_data, batch_size)
-    dev_data = read_and_gen_features(model, dev_examples_file, dev_passages_file, max_query_length, max_passage_length)
+    dev_data = read_and_gen_features(tokenization, dev_examples_file, dev_passages_file, max_query_length, max_passage_length)
     dev_batches = generate_dev_batches(dev_data, batch_size)
 
     accum_loss = 0.0
@@ -58,6 +72,8 @@ def train():
             input_ids, input_mask, segment_ids, start_position, end_position = batch
             outputs = model(input_ids, input_mask, segment_ids, start_position, end_position)
             loss = outputs.loss
+            if n_gpu > 1:
+                loss = loss.mean()
             accum_loss += loss.item()
             loss.backward()
             optimizer.step()
@@ -67,6 +83,19 @@ def train():
                 epoch, step + 1, len(train_batches), time.time() - start_time, accum_loss / tot_steps))
 
         evaluate(model, dev_batches, device)
+        save_checkpoint(checkpoints_path, epoch, model, optimizer)
+
+
+def save_checkpoint(path, epoch, model, optimizer):
+    print(f"Saving a checkpoint to {path}...")
+    model_file_name = os.path.join(path, "model-{}.pt".format(epoch+1))
+    if hasattr(model, 'module'):
+        model = model.module  # extract model from a distributed/data-parallel wrapper
+
+    checkpoint = {'epoch': epoch, 'model_state_dict': model.state_dict(),
+                  'optimizer_state_dict': optimizer.state_dict()}
+
+    torch.save(checkpoint, model_file_name)
 
 
 def evaluate(model, dev_batches, device):
@@ -82,13 +111,17 @@ def evaluate(model, dev_batches, device):
         for res_ind in range(start_logits.shape[0]):
             start_tolist = start_logits[res_ind].detach().cpu().tolist()
             end_tolist = end_logits[res_ind].detach().cpu().tolist()
-            sorted_start_logits = sorted(enumerate(start_tolist), key=lambda x: x[1], reverse=True)
-            sorted_end_logits = sorted(enumerate(end_tolist), key=lambda x: x[1], reverse=True)
+            top5_start_logits = sorted(enumerate(start_tolist), key=lambda x: x[1], reverse=True)[0:5]
+            top5_end_logits = sorted(enumerate(end_tolist), key=lambda x: x[1], reverse=True)[0:5]
 
+            # start_select, end_select = passage_position_selection([val[0] for val in top5_start_logits],
+            #                                                       [val[0] for val in top5_end_logits],
+            #                                                       query_start.data[res_ind].item(),
+            #                                                       query_end.data[res_ind].item())
             start_lab.append(pass_start.data[res_ind].item())
-            start_pred.append(sorted_start_logits[0][0])
+            start_pred.append(top5_start_logits[0][0])
             end_lab.append(pass_end.data[res_ind].item())
-            end_pred.append(sorted_end_logits[0][0])
+            end_pred.append(top5_end_logits[0][0])
 
     s_precision, s_recall, s_f1, _ = precision_recall_fscore_support(start_lab, start_pred, average='macro', zero_division=0)
     e_precision, e_recall, e_f1, _ = precision_recall_fscore_support(end_lab, end_pred, average='macro', zero_division=0)
@@ -99,7 +132,31 @@ def evaluate(model, dev_batches, device):
     # print("Avg Position: precision={}, recall={}, f1={}".format(e_precision, e_recall, e_f1))
 
 
-def read_and_gen_features(model, exmpl_file, passage_file, max_query_length, max_passage_length) -> List[InputFeature]:
+def passage_position_selection(start_labs, end_labs, query_start, query_end):
+    q_mention_length = query_end - query_start
+    if start_labs[0] == 0 and end_labs[0] == 0:
+        return start_labs[0], end_labs[0]
+    elif start_labs[0] == 0:
+        if 0 in end_labs:
+            return start_labs[0], end_labs[end_labs.index(0)]
+        else:
+            for end in end_labs:
+                found = next((start for start in start_labs if start + q_mention_length - 1 <= end), -1)
+                if found > 0:
+                    return found, end
+    elif end_labs[0] == 0:
+        if 0 in start_labs:
+            return start_labs[start_labs.index(0)], end_labs[0]
+        else:
+            for start in start_labs:
+                found = next((end for end in end_labs if end - q_mention_length + 1 >= start), -1)
+                if found > 0:
+                    return start, found
+
+    return start_labs[0], end_labs[0]
+
+
+def read_and_gen_features(tokenization, exmpl_file, passage_file, max_query_length, max_passage_length) -> List[InputFeature]:
     query_examples = io_utils.read_query_examples_file(exmpl_file)
     print("Done loading examples file-" + exmpl_file)
     passages = io_utils.read_passages_file(passage_file)
@@ -112,14 +169,14 @@ def read_and_gen_features(model, exmpl_file, passage_file, max_query_length, max
         # Generating positive examples
         data.extend(
             [
-                model.convert_example_to_features(exmpl, passages[pos_id], max_query_length, max_passage_length, True)
+                tokenization.convert_example_to_features(exmpl, passages[pos_id], max_query_length, max_passage_length, True)
                 for pos_id in exmpl["positivePassagesIds"]
             ])
 
         # Generating negative examples
         data.extend(
             [
-                model.convert_example_to_features(exmpl, passages[neg_id], max_query_length, max_passage_length, False)
+                tokenization.convert_example_to_features(exmpl, passages[neg_id], max_query_length, max_passage_length, False)
                 for neg_id in exmpl["negativePassagesIds"]
             ])
 
