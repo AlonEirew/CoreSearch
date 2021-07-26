@@ -1,21 +1,54 @@
-from typing import Dict
+from typing import Dict, List
 
+from tqdm import tqdm
 from transformers import BertTokenizer
 
-from src.data.input_feature import InputFeature
+from src.data_obj import InputFeature
+from src.utils import io_utils
 
 QUERY_SPAN_START = "[QSPAN_START]"
 QUERY_SPAN_END = "[QSPAN_END]"
 
 
 class Tokenization(object):
-    def __init__(self):
-        self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-        self.tokenizer.add_tokens(QUERY_SPAN_START)
-        self.tokenizer.add_tokens(QUERY_SPAN_END)
+    def __init__(self, model_file=None):
+        if model_file:
+            self.tokenizer = BertTokenizer.from_pretrained(model_file)
+        else:
+            self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+            self.tokenizer.add_tokens(QUERY_SPAN_START)
+            self.tokenizer.add_tokens(QUERY_SPAN_END)
 
-    def get_tokenizer(self):
-        return self.tokenizer
+    def read_and_gen_features(self, exmpl_file, passage_file, max_query_length, max_passage_length) -> List[InputFeature]:
+        query_examples = io_utils.read_query_examples_file(exmpl_file)
+        print("Done loading examples file-" + exmpl_file)
+        passages = io_utils.read_passages_file(passage_file)
+        print("Done loading passages file-" + passage_file)
+
+        # list of (query_id, passage_id, pass_ment_bound, gold) where pass_ment_bound = (start_index, end_index)
+        positive = list()
+        negative = list()
+        print("Starting to generate examples...")
+        for exmpl in tqdm(query_examples.values()):
+            # Generating positive examples
+            positive.extend(
+                [
+                    self.convert_example_to_features(exmpl, passages[pos_id], max_query_length,
+                                                             max_passage_length, True)
+                    for pos_id in exmpl["positivePassagesIds"]
+                ])
+
+            # Generating negative examples
+            negative.extend(
+                [
+                    self.convert_example_to_features(exmpl, passages[neg_id], max_query_length,
+                                                             max_passage_length, False)
+                    for neg_id in exmpl["negativePassagesIds"]
+                ])
+
+        print("Done generating data, total of-" + str(len(positive)) + " positive examples")
+        print("Done generating data, total of-" + str(len(negative)) + " positive examples")
+        return positive + negative
 
     def convert_example_to_features(self, query_obj: Dict, passage_obj: Dict, max_query_length: int,
                                     max_passage_length: int, is_positive: bool):
@@ -24,24 +57,24 @@ class Tokenization(object):
         max_pass_length_exclude = max_passage_length - 1
         max_seq_length = max_query_length + max_passage_length
 
-        passage_start, passage_end, passage_tokenized = self.passage_tokenization(passage_obj, max_pass_length_exclude,
+        passage_event_start, passage_event_end, passage_tokenized = self.passage_tokenization(passage_obj, max_pass_length_exclude,
                                                                                   is_positive)
         passage_tokenized.insert(0, "[CLS]")
-        if passage_start != 0 and passage_end != 0:
-            passage_start += 1
-            passage_end += 1
+        if passage_event_start != 0 and passage_event_end != 0:
+            passage_event_start += 1
+            passage_event_end += 1
 
         passage_tokenized.append("[SEP]")
         segment_ids = [0] * len(passage_tokenized)
 
-        query_start, query_end, query_tokenized = self.query_tokenization(query_obj, max_query_length_exclude)
+        query_event_start, query_event_end, query_tokenized = self.query_tokenization(query_obj, max_query_length_exclude)
         query_tokenized.append("[SEP]")
         segment_ids.extend([1] * len(query_tokenized))
 
         all_sequence_tokenized = passage_tokenized + query_tokenized
-        if query_start != 0 and query_end != 0:
-            query_start += len(passage_tokenized)
-            query_end += len(passage_tokenized)
+        if query_event_start != 0 and query_event_end != 0:
+            query_event_start += len(passage_tokenized)
+            query_event_end += len(passage_tokenized)
 
         input_ids = self.tokenizer.convert_tokens_to_ids(all_sequence_tokenized)
         input_mask = [1] * len(input_ids)
@@ -60,10 +93,12 @@ class Tokenization(object):
                             segment_ids,
                             query_obj["id"],
                             passage_obj["id"],
-                            query_start,
-                            query_end,
-                            passage_start,
-                            passage_end,
+                            query_event_start,
+                            query_event_end,
+                            len(all_sequence_tokenized),
+                            passage_event_start,
+                            passage_event_end,
+                            len(passage_tokenized),
                             is_positive)
 
     def passage_tokenization(self, passage_obj, max_pass_length_exclude, is_positive_sample):
@@ -71,41 +106,41 @@ class Tokenization(object):
         start_index = passage_obj["startIndex"]
         end_index = passage_obj["endIndex"]
         pass_context = passage_obj["context"]
-        passage_start_position = passage_end_position = 0
+        passage_event_start_ind = passage_event_end_ind = 0
         for i in range(len(pass_context)):
             word_tokens = self.tokenizer.tokenize(pass_context[i])
             passage_tokenized.extend(word_tokens)
             if is_positive_sample:
                 if i == start_index:
-                    passage_start_position = len(passage_tokenized) - len(word_tokens)
+                    passage_event_start_ind = len(passage_tokenized) - len(word_tokens)
                 if i == end_index:
-                    passage_end_position = len(passage_tokenized) - 1
+                    passage_event_end_ind = len(passage_tokenized) - 1
 
         if len(passage_tokenized) > max_pass_length_exclude:
             passage_tokenized = passage_tokenized[:max_pass_length_exclude]
 
-        if passage_end_position > len(passage_tokenized):
-            passage_start_position = 0
-            passage_end_position = 0
+        if passage_event_end_ind > len(passage_tokenized):
+            passage_event_start_ind = 0
+            passage_event_end_ind = 0
 
-        assert passage_start_position <= passage_end_position
-        return passage_start_position, passage_end_position, passage_tokenized
+        assert passage_event_start_ind <= passage_event_end_ind
+        return passage_event_start_ind, passage_event_end_ind, passage_tokenized
 
     def query_tokenization(self, query_obj, max_query_length_exclude):
         query_tokenized = list()
-        query_start_position = query_end_position = 0
+        query_event_start_ind = query_event_end_ind = 0
         for word in query_obj["context"]:
             query_tokenized.extend(self.tokenizer.tokenize(word))
             if word == QUERY_SPAN_START:
-                query_start_position = len(query_tokenized)
+                query_event_start_ind = len(query_tokenized)
             elif word == QUERY_SPAN_END:
-                query_end_position = len(query_tokenized) - 2
+                query_event_end_ind = len(query_tokenized) - 2
 
         if len(query_tokenized) > max_query_length_exclude:
             query_tokenized = query_tokenized[:max_query_length_exclude]
 
-        if query_end_position > len(query_tokenized):
-            query_start_position = 0
-            query_end_position = 0
+        if query_event_end_ind > len(query_tokenized):
+            query_event_start_ind = 0
+            query_event_end_ind = 0
 
-        return query_start_position, query_end_position, query_tokenized
+        return query_event_start_ind, query_event_end_ind, query_tokenized

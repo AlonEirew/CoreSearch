@@ -1,5 +1,8 @@
 import json
+import os
 from typing import Dict, List
+
+import torch
 
 
 def read_query_examples_file(queries_file: str) -> Dict[str, Dict]:
@@ -36,3 +39,23 @@ def read_gold_file(gold_file: str) -> Dict[str, List[str]]:
             gold_labels[line_splt[0]] = line_splt[1:]
 
     return gold_labels
+
+
+def save_checkpoint(path, epoch, model, optimizer):
+    model_file_name = os.path.join(path, "model-{}.pt".format(epoch))
+    print(f"Saving a checkpoint to {model_file_name}...")
+
+    if hasattr(model, 'module'):
+        model = model.module
+
+    checkpoint = {'epoch': epoch, 'model_state_dict': model.state_dict(),
+                  'optimizer_state_dict': optimizer.state_dict()}
+
+    torch.save(checkpoint, model_file_name)
+
+
+def load_checkpoint(path, model, optimizer=None):
+    checkpoint = torch.load(path)
+    model.load_state_dict(checkpoint['model_state_dict'])
+    if optimizer:
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
