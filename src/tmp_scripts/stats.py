@@ -1,4 +1,4 @@
-from src import io_utils
+from src.utils import io_utils
 
 if __name__ == '__main__':
     train_query_examples = io_utils.read_query_examples_file("resources/train/wec_es_train_qsent_examples.json")

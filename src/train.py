@@ -18,10 +18,10 @@ def train():
     start_time = datetime.now()
     dt_string = start_time.strftime("%d%m%Y_%H%M%S")
 
-    train_examples_file = "resources/train/wec_es_train_small_qsent.json"
-    train_passages_file = "resources/train/wec_es_train_passages.json"
-    dev_examples_file = "resources/train/wec_es_dev_small_qsent.json"
-    dev_passages_file = "resources/train/wec_es_dev_passages.json"
+    train_examples_file = "resources/train/wec_es_Train_qsent_psegment_examples.json"
+    train_passages_file = "resources/train/wec_es_Train_passages_segment.json"
+    dev_examples_file = "resources/train/wec_es_Dev_qsent_psegment_examples.json"
+    dev_passages_file = "resources/train/wec_es_Dev_passages_segment.json"
 
     tokenizer_path = "checkpoints/" + dt_string + "/tokenizer"
     checkpoints_path = "checkpoints/" + dt_string
@@ -33,9 +33,10 @@ def train():
     epochs = 15
     batch_size = 32
     lr = 1e-6
+    remove_qbound = True
     # hidden_size = 500
     max_query_length = 50
-    max_passage_length = 200
+    max_passage_length = 150
     assert (max_query_length + max_passage_length + 3) <= 512
     device = torch.device("cuda" if torch.cuda.is_available() and not cpu_only else "cpu")
     n_gpu = torch.cuda.device_count()
@@ -54,9 +55,9 @@ def train():
 
     optimizer = AdamW(model.parameters(), lr=lr)
 
-    train_data = tokenization.read_and_gen_features(train_examples_file, train_passages_file, max_query_length, max_passage_length)
+    train_data = tokenization.read_and_gen_features(train_examples_file, train_passages_file, max_query_length, max_passage_length, remove_qbound)
     train_batches = generate_train_batches(train_data, batch_size)
-    dev_data = tokenization.read_and_gen_features(dev_examples_file, dev_passages_file, max_query_length, max_passage_length)
+    dev_data = tokenization.read_and_gen_features(dev_examples_file, dev_passages_file, max_query_length, max_passage_length, remove_qbound)
     dev_batches = generate_dev_batches(dev_data, batch_size)
 
     accum_loss = 0.0
