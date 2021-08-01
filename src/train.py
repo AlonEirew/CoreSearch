@@ -33,7 +33,7 @@ def train():
     epochs = 15
     batch_size = 32
     lr = 1e-6
-    remove_qbound = True
+    remove_qbound_tokens = False
     # hidden_size = 500
     max_query_length = 50
     max_passage_length = 150
@@ -55,9 +55,9 @@ def train():
 
     optimizer = AdamW(model.parameters(), lr=lr)
 
-    train_data = tokenization.read_and_gen_features(train_examples_file, train_passages_file, max_query_length, max_passage_length, remove_qbound)
+    train_data = tokenization.read_and_gen_features(train_examples_file, train_passages_file, max_query_length, max_passage_length, remove_qbound_tokens)
     train_batches = generate_train_batches(train_data, batch_size)
-    dev_data = tokenization.read_and_gen_features(dev_examples_file, dev_passages_file, max_query_length, max_passage_length, remove_qbound)
+    dev_data = tokenization.read_and_gen_features(dev_examples_file, dev_passages_file, max_query_length, max_passage_length, remove_qbound_tokens)
     dev_batches = generate_dev_batches(dev_data, batch_size)
 
     accum_loss = 0.0
@@ -70,8 +70,15 @@ def train():
         for step, batch in enumerate(train_batches):
             if n_gpu == 1:
                 batch = tuple(t.to(device) for t in batch)
-            input_ids, input_mask, segment_ids, start_position, end_position = batch
-            outputs = model(input_ids, input_mask, segment_ids, start_position, end_position)
+            passage_input_ids, query_input_ids, \
+            passage_input_mask, query_input_mask, \
+            passage_segment_ids, query_segment_ids, \
+            passage_start_position, passage_end_position = batch
+            outputs = model(passage_input_ids, query_input_ids,
+                            passage_input_mask, query_input_mask,
+                            passage_segment_ids, query_segment_ids,
+                            passage_start_position, passage_end_position)
+
             loss = outputs.loss
             if n_gpu > 1:
                 loss = loss.mean()

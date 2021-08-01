@@ -4,9 +4,12 @@ class InputFeature(object):
     """
 
     def __init__(self,
-                 input_ids,
-                 input_mask,
-                 segment_ids,
+                 passage_input_ids,
+                 query_input_ids,
+                 passage_input_mask,
+                 query_input_mask,
+                 passage_segment_ids,
+                 query_segment_ids,
                  query_id,
                  passage_id,
                  query_event_start=None,
@@ -16,9 +19,13 @@ class InputFeature(object):
                  passage_event_end=None,
                  passage_end_bound=None,
                  is_positive=None):
-        self.input_ids = input_ids
-        self.input_mask = input_mask
-        self.segment_ids = segment_ids
+
+        self.passage_input_ids = passage_input_ids
+        self.query_input_ids = query_input_ids
+        self.passage_input_mask = passage_input_mask
+        self.query_input_mask = query_input_mask
+        self.passage_segment_ids = passage_segment_ids
+        self.query_segment_ids = query_segment_ids
         self.query_id = query_id
         self.passage_id = passage_id
         self.query_event_start = query_event_start
@@ -36,7 +43,6 @@ class EvaluationObject(object):
                  end_label,
                  start_pred,
                  end_pred,
-                 tokens_ids,
                  passage_bound,
                  query_event_start,
                  query_event_end):
@@ -44,7 +50,6 @@ class EvaluationObject(object):
         self.end_label = end_label
         self.start_pred = start_pred
         self.end_pred = end_pred
-        self.tokens_ids = tokens_ids
         self.passage_bound = passage_bound
         self.query_event_start = query_event_start
         self.query_event_end = query_event_end

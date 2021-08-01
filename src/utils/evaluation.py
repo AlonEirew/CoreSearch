@@ -11,12 +11,19 @@ def evaluate(model, dev_batches, device):
     evaluation_objects = list()
     for step, batch in enumerate(dev_batches):
         batch = tuple(t.to(device) for t in batch)
-        input_ids, input_masks, segment_ids, passage_event_starts, \
-            passage_event_ends, query_event_starts, query_event_ends, \
-            passage_end_bound, is_positives = batch
+        passage_input_ids, query_input_ids, \
+        passage_input_mask, query_input_mask, \
+        passage_segment_ids, query_segment_ids, \
+        passage_event_starts, passage_event_ends, \
+        query_event_starts, query_event_ends, \
+        passage_end_bound, is_positives = batch
 
         with torch.no_grad():
-            outputs = model(input_ids, input_masks, segment_ids, passage_event_starts, passage_event_ends)
+            outputs = model(passage_input_ids, query_input_ids,
+                            passage_input_mask, query_input_mask,
+                            passage_segment_ids, query_segment_ids,
+                            passage_event_starts, passage_event_ends)
+
         start_logits = outputs.start_logits
         end_logits = outputs.end_logits
         for res_ind in range(start_logits.shape[0]):
@@ -31,7 +38,6 @@ def evaluate(model, dev_batches, device):
                                                        end_label=passage_event_ends.data[res_ind].item(),
                                                        start_pred=top5_start_logits,
                                                        end_pred=top5_end_logits,
-                                                       tokens_ids=input_ids.data[res_ind].detach().cpu().tolist(),
                                                        passage_bound=passage_end_bound[res_ind].item(),
                                                        query_event_start=query_event_starts.data[res_ind].item(),
                                                        query_event_end=query_event_ends.data[res_ind].item()))
