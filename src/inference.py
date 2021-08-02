@@ -22,13 +22,14 @@ def inference():
     device = torch.device("cuda" if torch.cuda.is_available() and not cpu_only else "cpu")
     batch_size = 32
     max_query_length = 50
-    max_passage_length = 200
-    checkpoint_path = "/home/alon_nlp/event-search/checkpoints/21072021_110812"
-    model_file = checkpoint_path + "/model-9.pt"
+    max_passage_length = 150
+    remove_qbound_tokens = False
+    checkpoint_path = "/home/alon_nlp/event-search/checkpoints/01082021_111218"
+    model_file = checkpoint_path + "/model-4.pt"
     tokenizer_path = checkpoint_path + "/tokenizer"
 
-    dev_examples_file = "resources/train/wec_es_dev_qsent_examples.json"
-    dev_passages_file = "resources/train/wec_es_dev_passages.json"
+    dev_examples_file = "resources/train/wec_es_Dev_qsent_psegment_examples.json"
+    dev_passages_file = "resources/train/wec_es_Dev_passages_segment.json"
 
     tokenization = Tokenization(tokenizer_path)
     model = WecEsModel(len(tokenization.tokenizer))
@@ -37,7 +38,8 @@ def inference():
     if n_gpu > 1:
         model = torch.nn.DataParallel(model)
 
-    dev_data = tokenization.read_and_gen_features(dev_examples_file, dev_passages_file, max_query_length, max_passage_length)
+    dev_data = tokenization.read_and_gen_features(dev_examples_file, dev_passages_file, max_query_length,
+                                                  max_passage_length, remove_qbound_tokens)
     dev_batches = generate_dev_batches(dev_data, batch_size)
 
     evaluate(model, dev_batches, device)
