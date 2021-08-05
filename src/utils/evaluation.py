@@ -15,8 +15,7 @@ def evaluate(model, dev_batches, device):
         passage_input_mask, query_input_mask, \
         passage_segment_ids, query_segment_ids, \
         passage_event_starts, passage_event_ends, \
-        query_event_starts, query_event_ends, \
-        passage_end_bound, is_positives = batch
+        passage_end_bound, query_event_starts, query_event_ends = batch
 
         with torch.no_grad():
             outputs = model(passage_input_ids, query_input_ids,

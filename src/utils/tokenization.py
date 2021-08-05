@@ -43,7 +43,7 @@ class Tokenization(object):
 
     def get_passage_feat(self, passage_obj, max_passage_length) -> PassageFeat:
         max_pass_length_exclude = max_passage_length - 2
-        passage_event_start, passage_event_end, passage_tokenized, passage_input_mask = \
+        passage_event_start, passage_event_end, passage_end_bound, passage_tokenized, passage_input_mask = \
             self.passage_tokenization(passage_obj, max_pass_length_exclude)
         passage_tokenized.insert(0, "[CLS]")
         passage_input_mask.insert(0, 1)
@@ -68,6 +68,7 @@ class Tokenization(object):
             passage_id=passage_obj["id"],
             passage_event_start=passage_event_start,
             passage_event_end=passage_event_end,
+            passage_end_bound=passage_end_bound
         )
 
     def passage_tokenization(self, passage_obj, max_pass_length_exclude):
@@ -88,7 +89,9 @@ class Tokenization(object):
         if len(passage_tokenized) > max_pass_length_exclude:
             passage_tokenized = passage_tokenized[:max_pass_length_exclude]
             passage_input_mask = passage_input_mask[:max_pass_length_exclude]
+            passage_end_bound = max_pass_length_exclude
         else:
+            passage_end_bound = len(passage_tokenized)
             while len(passage_tokenized) < max_pass_length_exclude:
                 passage_tokenized.append('[PAD]')
                 passage_input_mask.append(0)
@@ -98,7 +101,7 @@ class Tokenization(object):
             passage_event_end_ind = 0
 
         assert passage_event_start_ind <= passage_event_end_ind
-        return passage_event_start_ind, passage_event_end_ind, passage_tokenized, passage_input_mask
+        return passage_event_start_ind, passage_event_end_ind, passage_end_bound, passage_tokenized, passage_input_mask
 
     def query_tokenization(self, query_obj, max_query_length_exclude, remove_qbound):
         query_tokenized = list()

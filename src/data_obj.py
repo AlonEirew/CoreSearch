@@ -42,11 +42,11 @@ class PassageFeat(object):
 
 
 class SearchFeat(object):
-    def __init__(self, query_id: str, pos_passage_id: str,
-                 negative_passage_ids: List[str]):
-        self.query_id = query_id
-        self.positive_passage_id = pos_passage_id
-        self.negative_passages_ids = negative_passage_ids
+    def __init__(self, query: QueryFeat, pos_passage: PassageFeat,
+                 negative_passage: List[PassageFeat]):
+        self.query = query
+        self.positive_passage = pos_passage
+        self.negative_passages = negative_passage
 
 
 class SpanPredictFeat(object):
