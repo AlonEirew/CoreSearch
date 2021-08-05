@@ -4,7 +4,6 @@ import numpy as np
 import torch
 
 from src.model import WecEsModel
-from src.utils.dataset_utils import generate_dev_batches
 from src.utils.evaluation import evaluate
 from src.utils.io_utils import load_checkpoint
 from src.utils.tokenization import Tokenization

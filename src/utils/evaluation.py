@@ -75,9 +75,10 @@ def generate_results_inspection(tokenizer, evaluation_objects):
 
 
 def passage_position_selection(eval_obj):
-    q_mention_length = eval_obj.query_event_end - eval_obj.query_event_start
+    # If one of start/end is 0 return 0 for both
     if eval_obj.start_pred[0][0] == 0 or eval_obj.end_pred[0][0] == 0:
         return 0, 0
+    # if start position is grater then end position
     if eval_obj.start_pred[0][0] > eval_obj.end_pred[0][0]:
         if eval_obj.start_pred[0][1] > eval_obj.end_pred[0][1]:
             new_end = next((x[0] for x in eval_obj.end_pred if x[0] > eval_obj.start_pred[0][0]), None)

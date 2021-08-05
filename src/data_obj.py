@@ -1,40 +1,58 @@
-class InputFeature(object):
-    """
-        A single set of features of data.
-    """
+from typing import List
 
+
+class QueryFeat(object):
     def __init__(self,
-                 passage_input_ids,
                  query_input_ids,
-                 passage_input_mask,
                  query_input_mask,
-                 passage_segment_ids,
                  query_segment_ids,
                  query_id,
+                 query_event_start,
+                 query_event_end,
+                 ):
+
+        self.query_input_ids = query_input_ids
+        self.query_input_mask = query_input_mask
+        self.query_segment_ids = query_segment_ids
+        self.query_id = query_id
+        self.query_event_start = query_event_start
+        self.query_event_end = query_event_end
+
+
+class PassageFeat(object):
+    def __init__(self,
+                 passage_input_ids,
+                 passage_input_mask,
+                 passage_segment_ids,
                  passage_id,
-                 query_event_start=None,
-                 query_event_end=None,
-                 query_end_bound=None,
                  passage_event_start=None,
                  passage_event_end=None,
                  passage_end_bound=None,
-                 is_positive=None):
+                 is_positive=None
+                 ):
 
         self.passage_input_ids = passage_input_ids
-        self.query_input_ids = query_input_ids
         self.passage_input_mask = passage_input_mask
-        self.query_input_mask = query_input_mask
         self.passage_segment_ids = passage_segment_ids
-        self.query_segment_ids = query_segment_ids
-        self.query_id = query_id
         self.passage_id = passage_id
-        self.query_event_start = query_event_start
-        self.query_event_end = query_event_end
-        self.query_end_bound = query_end_bound
         self.passage_event_start = passage_event_start
         self.passage_event_end = passage_event_end
         self.passage_end_bound = passage_end_bound
         self.is_positive = is_positive
+
+
+class SearchFeat(object):
+    def __init__(self, query_id: str, pos_passage_id: str,
+                 negative_passage_ids: List[str]):
+        self.query_id = query_id
+        self.positive_passage_id = pos_passage_id
+        self.negative_passages_ids = negative_passage_ids
+
+
+class SpanPredictFeat(object):
+    def __init__(self, query_feat: QueryFeat, passage_feat: PassageFeat):
+        self.query_feat = query_feat
+        self.passage_feat = passage_feat
 
 
 class EvaluationObject(object):

@@ -5,14 +5,14 @@ from typing import Dict, List
 import torch
 
 
-def read_query_examples_file(queries_file: str) -> Dict[str, Dict]:
+def read_query_examples_file(queries_file: str) -> Dict[int, Dict]:
     assert queries_file
     with open(queries_file, "r") as fis:
         queries_json = json.load(fis)
     return {qobj["id"]: qobj for qobj in queries_json}
 
 
-def read_passages_file(passages_file: str) -> Dict[str, Dict]:
+def read_passages_file(passages_file: str) -> Dict[int, Dict]:
     assert passages_file
     with open(passages_file, "r") as fis:
         passages_json = json.load(fis)
