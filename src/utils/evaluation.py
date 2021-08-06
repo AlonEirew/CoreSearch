@@ -1,9 +1,12 @@
+import logging
 import math
 
 import torch
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
 from src.data_obj import EvaluationObject
+
+logger = logging.getLogger("event-search")
 
 
 def evaluate(model, dev_batches, device):
@@ -59,8 +62,8 @@ def generate_results_matrics(evaluation_objects):
     e_precision, e_recall, e_f1, _ = precision_recall_fscore_support(end_labs, end_pred_firsts, average='macro', zero_division=0)
     s_accuracy = accuracy_score(start_labs, start_pred_firsts)
     e_accuracy = accuracy_score(end_labs, end_pred_firsts)
-    print("Start Position: accuracy={}, precision={}, recall={}, f1={}".format(s_accuracy, s_precision, s_recall, s_f1))
-    print("End Position: accuracy={}, precision={}, recall={}, f1={}".format(e_accuracy, e_precision, e_recall, e_f1))
+    logger.info("Start Position: accuracy={}, precision={}, recall={}, f1={}".format(s_accuracy, s_precision, s_recall, s_f1))
+    logger.info("End Position: accuracy={}, precision={}, recall={}, f1={}".format(e_accuracy, e_precision, e_recall, e_f1))
     # print("Avg Position: precision={}, recall={}, f1={}".format(e_precision, e_recall, e_f1))
 
 
@@ -68,9 +71,9 @@ def generate_results_inspection(tokenizer, evaluation_objects):
     for eval in evaluation_objects:
         selected_start, selected_end = passage_position_selection(eval)
         as_tokens = tokenizer.convert_ids_to_tokens(eval.tokens_ids)
-        print("Query event=" + " ".join(as_tokens[eval.query_event_start:eval.query_event_end + 1]))
-        print("Gold pass event=" + " ".join(as_tokens[eval.start_label:eval.end_label + 1]))
-        print("Pred pass event=" + " ".join(as_tokens[selected_start:selected_end + 1]))
+        logger.info("Query event=" + " ".join(as_tokens[eval.query_event_start:eval.query_event_end + 1]))
+        logger.info("Gold pass event=" + " ".join(as_tokens[eval.start_label:eval.end_label + 1]))
+        logger.info("Pred pass event=" + " ".join(as_tokens[selected_start:selected_end + 1]))
 
 
 def passage_position_selection(eval_obj):
