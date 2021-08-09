@@ -11,8 +11,8 @@ import torch
 from tqdm import tqdm
 from transformers import AdamW
 
+from src.coref_search_model import SpanPredAuxiliary, SimilarityModel
 from src.data_obj import SearchFeat
-from src.model import WecEsModel
 from src.utils import io_utils
 from src.utils.data_utils import generate_batches
 from src.utils.evaluation import evaluate
@@ -61,13 +61,6 @@ def generate_queries_feats(tokenizer: Tokenization,
     return search_feats
 
 
-def extract_logits(outputs):
-    softmax_starts = torch.softmax(outputs.start_logits, dim=1)
-    softmax_ends = torch.softmax(outputs.end_logits, dim=1)
-    start_idxs, end_idxs = torch.argmax(softmax_starts, dim=1), torch.argmax(softmax_ends, dim=1)
-    print()
-
-
 def train():
     start_time = datetime.now()
     dt_string = start_time.strftime("%d%m%Y_%H%M%S")
@@ -87,9 +80,10 @@ def train():
     cpu_only = False
     epochs = 15
     negative_sample_size = 2
+    in_batch_samples = 10
     # batch_size = 3 * (2 + 1) in training for 2 negatives and 1 positive samples
-    batch_size = 10 * (negative_sample_size + 1)
-    lr = 1e-6
+    batch_size = in_batch_samples * (negative_sample_size + 1)
+    lr = 1e-5
     remove_qbound_tokens = False
     max_query_length = 50
     max_passage_length = 150
@@ -104,12 +98,14 @@ def train():
 
     tokenization = Tokenization()
     tokenization.tokenizer.save_pretrained(tokenizer_path)
-    model = WecEsModel(len(tokenization.tokenizer))
-    model.to(device)
+    auxiliary_method = SpanPredAuxiliary(len(tokenization.tokenizer))
+    auxiliary_method.to(device)
     if n_gpu > 1:
-        model = torch.nn.DataParallel(model)
+        auxiliary_method = torch.nn.DataParallel(auxiliary_method)
 
-    optimizer = AdamW(model.parameters(), lr=lr)
+    similarity_method = SimilarityModel(in_batch_samples, negative_sample_size, device)
+
+    optimizer = AdamW(auxiliary_method.parameters(), lr=lr)
 
     train_search_feats = generate_queries_feats(tokenization, train_examples_file,
                                                 train_passages_file, max_query_length,
@@ -119,17 +115,18 @@ def train():
                                               dev_passages_file, max_query_length,
                                               max_passage_length, negative_sample_size, remove_qbound_tokens)
 
-    train_batches = generate_batches(train_search_feats, batch_size)
-    dev_batches = generate_batches(dev_search_feats, batch_size)
+    train_batches, train_positive_batches = generate_batches(train_search_feats, batch_size, negative_sample_size)
+    dev_batches, dev_positive_batches = generate_batches(dev_search_feats, batch_size, negative_sample_size)
 
     accum_loss = 0.0
     start_time = time.time()
     tot_steps = 0.0
     logger.info("Start training...")
     for epoch in range(epochs):
-        model.train()
-        random.shuffle(train_batches)
-        accum_outputs = list()
+        auxiliary_method.train()
+        train_shuff_batches = list(zip(train_batches, train_positive_batches))
+        random.shuffle(train_shuff_batches)
+        train_batches, train_positive_batches = zip(*train_shuff_batches)
         for step, batch in enumerate(train_batches):
             if n_gpu == 1:
                 batch = tuple(t.to(device) for t in batch)
@@ -139,29 +136,32 @@ def train():
             passage_segment_ids, query_segment_ids, \
             passage_start_position, passage_end_position, \
             passage_end_bound, query_event_starts, query_event_ends = batch
-            outputs = model(passage_input_ids, query_input_ids,
+            outputs = auxiliary_method(passage_input_ids, query_input_ids,
                             passage_input_mask, query_input_mask,
                             passage_segment_ids, query_segment_ids,
                             passage_start_position, passage_end_position)
 
-            # start_idxs, ends_indxs = extract_logits(outputs)
-            accum_outputs.append(outputs)
+            query_rep, passage_rep = similarity_method.extract_embeddings(outputs, passage_end_bound,
+                                                                          query_event_starts, query_event_ends)
 
-            loss = outputs.loss
+            span_lost = outputs.loss
+            sim_loss, _, _ = similarity_method.calc_similarity_loss(query_rep, passage_rep, train_positive_batches[step])
             if n_gpu > 1:
-                loss = loss.mean()
-            accum_loss += loss.item()
-            loss.backward()
+                span_lost = span_lost.mean()
+                sim_loss = sim_loss.mean()
+            loss = span_lost + sim_loss
+            accum_loss += span_lost.item() + sim_loss.item()
             tot_steps += 1
-            if step % 2 == 0:
-                optimizer.step()
-                optimizer.zero_grad()
+
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
 
             logger.info('Epoch: {}, Step: {} / {}, used_time = {:.2f}s, loss = {:.6f}'.format(
                 epoch, step + 1, len(train_batches), time.time() - start_time, accum_loss / tot_steps))
 
-        evaluate(model, dev_batches, device)
-        save_checkpoint(checkpoints_path, epoch, model, optimizer)
+        evaluate(auxiliary_method, dev_batches, dev_positive_batches, similarity_method, n_gpu)
+        save_checkpoint(checkpoints_path, epoch, auxiliary_method, optimizer)
 
 
 if __name__ == '__main__':

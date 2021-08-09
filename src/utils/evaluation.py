@@ -1,6 +1,7 @@
 import logging
 import math
 
+import numpy as np
 import torch
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
@@ -9,46 +10,7 @@ from src.data_obj import EvaluationObject
 logger = logging.getLogger("event-search")
 
 
-def evaluate(model, dev_batches, device):
-    model.eval()
-    evaluation_objects = list()
-    for step, batch in enumerate(dev_batches):
-        batch = tuple(t.to(device) for t in batch)
-        passage_input_ids, query_input_ids, \
-        passage_input_mask, query_input_mask, \
-        passage_segment_ids, query_segment_ids, \
-        passage_event_starts, passage_event_ends, \
-        passage_end_bound, query_event_starts, query_event_ends = batch
-
-        with torch.no_grad():
-            outputs = model(passage_input_ids, query_input_ids,
-                            passage_input_mask, query_input_mask,
-                            passage_segment_ids, query_segment_ids,
-                            passage_event_starts, passage_event_ends)
-
-        start_logits = outputs.start_logits
-        end_logits = outputs.end_logits
-        for res_ind in range(start_logits.shape[0]):
-            start_tolist = start_logits[res_ind].detach().cpu().numpy()
-            end_tolist = end_logits[res_ind].detach().cpu().numpy()
-            start_tolist[passage_end_bound[res_ind]:] = -math.inf
-            end_tolist[passage_end_bound[res_ind]:] = -math.inf
-            top5_start_logits = sorted(enumerate(start_tolist), key=lambda x: x[1], reverse=True)[0:5]
-            top5_end_logits = sorted(enumerate(end_tolist), key=lambda x: x[1], reverse=True)[0:5]
-
-            evaluation_objects.append(EvaluationObject(start_label=passage_event_starts.data[res_ind].item(),
-                                                       end_label=passage_event_ends.data[res_ind].item(),
-                                                       start_pred=top5_start_logits,
-                                                       end_pred=top5_end_logits,
-                                                       passage_bound=passage_end_bound[res_ind].item(),
-                                                       query_event_start=query_event_starts.data[res_ind].item(),
-                                                       query_event_end=query_event_ends.data[res_ind].item()))
-
-    generate_results_matrics(evaluation_objects)
-    # generate_results_inspection(tokenization.tokenizer, evaluation_objects)
-
-
-def generate_results_matrics(evaluation_objects):
+def generate_span_results(evaluation_objects):
     start_labs, end_labs, start_pred_firsts, end_pred_firsts = (list(), list(), list(), list())
     for eval in evaluation_objects:
         start_labs.append(eval.start_label)
@@ -92,3 +54,60 @@ def passage_position_selection(eval_obj):
                 return new_start, eval_obj.start_pred[0][0]
         return eval_obj.end_pred[0][0], eval_obj.start_pred[0][0]
     return eval_obj.start_pred[0][0], eval_obj.end_pred[0][0]
+
+
+def generate_sim_results(golds, predictions):
+    golds_st = np.concatenate(golds)
+    pred_st = np.concatenate(predictions)
+    precision, recall, f1, _ = precision_recall_fscore_support(golds_st, pred_st, average='macro', zero_division=0)
+    accuracy = accuracy_score(golds_st, pred_st)
+    logger.info("Similarity: accuracy={}, precision={}, recall={}, f1={}".format(accuracy, precision, recall, f1))
+
+
+def evaluate(model, dev_batches, dev_positive_batches, similarity_method, n_gpu):
+    model.eval()
+    evaluation_objects = list()
+    predictions = list()
+    golds = list()
+    for step, batch in enumerate(dev_batches):
+        if n_gpu == 1:
+            batch = tuple(t.to(similarity_method.device) for t in batch)
+        passage_input_ids, query_input_ids, \
+        passage_input_mask, query_input_mask, \
+        passage_segment_ids, query_segment_ids, \
+        passage_event_starts, passage_event_ends, \
+        passage_end_bound, query_event_starts, query_event_ends = batch
+
+        with torch.no_grad():
+            outputs = model(passage_input_ids, query_input_ids,
+                            passage_input_mask, query_input_mask,
+                            passage_segment_ids, query_segment_ids,
+                            passage_event_starts, passage_event_ends)
+            query_rep, passage_rep = similarity_method.extract_embeddings(outputs, passage_end_bound,
+                                                                          query_event_starts, query_event_ends)
+
+            predicted_idxs, _ = similarity_method.predict_softmax(query_rep, passage_rep)
+        predictions.append(predicted_idxs.detach().cpu().numpy())
+        golds.append(dev_positive_batches[step].detach().cpu().numpy())
+
+        start_logits = outputs.start_logits
+        end_logits = outputs.end_logits
+        for res_ind in range(start_logits.shape[0]):
+            start_tolist = start_logits[res_ind].detach().cpu().numpy()
+            end_tolist = end_logits[res_ind].detach().cpu().numpy()
+            start_tolist[passage_end_bound[res_ind]:] = -math.inf
+            end_tolist[passage_end_bound[res_ind]:] = -math.inf
+            top5_start_logits = sorted(enumerate(start_tolist), key=lambda x: x[1], reverse=True)[0:5]
+            top5_end_logits = sorted(enumerate(end_tolist), key=lambda x: x[1], reverse=True)[0:5]
+
+            evaluation_objects.append(EvaluationObject(start_label=passage_event_starts.data[res_ind].item(),
+                                                       end_label=passage_event_ends.data[res_ind].item(),
+                                                       start_pred=top5_start_logits,
+                                                       end_pred=top5_end_logits,
+                                                       passage_bound=passage_end_bound[res_ind].item(),
+                                                       query_event_start=query_event_starts.data[res_ind].item(),
+                                                       query_event_end=query_event_ends.data[res_ind].item()))
+
+    generate_span_results(evaluation_objects)
+    generate_sim_results(golds, predictions)
+    # generate_results_inspection(tokenization.tokenizer, evaluation_objects)

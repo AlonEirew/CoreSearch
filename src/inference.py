@@ -3,7 +3,7 @@ import random
 import numpy as np
 import torch
 
-from src.model import WecEsModel
+from src.model import SpanPredAuxiliary
 from src.utils.evaluation import evaluate
 from src.utils.io_utils import load_checkpoint
 from src.utils.tokenization import Tokenization
@@ -31,7 +31,7 @@ def inference():
     dev_passages_file = "resources/train/wec_es_Dev_passages_segment.json"
 
     tokenization = Tokenization(tokenizer_path)
-    model = WecEsModel(len(tokenization.tokenizer))
+    model = SpanPredAuxiliary(len(tokenization.tokenizer))
     model.to(device)
     load_checkpoint(model_file, model)
     if n_gpu > 1:

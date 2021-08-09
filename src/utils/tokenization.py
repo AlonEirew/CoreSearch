@@ -24,9 +24,9 @@ class Tokenization(object):
         query_input_mask.append(0)
         query_segment_ids = [1] * len(query_tokenized)
 
-        if query_event_start != 0 and query_event_end != 0:
-            query_event_start += max_passage_length
-            query_event_end += max_passage_length
+        # if query_event_start != 0 and query_event_end != 0:
+        #     query_event_start += max_passage_length
+        #     query_event_end += max_passage_length
 
         query_input_ids = self.tokenizer.convert_tokens_to_ids(query_tokenized)
 

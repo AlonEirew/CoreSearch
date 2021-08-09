@@ -1,4 +1,8 @@
-from typing import List
+from dataclasses import dataclass
+from typing import List, Optional
+
+import torch
+from transformers.file_utils import ModelOutput
 
 
 class QueryFeat(object):
@@ -53,6 +57,15 @@ class SpanPredictFeat(object):
     def __init__(self, query_feat: QueryFeat, passage_feat: PassageFeat):
         self.query_feat = query_feat
         self.passage_feat = passage_feat
+
+
+@dataclass
+class QuestionAnsweringModelOutput(ModelOutput):
+    loss: Optional[torch.FloatTensor] = None
+    start_logits: torch.FloatTensor = None
+    end_logits: torch.FloatTensor = None
+    query_hidden_states: torch.FloatTensor = None
+    passage_hidden_states: torch.FloatTensor = None
 
 
 class EvaluationObject(object):
