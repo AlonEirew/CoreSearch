@@ -2,8 +2,9 @@ import random
 
 import numpy as np
 import torch
-
 from src.model import SpanPredAuxiliary
+
+from src.train import generate_queries_feats
 from src.utils.evaluation import evaluate
 from src.utils.io_utils import load_checkpoint
 from src.utils.tokenization import Tokenization
@@ -37,8 +38,10 @@ def inference():
     if n_gpu > 1:
         model = torch.nn.DataParallel(model)
 
-    dev_data = tokenization.read_and_gen_features(dev_examples_file, dev_passages_file, max_query_length,
-                                                  max_passage_length, remove_qbound_tokens)
+    dev_search_feats = generate_queries_feats(tokenization, dev_examples_file,
+                                              dev_passages_file, max_query_length,
+                                              max_passage_length, dev_negative_samples, remove_qbound_tokens)
+
     dev_batches = generate_dev_batches(dev_data, batch_size)
 
     evaluate(model, dev_batches, device)

@@ -15,7 +15,7 @@ class Tokenization(object):
             self.tokenizer.add_tokens(QUERY_SPAN_START)
             self.tokenizer.add_tokens(QUERY_SPAN_END)
 
-    def get_query_feat(self, query_obj, max_query_length, max_passage_length, remove_qbound=False) -> QueryFeat:
+    def get_query_feat(self, query_obj, max_query_length, remove_qbound=False) -> QueryFeat:
         max_query_length_exclude = max_query_length - 1
         query_event_start, query_event_end, \
         query_tokenized, query_input_mask = self.query_tokenization(query_obj, max_query_length_exclude, remove_qbound)

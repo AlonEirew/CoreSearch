@@ -59,16 +59,15 @@ def passage_position_selection(eval_obj):
 def generate_sim_results(golds, predictions):
     golds_st = np.concatenate(golds)
     pred_st = np.concatenate(predictions)
-    precision, recall, f1, _ = precision_recall_fscore_support(golds_st, pred_st, average='macro', zero_division=0)
     accuracy = accuracy_score(golds_st, pred_st)
-    logger.info("Similarity: accuracy={}, precision={}, recall={}, f1={}".format(accuracy, precision, recall, f1))
+    logger.info("Similarity: accuracy={}".format(accuracy))
 
 
-def evaluate(model, dev_batches, dev_positive_batches, similarity_method, n_gpu):
+def evaluate(model, dev_batches, similarity_method, negatives, n_gpu):
     model.eval()
     evaluation_objects = list()
     predictions = list()
-    golds = list()
+    gold_labs = list()
     for step, batch in enumerate(dev_batches):
         if n_gpu == 1:
             batch = tuple(t.to(similarity_method.device) for t in batch)
@@ -83,12 +82,17 @@ def evaluate(model, dev_batches, dev_positive_batches, similarity_method, n_gpu)
                             passage_input_mask, query_input_mask,
                             passage_segment_ids, query_segment_ids,
                             passage_event_starts, passage_event_ends)
-            query_rep, passage_rep = similarity_method.extract_embeddings(outputs, passage_end_bound,
-                                                                          query_event_starts, query_event_ends)
+            passage_rep = similarity_method.extract_passage_embeddings(outputs, passage_end_bound)
+            query_rep = similarity_method.extract_query_embeddings(outputs.query_hidden_states, query_event_starts,
+                                                                   query_event_ends, negatives+1)
 
+            passage_rep = passage_rep.view(query_rep.size(0), negatives + 1, -1)
             predicted_idxs, _ = similarity_method.predict_softmax(query_rep, passage_rep)
+
         predictions.append(predicted_idxs.detach().cpu().numpy())
-        golds.append(dev_positive_batches[step].detach().cpu().numpy())
+        golds = np.zeros(len(predicted_idxs))
+        # golds[np.arange(0, len(predicted_idxs), negatives+1)] = 1
+        gold_labs.append(golds)
 
         start_logits = outputs.start_logits
         end_logits = outputs.end_logits
@@ -109,5 +113,5 @@ def evaluate(model, dev_batches, dev_positive_batches, similarity_method, n_gpu)
                                                        query_event_end=query_event_ends.data[res_ind].item()))
 
     generate_span_results(evaluation_objects)
-    generate_sim_results(golds, predictions)
+    generate_sim_results(gold_labs, predictions)
     # generate_results_inspection(tokenization.tokenizer, evaluation_objects)

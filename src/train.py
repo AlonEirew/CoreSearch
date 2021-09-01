@@ -15,7 +15,7 @@ from src.coref_search_model import SpanPredAuxiliary, SimilarityModel
 from src.data_obj import SearchFeat
 from src.utils import io_utils
 from src.utils.data_utils import generate_batches
-from src.utils.evaluation import evaluate
+from src.utils.evaluation import evaluate, generate_sim_results
 from src.utils.io_utils import save_checkpoint
 from src.utils.log_utils import create_logger
 from src.utils.tokenization import Tokenization
@@ -39,7 +39,7 @@ def generate_queries_feats(tokenizer: Tokenization,
     passage_feats = dict()
     search_feats = list()
     for query_obj in tqdm(query_examples.values(), "Loading Queries"):
-        query_feat = tokenizer.get_query_feat(query_obj, max_query_length, max_passage_length, remove_qbound)
+        query_feat = tokenizer.get_query_feat(query_obj, max_query_length, remove_qbound)
         query_feats[query_obj["id"]] = query_feat
         pos_passages = list()
         neg_passages = list()
@@ -65,10 +65,15 @@ def train():
     start_time = datetime.now()
     dt_string = start_time.strftime("%d%m%Y_%H%M%S")
 
-    train_examples_file = "resources/train/wec_es_train_qsent_small.json"
+    train_examples_file = "resources/train/wec_es_Train_qsent_psegment_examples.json"
     train_passages_file = "resources/train/wec_es_Train_passages_segment.json"
-    dev_examples_file = train_examples_file#"resources/train/wec_es_Dev_qsent_psegment_examples.json"
-    dev_passages_file = train_passages_file#"resources/train/wec_es_Dev_passages_segment.json"
+    dev_examples_file = "resources/train/wec_es_Dev_qsent_psegment_examples.json"
+    dev_passages_file = "resources/train/wec_es_Dev_passages_segment.json"
+
+    # train_examples_file = "resources/train/wec_es_train_qsent_small.json"
+    # train_passages_file = "resources/train/wec_es_Train_passages_segment.json"
+    # dev_examples_file = train_examples_file
+    # dev_passages_file = train_passages_file
 
     tokenizer_path = "checkpoints/" + dt_string + "/tokenizer"
     checkpoints_path = "checkpoints/" + dt_string
@@ -79,11 +84,13 @@ def train():
 
     cpu_only = False
     epochs = 15
-    negative_sample_size = 2
+    train_negative_samples = 2
+    dev_negative_samples = 2
     in_batch_samples = 10
-    # batch_size = 3 * (2 + 1) in training for 2 negatives and 1 positive samples
-    batch_size = in_batch_samples * (negative_sample_size + 1)
-    lr = 1e-5
+    # train_batch_size = 3 * (2 + 1) in training for 2 negatives and 1 positive samples
+    train_batch_size = in_batch_samples * (train_negative_samples + 1)
+    dev_batch_size = in_batch_samples * (dev_negative_samples + 1)
+    lr = 1e-6
     remove_qbound_tokens = False
     max_query_length = 50
     max_passage_length = 150
@@ -103,20 +110,20 @@ def train():
     if n_gpu > 1:
         auxiliary_method = torch.nn.DataParallel(auxiliary_method)
 
-    similarity_method = SimilarityModel(in_batch_samples, negative_sample_size, device)
+    similarity_method = SimilarityModel(in_batch_samples, device)
 
     optimizer = AdamW(auxiliary_method.parameters(), lr=lr)
 
     train_search_feats = generate_queries_feats(tokenization, train_examples_file,
                                                 train_passages_file, max_query_length,
-                                                max_passage_length, negative_sample_size, remove_qbound_tokens)
+                                                max_passage_length, train_negative_samples, remove_qbound_tokens)
 
     dev_search_feats = generate_queries_feats(tokenization, dev_examples_file,
                                               dev_passages_file, max_query_length,
-                                              max_passage_length, negative_sample_size, remove_qbound_tokens)
+                                              max_passage_length, dev_negative_samples, remove_qbound_tokens)
 
-    train_batches, train_positive_batches = generate_batches(train_search_feats, batch_size, negative_sample_size)
-    dev_batches, dev_positive_batches = generate_batches(dev_search_feats, batch_size, negative_sample_size)
+    train_batches = generate_batches(train_search_feats, train_batch_size)
+    dev_batches = generate_batches(dev_search_feats, dev_batch_size)
 
     accum_loss = 0.0
     start_time = time.time()
@@ -124,9 +131,8 @@ def train():
     logger.info("Start training...")
     for epoch in range(epochs):
         auxiliary_method.train()
-        train_shuff_batches = list(zip(train_batches, train_positive_batches))
-        random.shuffle(train_shuff_batches)
-        train_batches, train_positive_batches = zip(*train_shuff_batches)
+        random.shuffle(train_batches)
+        batch_predictions, batch_golds = list(), list()
         for step, batch in enumerate(train_batches):
             if n_gpu == 1:
                 batch = tuple(t.to(device) for t in batch)
@@ -141,11 +147,14 @@ def train():
                             passage_segment_ids, query_segment_ids,
                             passage_start_position, passage_end_position)
 
-            query_rep, passage_rep = similarity_method.extract_embeddings(outputs, passage_end_bound,
-                                                                          query_event_starts, query_event_ends)
+            passage_rep = similarity_method.extract_passage_embeddings(outputs, passage_end_bound)
+            query_rep = similarity_method.extract_query_embeddings(outputs.query_hidden_states, query_event_starts,
+                                                                   query_event_ends, train_negative_samples + 1)
 
             span_lost = outputs.loss
-            sim_loss, _, _ = similarity_method.calc_similarity_loss(query_rep, passage_rep, train_positive_batches[step])
+            # Transform to vectors of (BatchSize, Num of examples {Negative + Positive), Embedding size)
+            passage_rep = passage_rep.view(in_batch_samples, train_negative_samples + 1, -1)
+            sim_loss, predictions = similarity_method.calc_similarity_loss(query_rep, passage_rep)
             if n_gpu > 1:
                 span_lost = span_lost.mean()
                 sim_loss = sim_loss.mean()
@@ -157,10 +166,13 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
 
+            batch_predictions.append(predictions.detach().cpu().numpy())
+            batch_golds.append(np.zeros(len(predictions)))
             logger.info('Epoch: {}, Step: {} / {}, used_time = {:.2f}s, loss = {:.6f}'.format(
                 epoch, step + 1, len(train_batches), time.time() - start_time, accum_loss / tot_steps))
 
-        evaluate(auxiliary_method, dev_batches, dev_positive_batches, similarity_method, n_gpu)
+        logger.info("Train-Similarity: accuracy={}".format(generate_sim_results(batch_golds, batch_predictions)))
+        evaluate(auxiliary_method, dev_batches, similarity_method, dev_negative_samples, n_gpu)
         save_checkpoint(checkpoints_path, epoch, auxiliary_method, optimizer)
 
 
