@@ -1,8 +1,9 @@
 import json
 import os
-from typing import Dict, List
+from typing import Dict, List, Any
 
 import torch
+from haystack import Document
 
 
 def read_query_examples_file(queries_file: str) -> Dict[int, Dict]:
@@ -59,3 +60,23 @@ def load_checkpoint(path, model, optimizer=None):
     model.load_state_dict(checkpoint['model_state_dict'])
     if optimizer:
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
+
+def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
+    passage_dict = read_passages_file(passages_file)
+    documents: List[Document] = []
+    for doc_id, passages_json in passage_dict.items():
+        meta: Dict[str, Any] = dict()
+        meta["mention"] = " ".join(passages_json["mention"])
+        meta["startIndex"] = passages_json["startIndex"]
+        meta["endIndex"] = passages_json["endIndex"]
+        meta["goldChain"] = passages_json["goldChain"]
+        documents.append(
+            Document(
+                text=" ".join(passages_json["context"]),
+                id=str(doc_id),
+                meta=meta
+            )
+        )
+
+    return documents
