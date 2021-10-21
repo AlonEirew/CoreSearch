@@ -30,7 +30,7 @@ def generate_queries_feats(tokenizer: Tokenization,
                            max_passage_length: int,
                            negative_sample_size: int,
                            remove_qbound: bool = False) -> List[SearchFeat]:
-    query_examples = io_utils.read_query_examples_file(query_file)
+    query_examples = io_utils.read_query_file(query_file)
     passages_examples = io_utils.read_passages_file(passages_file)
     logger.info("Done loading examples file, queries-" + query_file + ", passages-" + passages_file)
     logger.info("Total examples loaded, queries=" + str(len(query_examples)) + ", passages=" + str(len(passages_examples)))

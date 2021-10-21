@@ -1,9 +1,9 @@
-from typing import List
+from typing import List, Dict
 
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
-from src.data_obj import SearchFeat
+from src.data_obj import SearchFeat, QueryResult, Cluster
 
 
 def generate_batches(search_features: List[SearchFeat], batch_size: int):
@@ -87,3 +87,24 @@ def generate_span_feats(search_features: List[SearchFeat]):
            all_passage_segment_ids, all_query_segment_ids, \
            all_start_positions, all_end_positions, all_end_bounds, \
            all_query_starts, all_query_ends
+
+
+def query_results_to_ids_list(query_results: List[QueryResult]) -> Dict[str, List[str]]:
+    assert query_results
+    new_queries = dict()
+    for query_res in query_results:
+        new_queries[query_res.query.id] = list()
+        for passage in query_res.results:
+            new_queries[query_res.query.id].append(passage.id)
+    return new_queries
+
+
+def clusters_to_ids_list(gold_clusters: List[Cluster]) -> Dict[str, List[str]]:
+    assert gold_clusters
+    new_results = dict()
+    for clust in gold_clusters:
+        for id_ in clust.mention_ids:
+            new_ment_list = clust.mention_ids.copy()
+            new_ment_list.remove(id_)
+            new_results[id_] = new_ment_list
+    return new_results

@@ -2,3 +2,4 @@ farm-haystack==0.10.0
 numpy==1.21.0
 scikit-learn
 tqdm
+docopt

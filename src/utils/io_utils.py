@@ -4,20 +4,40 @@ from typing import Dict, List, Any
 
 import torch
 from haystack import Document
+from tqdm import tqdm
+
+from src.data_obj import Query, Passage, Cluster
 
 
-def read_query_examples_file(queries_file: str) -> Dict[int, Dict]:
-    assert queries_file
-    with open(queries_file, "r") as fis:
-        queries_json = json.load(fis)
-    return {qobj["id"]: qobj for qobj in queries_json}
+def load_json_file(json_file: str):
+    assert json_file
+    with open(json_file, "r") as fis:
+        return json.load(fis)
 
 
-def read_passages_file(passages_file: str) -> Dict[int, Dict]:
-    assert passages_file
-    with open(passages_file, "r") as fis:
-        passages_json = json.load(fis)
-    return {pobj["id"]: pobj for pobj in passages_json}
+def read_query_file(queries_file: str) -> List[Query]:
+    queries_json = load_json_file(queries_file)
+    queries = list()
+    for query_obj in tqdm(queries_json, desc="Reading queries"):
+        queries.append(Query(query_obj))
+    return queries
+
+
+def read_passages_file(passages_file: str) -> List[Passage]:
+    passages_json = load_json_file(passages_file)
+    passages = list()
+    for pass_obj in tqdm(passages_json, desc="Reading passages"):
+        passages.append(Passage(pass_obj))
+    return passages
+
+
+def read_gold_file(gold_file: str) -> List[Cluster]:
+    gold_json = load_json_file(gold_file)
+    golds = list()
+    for gold_obj in gold_json:
+        golds.append(Cluster(gold_obj))
+
+    return golds
 
 
 def read_id_sent_file(in_file: str) -> Dict[str, str]:
@@ -29,17 +49,6 @@ def read_id_sent_file(in_file: str) -> Dict[str, str]:
             queries[line_splt[0]] = line_splt[1]
 
     return queries
-
-
-def read_gold_file(gold_file: str) -> Dict[str, List[str]]:
-    gold_labels = dict()
-    with open(gold_file, "r") as fis:
-        readlines = fis.readlines()
-        for line in readlines:
-            line_splt = line.strip().split("\t")
-            gold_labels[line_splt[0]] = line_splt[1:]
-
-    return gold_labels
 
 
 def save_checkpoint(path, epoch, model, optimizer):
@@ -65,16 +74,16 @@ def load_checkpoint(path, model, optimizer=None):
 def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
     passage_dict = read_passages_file(passages_file)
     documents: List[Document] = []
-    for doc_id, passages_json in passage_dict.items():
+    for passage in tqdm(passage_dict, desc="Converting passages"):
         meta: Dict[str, Any] = dict()
-        meta["mention"] = " ".join(passages_json["mention"])
-        meta["startIndex"] = passages_json["startIndex"]
-        meta["endIndex"] = passages_json["endIndex"]
-        meta["goldChain"] = passages_json["goldChain"]
+        meta["mention"] = " ".join(passage.mention)
+        meta["startIndex"] = passage.start_idx
+        meta["endIndex"] = passage.end_idx
+        meta["goldChain"] = passage.cluster
         documents.append(
             Document(
-                text=" ".join(passages_json["context"]),
-                id=str(doc_id),
+                text=" ".join(passage.context),
+                id=passage.id,
                 meta=meta
             )
         )

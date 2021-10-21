@@ -1,9 +1,8 @@
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from haystack.pipeline import ExtractiveQAPipeline, DocumentSearchPipeline
-from haystack.utils import print_answers
 
-from src.utils import measurments
+from src.data_obj import Query, QueryResult, Passage
 
 
 class BasePipeline(object):
@@ -18,27 +17,18 @@ class BasePipeline(object):
     def run_pipeline(self, query_text):
         raise NotImplementedError
 
-    def extract_results(self, result) -> List[int]:
+    def extract_results(self, query: Query, result: Dict) -> QueryResult:
         raise NotImplementedError
 
-    def run_end_to_end(self, query_examples):
-        prediction: Dict[int, List[int]] = dict()
-        golds: Dict[int, List[int]] = dict()
-        for qid, query in query_examples.items():
-            query_text = " ".join(query["context"])
+    def run_end_to_end(self, query_examples: List[Query]) -> List[QueryResult]:
+        predictions = list()
+        for query in query_examples:
+            query_text = " ".join(query.context)
             results = self.run_pipeline(query_text)
-
-            golds[qid] = query["positivePassagesIds"]
-            prediction[qid] = list()
-            for result in self.extract_results(results):
-                if qid != result:
-                    prediction[qid].append(result)
-
+            query_result = self.extract_results(query, results)
             print("query_text=" + query_text)
-            # print_answers(results, details="minimal")
-
-        print("MRR@10=" + str(measurments.mean_reciprocal_rank(predictions=prediction, golds=golds, topk=5)))
-        print("HIT@10=" + str(measurments.hit_rate(predictions=prediction, golds=golds, topk=5)))
+            predictions.append(query_result)
+        return predictions
 
 
 class RetrievalOnlyPipeline(BasePipeline):
@@ -50,15 +40,18 @@ class RetrievalOnlyPipeline(BasePipeline):
         return DocumentSearchPipeline(self.retriever)
 
     def run_pipeline(self, query_text):
-        return self.pipeline.run(
-            query=query_text, params={"Retriever": {"top_k": self.ret_topk}}
-        )
+        return self.pipeline.run(query=query_text, params={"Retriever": {"top_k": self.ret_topk}})
 
-    def extract_results(self, results):
+    def extract_results(self, query: Query, results: Dict) -> QueryResult:
         converted_list = list()
         for result in results["documents"]:
-            converted_list.append(int(result["id"]))
-        return converted_list
+            if query.id != result["id"]:
+                meta = result["meta"]
+                meta["id"] = result["id"]
+                meta["context"] = result["text"]
+                converted_list.append(Passage(meta))
+
+        return QueryResult(query, converted_list)
 
 
 class QAPipeline(BasePipeline):
@@ -76,8 +69,14 @@ class QAPipeline(BasePipeline):
             query=query_text, params={"Retriever": {"top_k": self.ret_topk}, "Reader": {"top_k": self.read_topk}}
         )
 
-    def extract_results(self, results):
+    def extract_results(self, query: Query, results: Dict) -> QueryResult:
         converted_list = list()
         for result in results["answers"]:
-            converted_list.append(int(result["document_id"]))
-        return converted_list
+            ans_id = result["document_id"]
+            ans_doc = next((doc for doc in results["documents"] if doc.id == ans_id), None)
+            assert ans_doc
+            meta = ans_doc.meta
+            meta["id"] = ans_id
+            meta["context"] = ans_doc.text
+            converted_list.append(Passage(meta))
+        return QueryResult(query, converted_list)

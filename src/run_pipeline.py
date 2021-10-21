@@ -1,42 +1,37 @@
-from typing import Dict
+from typing import Dict, List
 
 from haystack.document_store import FAISSDocumentStore, ElasticsearchDocumentStore
 from haystack.reader import FARMReader
-from haystack.retriever import DensePassageRetriever, ElasticsearchRetriever
+from haystack.retriever import ElasticsearchRetriever
 
+from src.data_obj import Query, Cluster
+from src.index import faiss_index
 from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
-from src.utils import io_utils
+from src.utils import io_utils, measurments, data_utils
 
 
 def get_faiss_dpr():
     document_store = FAISSDocumentStore.load(faiss_file_path="wec_train_index.faiss",
-                                   sql_url="sqlite:///weces_train.db",
-                                   index="document")
+                                             sql_url="sqlite:///weces_train.db",
+                                             index="document")
 
-    retriever = DensePassageRetriever(document_store=document_store,
-                                      query_embedding_model="facebook/dpr-question_encoder-single-nq-base",
-                                      passage_embedding_model="facebook/dpr-ctx_encoder-single-nq-base",
-                                      max_seq_len_query=64,
-                                      max_seq_len_passage=256,
-                                      batch_size=16,
-                                      use_gpu=True,
-                                      embed_title=False,
-                                      use_fast_tokenizers=False)
-
-    document_store.update_embeddings(retriever=retriever)
+    retriever = faiss_index.get_dpr(document_store)
     return document_store, retriever
 
 
 def get_elastic_bm25():
-    document_store = ElasticsearchDocumentStore()
+    document_store = ElasticsearchDocumentStore(index="document")
     retriever = ElasticsearchRetriever(document_store)
     return document_store, retriever
 
 
 def main():
-    method_str = "faiss_dpr" #"elastic_bm25"
+    method_str = "elastic_bm25"
     run_pipe_str = "retriever"
-    query_examples: Dict[int, Dict] = io_utils.read_query_examples_file("resources/train/wec_es_train_qsent_small.json")
+    # method_str = "faiss_dpr"
+    # run_pipe_str = "qa"
+    query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/Train_queries.json")
+    golds: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/Train_gold_clusters.json")
 
     if method_str == "faiss_dpr":
         document_store, retriever = get_faiss_dpr()
@@ -44,6 +39,9 @@ def main():
         document_store, retriever = get_elastic_bm25()
     else:
         raise TypeError
+
+    print(method_str + " Document store and retriever created..")
+    print("Total indexed documents to be searched=" + str(document_store.get_document_count()))
 
     if run_pipe_str == "qa":
         pipeline = QAPipeline(document_store=document_store,
@@ -55,12 +53,15 @@ def main():
         pipeline = RetrievalOnlyPipeline(document_store=document_store,
                                          retriever=retriever,
                                          ret_topk=10)
-        pipeline.run_end_to_end(query_examples=query_examples)
     else:
         raise TypeError
 
-    pipeline.run_end_to_end(query_examples=query_examples)
-    print("Total indexed documents searched=" + str(document_store.get_document_count()))
+    print("Running " + run_pipe_str + " pipeline..")
+    predictions = pipeline.run_end_to_end(query_examples=query_examples)
+    predictions_arranged = data_utils.query_results_to_ids_list(predictions)
+    golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
+    print("MRR@10=" + str(measurments.mean_reciprocal_rank(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
+    print("HIT@10=" + str(measurments.hit_rate(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
 
 
 if __name__ == '__main__':

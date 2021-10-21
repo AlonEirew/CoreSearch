@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import torch
 from transformers.file_utils import ModelOutput
@@ -84,3 +84,35 @@ class EvaluationObject(object):
         self.passage_bound = passage_bound
         self.query_event_start = query_event_start
         self.query_event_end = query_event_end
+
+
+class BasicMent(object):
+    def __init__(self, json_obj: Dict):
+        self.id = json_obj["id"]
+        self.cluster = json_obj["goldChain"]
+        self.context = json_obj["context"]
+        self.mention = json_obj["mention"]
+        self.start_idx = json_obj["startIndex"]
+        self.end_idx = json_obj["endIndex"]
+
+
+class Passage(BasicMent):
+    def __init__(self, json_obj: Dict):
+        super().__init__(json_obj)
+
+
+class Query(BasicMent):
+    def __init__(self, json_obj: Dict):
+        super().__init__(json_obj)
+
+
+class Cluster(object):
+    def __init__(self, cluster_obj: Dict):
+        self.cluster_id = str(cluster_obj["clusterId"])
+        self.mention_ids = [str(id_) for id_ in cluster_obj["mentionIds"]]
+
+
+class QueryResult(object):
+    def __init__(self, query: Query, results: List[Passage]):
+        self.query = query
+        self.results = results
