@@ -15,8 +15,15 @@ from typing import List
 from docopt import docopt
 from haystack import Document
 from haystack.document_store import ElasticsearchDocumentStore
+from haystack.retriever import ElasticsearchRetriever
 
 from src.utils import io_utils
+
+
+def load_elastic_bm25():
+    document_store = ElasticsearchDocumentStore(index="document")
+    retriever = ElasticsearchRetriever(document_store)
+    return document_store, retriever
 
 
 def elastic_index(index: str, documents: List[Document]):

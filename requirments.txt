@@ -3,3 +3,4 @@ numpy==1.21.0
 scikit-learn
 tqdm
 docopt
+spacy

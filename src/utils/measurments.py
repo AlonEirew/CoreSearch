@@ -2,7 +2,7 @@ from typing import List, Dict
 
 
 def hit_rate(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):
-    # assert len(predictions) == len(golds)
+    assert len(predictions) == len(golds)
     hit_rates = list()
     for query_id in predictions.keys():
         predict_hits = list()
@@ -17,7 +17,7 @@ def hit_rate(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], top
 
 
 def mean_reciprocal_rank(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):
-    # assert len(predictions) == len(golds)
+    assert len(predictions) == len(golds)
     mrr_topk = list()
     for query_id in predictions.keys():
         max_topk = topk if topk <= len(predictions[query_id]) else len(predictions[query_id])

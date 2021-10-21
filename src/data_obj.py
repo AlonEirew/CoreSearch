@@ -99,6 +99,8 @@ class BasicMent(object):
 class Passage(BasicMent):
     def __init__(self, json_obj: Dict):
         super().__init__(json_obj)
+        if "score" in json_obj:
+            self.score = json_obj["score"]
 
 
 class Query(BasicMent):

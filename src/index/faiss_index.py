@@ -7,6 +7,15 @@ from haystack.retriever import DensePassageRetriever
 from src.utils import io_utils
 
 
+def load_faiss_dpr():
+    document_store = FAISSDocumentStore.load(faiss_file_path="wec_train_index.faiss",
+                                             sql_url="sqlite:///weces_train.db",
+                                             index="document")
+
+    retriever = get_dpr(document_store)
+    return document_store, retriever
+
+
 def get_dpr(document_store):
     return DensePassageRetriever(document_store=document_store,
                                  query_embedding_model="facebook/dpr-question_encoder-single-nq-base",

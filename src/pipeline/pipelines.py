@@ -49,6 +49,7 @@ class RetrievalOnlyPipeline(BasePipeline):
                 meta = result["meta"]
                 meta["id"] = result["id"]
                 meta["context"] = result["text"]
+                meta["score"] = result["score"]
                 converted_list.append(Passage(meta))
 
         return QueryResult(query, converted_list)
@@ -78,5 +79,6 @@ class QAPipeline(BasePipeline):
             meta = ans_doc.meta
             meta["id"] = ans_id
             meta["context"] = ans_doc.text
+            meta["score"] = ans_doc.score
             converted_list.append(Passage(meta))
         return QueryResult(query, converted_list)
