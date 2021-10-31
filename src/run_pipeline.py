@@ -13,13 +13,14 @@ def main():
     run_pipe_str = "retriever"
     # method_str = "faiss_dpr"
     # run_pipe_str = "qa"
-    query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/Tiny_queries.json")
+    es_index = "train"
+    query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/Train_queries.json")
     golds: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/Train_gold_clusters.json")
 
     if method_str == "faiss_dpr":
         document_store, retriever = faiss_index.load_faiss_dpr()
     elif method_str == "elastic_bm25":
-        document_store, retriever = elastic_index.load_elastic_bm25()
+        document_store, retriever = elastic_index.load_elastic_bm25(es_index)
     else:
         raise TypeError
 

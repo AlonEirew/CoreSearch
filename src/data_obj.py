@@ -89,11 +89,11 @@ class EvaluationObject(object):
 class BasicMent(object):
     def __init__(self, json_obj: Dict):
         self.id = json_obj["id"]
-        self.cluster = json_obj["goldChain"]
+        self.goldChain = json_obj["goldChain"]
         self.context = json_obj["context"]
         self.mention = json_obj["mention"]
-        self.start_idx = json_obj["startIndex"]
-        self.end_idx = json_obj["endIndex"]
+        self.startIndex = json_obj["startIndex"]
+        self.endIndex = json_obj["endIndex"]
 
 
 class Passage(BasicMent):
@@ -118,3 +118,10 @@ class QueryResult(object):
     def __init__(self, query: Query, results: List[Passage]):
         self.query = query
         self.results = results
+
+
+class TrainExample(BasicMent):
+    def __init__(self, positive_examples, negative_examples, json_obj: Dict):
+        super().__init__(json_obj)
+        self.positive_examples = positive_examples
+        self.negative_examples = negative_examples

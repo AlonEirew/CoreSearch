@@ -77,9 +77,9 @@ def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
     for passage in tqdm(passage_dict, desc="Converting passages"):
         meta: Dict[str, Any] = dict()
         meta["mention"] = " ".join(passage.mention)
-        meta["startIndex"] = passage.start_idx
-        meta["endIndex"] = passage.end_idx
-        meta["goldChain"] = passage.cluster
+        meta["startIndex"] = passage.startIndex
+        meta["endIndex"] = passage.endIndex
+        meta["goldChain"] = passage.goldChain
         documents.append(
             Document(
                 text=" ".join(passage.context),

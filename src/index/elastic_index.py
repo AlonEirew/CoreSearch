@@ -20,8 +20,8 @@ from haystack.retriever import ElasticsearchRetriever
 from src.utils import io_utils
 
 
-def load_elastic_bm25():
-    document_store = ElasticsearchDocumentStore(index="document")
+def load_elastic_bm25(index):
+    document_store = ElasticsearchDocumentStore(index=index)
     retriever = ElasticsearchRetriever(document_store)
     return document_store, retriever
 
