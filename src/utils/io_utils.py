@@ -6,13 +6,21 @@ import torch
 from haystack import Document
 from tqdm import tqdm
 
-from src.data_obj import Query, Passage, Cluster
+from src.data_obj import Query, Passage, Cluster, TrainExample
 
 
 def load_json_file(json_file: str):
     assert json_file
     with open(json_file, "r") as fis:
         return json.load(fis)
+
+
+def read_train_example_file(train_exp_file: str) -> List[TrainExample]:
+    examples_json = load_json_file(train_exp_file)
+    train_exmpl = list()
+    for train_exp_obj in tqdm(examples_json, desc="Reading Train Exp"):
+        train_exmpl.append(TrainExample(train_exp_obj))
+    return train_exmpl
 
 
 def read_query_file(queries_file: str) -> List[Query]:

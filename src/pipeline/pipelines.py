@@ -1,8 +1,8 @@
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from haystack.pipeline import ExtractiveQAPipeline, DocumentSearchPipeline
 
-from src.data_obj import Query, QueryResult, Passage
+from src.data_obj import QueryResult, Passage, BasicMent
 
 
 class BasePipeline(object):
@@ -17,10 +17,10 @@ class BasePipeline(object):
     def run_pipeline(self, query_text):
         raise NotImplementedError
 
-    def extract_results(self, query: Query, result: Dict) -> QueryResult:
+    def extract_results(self, query: BasicMent, result: Dict) -> QueryResult:
         raise NotImplementedError
 
-    def run_end_to_end(self, query_examples: List[Query]) -> List[QueryResult]:
+    def run_end_to_end(self, query_examples: List[BasicMent]) -> List[QueryResult]:
         predictions = list()
         for query in query_examples:
             query_text = " ".join(query.context)
@@ -42,7 +42,7 @@ class RetrievalOnlyPipeline(BasePipeline):
     def run_pipeline(self, query_text):
         return self.pipeline.run(query=query_text, params={"Retriever": {"top_k": self.ret_topk}})
 
-    def extract_results(self, query: Query, results: Dict) -> QueryResult:
+    def extract_results(self, query: BasicMent, results: Dict) -> QueryResult:
         converted_list = list()
         for result in results["documents"]:
             if query.id != result["id"]:
@@ -70,7 +70,7 @@ class QAPipeline(BasePipeline):
             query=query_text, params={"Retriever": {"top_k": self.ret_topk}, "Reader": {"top_k": self.read_topk}}
         )
 
-    def extract_results(self, query: Query, results: Dict) -> QueryResult:
+    def extract_results(self, query: BasicMent, results: Dict) -> QueryResult:
         converted_list = list()
         for result in results["answers"]:
             ans_id = result["document_id"]

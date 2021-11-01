@@ -8,16 +8,16 @@ from src.data_obj import SearchFeat, QueryResult, Cluster
 
 def generate_batches(search_features: List[SearchFeat], batch_size: int):
     all_passage_input_ids, all_query_input_ids, \
-           all_passage_input_mask, all_query_input_mask, \
-           all_passage_segment_ids, all_query_segment_ids, \
-           passage_event_starts, passage_event_ends, all_end_bounds, \
-           all_query_starts, all_query_ends = generate_span_feats(search_features)
+    all_passage_input_mask, all_query_input_mask, \
+    all_passage_segment_ids, all_query_segment_ids, \
+    passage_event_starts, passage_event_ends, all_end_bounds, \
+    all_query_starts, all_query_ends = generate_span_feats(search_features)
 
     data = TensorDataset(all_passage_input_ids, all_query_input_ids,
-                               all_passage_input_mask, all_query_input_mask,
-                               all_passage_segment_ids, all_query_segment_ids,
-                               passage_event_starts, passage_event_ends,
-                               all_end_bounds, all_query_starts, all_query_ends)
+                         all_passage_input_mask, all_query_input_mask,
+                         all_passage_segment_ids, all_query_segment_ids,
+                         passage_event_starts, passage_event_ends,
+                         all_end_bounds, all_query_starts, all_query_ends)
     dataloader = DataLoader(data, batch_size=batch_size, shuffle=False)
     batches = [batch for batch in dataloader]
     return batches

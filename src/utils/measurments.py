@@ -2,7 +2,6 @@ from typing import List, Dict
 
 
 def hit_rate(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):
-    assert len(predictions) == len(golds)
     hit_rates = list()
     for query_id in predictions.keys():
         predict_hits = list()
@@ -17,7 +16,6 @@ def hit_rate(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], top
 
 
 def mean_reciprocal_rank(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):
-    assert len(predictions) == len(golds)
     mrr_topk = list()
     for query_id in predictions.keys():
         max_topk = topk if topk <= len(predictions[query_id]) else len(predictions[query_id])
@@ -27,3 +25,16 @@ def mean_reciprocal_rank(predictions: Dict[str, List[str]], golds: Dict[str, Lis
                 break
 
     return sum(mrr_topk) / len(predictions)
+
+
+def recall(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):
+    relevant = 0
+    true_pos = 0
+    for query_id in predictions.keys():
+        max_topk = topk if topk <= len(predictions[query_id]) else len(predictions[query_id])
+        relevant += len(golds[query_id])
+        for index in range(max_topk):
+            if predictions[query_id][index] in golds[query_id]:
+                true_pos += 1
+
+    return true_pos / relevant

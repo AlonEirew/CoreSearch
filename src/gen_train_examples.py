@@ -10,7 +10,7 @@ from tqdm import tqdm
 from src.data_obj import Query, Cluster, QueryResult, TrainExample, Passage
 from src.index import elastic_index
 from src.pipeline.pipelines import RetrievalOnlyPipeline
-from src.utils import io_utils, data_utils, measurments
+from src.utils import io_utils, data_utils
 from src.utils.nlp_utils import NLPUtils
 
 
@@ -33,9 +33,12 @@ def create_train_examples(query_results, golds) -> Tuple[List[TrainExample], Set
             else:
                 neg_ids.append(rid)
 
-        train_examples.append(TrainExample(positive_examples=pos_ids,
-                                           negative_examples=neg_ids,
-                                           json_obj=query_res.query.__dict__))
+        json_obj = query_res.query.__dict__
+        json_obj["positive_examples"] = pos_ids
+        json_obj["negative_examples"] = neg_ids
+        json_obj["bm25_query"] = query_res.searched_query
+
+        train_examples.append(TrainExample(json_obj))
 
     return train_examples, all_pass_ids
 
@@ -49,7 +52,9 @@ def extract_query_and_run(nlp, pipeline, query_examples) -> List[QueryResult]:
         ner_text = set([ner[1] for ner in query_ners])
         query_text = query_mention + " . " + " ".join(ner_text)
         result = pipeline.run_pipeline(query_text)
-        query_results.append(pipeline.extract_results(query, result))
+        query_res = pipeline.extract_results(query, result)
+        query_res.searched_query = query_text
+        query_results.append(query_res)
     return query_results
 
 
@@ -95,5 +100,5 @@ def main():
 
 
 if __name__ == '__main__':
-    SPLIT = "Dev"
+    SPLIT = "Train"
     main()

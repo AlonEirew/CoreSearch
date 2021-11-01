@@ -115,13 +115,15 @@ class Cluster(object):
 
 
 class QueryResult(object):
-    def __init__(self, query: Query, results: List[Passage]):
+    def __init__(self, query: BasicMent, results: List[Passage], searched_query: str = None):
         self.query = query
         self.results = results
+        self.searched_query = searched_query
 
 
 class TrainExample(BasicMent):
-    def __init__(self, positive_examples, negative_examples, json_obj: Dict):
+    def __init__(self, json_obj: Dict):
         super().__init__(json_obj)
-        self.positive_examples = positive_examples
-        self.negative_examples = negative_examples
+        self.positive_examples = json_obj["positive_examples"]
+        self.negative_examples = json_obj["negative_examples"]
+        self.bm25_query = json_obj["bm25_query"]

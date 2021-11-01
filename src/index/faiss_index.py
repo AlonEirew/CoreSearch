@@ -7,9 +7,9 @@ from haystack.retriever import DensePassageRetriever
 from src.utils import io_utils
 
 
-def load_faiss_dpr():
-    document_store = FAISSDocumentStore.load(faiss_file_path="wec_train_index.faiss",
-                                             sql_url="sqlite:///weces_train.db",
+def load_faiss_dpr(faiss_file_path, sql_rul):
+    document_store = FAISSDocumentStore.load(faiss_file_path=faiss_file_path,
+                                             sql_url=sql_rul,
                                              index="document")
 
     retriever = get_dpr(document_store)
@@ -28,8 +28,8 @@ def get_dpr(document_store):
                                  use_fast_tokenizers=False)
 
 
-def faiss_index(documents: List[Document]):
-    document_store = FAISSDocumentStore(sql_url="sqlite:///weces_train.db",
+def faiss_index(documents: List[Document], faiss_file_path, sql_rul):
+    document_store = FAISSDocumentStore(sql_url=sql_rul,
                                         faiss_index_factory_str="Flat",
                                         similarity="dot_product")
 
@@ -39,13 +39,15 @@ def faiss_index(documents: List[Document]):
     print("Writing document to FAISS index (may take a while)..")
     document_store.write_documents(documents=documents)
     document_store.update_embeddings(retriever=retriever)
-    document_store.save("wec_train_index.faiss")
+    document_store.save(faiss_file_path)
     print("FAISS index creation done!")
 
 
 def main():
-    documents = io_utils.read_wec_to_haystack_doc_list("resources/WEC-ES/Train_passages.json")
-    faiss_index(documents)
+    documents = io_utils.read_wec_to_haystack_doc_list("resources/WEC-ES/Dev_passages.json")
+    faiss_file_path = "wec_dev_index.faiss"
+    sql_rul = "sqlite:///weces_dev.db"
+    faiss_index(documents, faiss_file_path, sql_rul)
 
 
 if __name__ == '__main__':
