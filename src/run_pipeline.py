@@ -2,23 +2,30 @@ from typing import List
 
 from haystack.reader import FARMReader
 
-from src.data_obj import Query, Cluster
+from src.data_obj import Query, Cluster, TrainExample
 from src.index import faiss_index, elastic_index
 from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
 from src.utils import io_utils, measurments, data_utils
 
 
 def main():
-    method_str = "elastic_bm25"
+    # method_str = "elastic_bm25"
+    method_str = "faiss_dpr"
     run_pipe_str = "retriever"
-    # method_str = "faiss_dpr"
     # run_pipe_str = "qa"
-    es_index = "train"
-    query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/Train_queries.json")
-    golds: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/Train_gold_clusters.json")
+    es_index = SPLIT.lower()
+
+    faiss_index_file = "wec_" + es_index + "_index.faiss"
+    sql_url = "sqlite:///weces_" + es_index + ".db"
+
+    golds: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/" + SPLIT + "_gold_clusters.json")
+    # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
+    query_examples: List[TrainExample] = io_utils.read_train_example_file("resources/train/" + SPLIT + "_training_queries.json")
+    for query in query_examples:
+        query.context = query.bm25_query.split(" ")
 
     if method_str == "faiss_dpr":
-        document_store, retriever = faiss_index.load_faiss_dpr()
+        document_store, retriever = faiss_index.load_faiss_dpr(faiss_index_file, sql_url)
     elif method_str == "elastic_bm25":
         document_store, retriever = elastic_index.load_elastic_bm25(es_index)
     else:
@@ -36,7 +43,7 @@ def main():
     elif run_pipe_str == "retriever":
         pipeline = RetrievalOnlyPipeline(document_store=document_store,
                                          retriever=retriever,
-                                         ret_topk=10)
+                                         ret_topk=150)
     else:
         raise TypeError
 
@@ -45,9 +52,14 @@ def main():
     predictions_arranged = data_utils.query_results_to_ids_list(predictions)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
 
+    assert len(predictions) == len(golds_arranged)
+    # print("HIT@10=" + str(measurments.hit_rate(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
     print("MRR@10=" + str(measurments.mean_reciprocal_rank(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
-    print("HIT@10=" + str(measurments.hit_rate(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
+    print("RECALL@10=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
+    print("RECALL@50=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=50)))
+    print("RECALL@100=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=100)))
 
 
 if __name__ == '__main__':
+    SPLIT = "Dev"
     main()
