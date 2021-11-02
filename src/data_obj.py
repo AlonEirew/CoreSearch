@@ -95,6 +95,11 @@ class BasicMent(object):
         self.startIndex = json_obj["startIndex"]
         self.endIndex = json_obj["endIndex"]
 
+    @staticmethod
+    def list_to_map(list_to_convert) -> Dict:
+        assert list_to_convert
+        return {obj.id: obj for obj in list_to_convert}
+
 
 class Passage(BasicMent):
     def __init__(self, json_obj: Dict):
@@ -127,3 +132,34 @@ class TrainExample(BasicMent):
         self.positive_examples = json_obj["positive_examples"]
         self.negative_examples = json_obj["negative_examples"]
         self.bm25_query = json_obj["bm25_query"]
+
+
+class DPRContext(object):
+    def __init__(self,
+                 title: str,
+                 text: str,
+                 score: int,
+                 title_score: int,
+                 passage_id: str):
+        self.title = title
+        self.text = text
+        self.score = score
+        self.title_score = title_score
+        self.passage_id = passage_id
+
+
+class DPRExample(object):
+    def __init__(self,
+                 dataset: str,
+                 question: str,
+                 answers: List[str],
+                 positive_ctxs: List[DPRContext],
+                 negative_ctxs: List[DPRContext],
+                 hard_negative_ctxs: List[DPRContext]):
+
+        self.dataset = dataset
+        self.question = question
+        self.answers = answers
+        self.positive_ctxs = positive_ctxs
+        self.negative_ctxs = negative_ctxs
+        hard_negative_ctxs = hard_negative_ctxs

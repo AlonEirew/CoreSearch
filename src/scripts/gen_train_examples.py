@@ -24,17 +24,15 @@ def create_train_examples(query_results, golds) -> Tuple[List[TrainExample], Set
     for query_res in query_results:
         predicted_list: List[str] = predictions_arranged[query_res.query.id]
         gold_list: List[str] = golds_arranged[query_res.query.id]
-        pos_ids = list()
         neg_ids = list()
         for rid in predicted_list:
-            all_pass_ids.add(rid)
-            if rid in gold_list:
-                pos_ids.append(rid)
-            else:
+            all_pass_ids.update(gold_list)
+            if rid not in gold_list:
                 neg_ids.append(rid)
+                all_pass_ids.add(rid)
 
         json_obj = query_res.query.__dict__
-        json_obj["positive_examples"] = pos_ids
+        json_obj["positive_examples"] = gold_list
         json_obj["negative_examples"] = neg_ids
         json_obj["bm25_query"] = query_res.searched_query
 
@@ -89,7 +87,7 @@ def main():
     train_examples, all_pass_ids = create_train_examples(query_results, golds)
     filtered_passages = filter_only_used_passages(passages_file, all_pass_ids)
 
-    print(SPLIT + "train queries=" + str(len(train_examples)))
+    print(SPLIT + " train queries=" + str(len(train_examples)))
     print("Writing-" + train_exml_out_file)
     with open(train_exml_out_file, 'w', encoding='utf-8') as train_exmpl_os:
         json.dump(train_examples, train_exmpl_os, default=lambda o: o.__dict__, ensure_ascii=False, indent=4)
