@@ -9,8 +9,8 @@ from src.utils import io_utils, measurments, data_utils
 
 
 def main():
-    # method_str = "elastic_bm25"
-    method_str = "faiss_dpr"
+    # index_type = "elastic_bm25"
+    index_type = "faiss_dpr"
     run_pipe_str = "retriever"
     # run_pipe_str = "qa"
     es_index = SPLIT.lower()
@@ -24,14 +24,14 @@ def main():
     for query in query_examples:
         query.context = query.bm25_query.split(" ")
 
-    if method_str == "faiss_dpr":
+    if index_type == "faiss_dpr":
         document_store, retriever = faiss_index.load_faiss_dpr(faiss_index_file, sql_url)
-    elif method_str == "elastic_bm25":
+    elif index_type == "elastic_bm25":
         document_store, retriever = elastic_index.load_elastic_bm25(es_index)
     else:
         raise TypeError
 
-    print(method_str + " Document store and retriever created..")
+    print(index_type + " Document store and retriever created..")
     print("Total indexed documents to be searched=" + str(document_store.get_document_count()))
 
     if run_pipe_str == "qa":
@@ -48,6 +48,10 @@ def main():
         raise TypeError
 
     print("Running " + run_pipe_str + " pipeline..")
+    predict_and_eval(pipeline, golds, query_examples)
+
+
+def predict_and_eval(pipeline, golds, query_examples):
     predictions = pipeline.run_end_to_end(query_examples=query_examples)
     predictions_arranged = data_utils.query_results_to_ids_list(predictions)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)

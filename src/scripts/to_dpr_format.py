@@ -31,12 +31,12 @@ def main():
             neg_passage = train_passages[neg_pass_id]
             dpr_neg_ctxs.append(DPRContext("NA", " ".join(neg_passage.context), 0, 0, neg_pass_id))
 
-        dpr_examples.append(DPRExample("WEC", dpr_quesion, list(dpr_answers), dpr_pos_ctxs, dpr_neg_ctxs, list()))
+        dpr_examples.append(DPRExample("WEC", dpr_quesion, list(dpr_answers), dpr_pos_ctxs, list(), dpr_neg_ctxs))
 
     with open(dpr_out, 'w', encoding='utf-8') as train_exmpl_os:
         json.dump(dpr_examples, train_exmpl_os, default=lambda o: o.__dict__, ensure_ascii=False, indent=4)
 
 
 if __name__ == '__main__':
-    SPLIT = "Train"
+    SPLIT = "Dev"
     main()
