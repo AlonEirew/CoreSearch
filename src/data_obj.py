@@ -162,4 +162,4 @@ class DPRExample(object):
         self.answers = answers
         self.positive_ctxs = positive_ctxs
         self.negative_ctxs = negative_ctxs
-        hard_negative_ctxs = hard_negative_ctxs
+        self.hard_negative_ctxs = hard_negative_ctxs

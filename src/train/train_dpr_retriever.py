@@ -33,7 +33,7 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
                                       query_embedding_model=query_model,
                                       passage_embedding_model=passage_model,
                                       max_seq_len_query=64,
-                                      max_seq_len_passage=128
+                                      max_seq_len_passage=180
                                       )
 
     retriever.train(data_dir=doc_dir,
@@ -44,7 +44,7 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
                     batch_size=16,
                     grad_acc_steps=8,
                     save_dir=save_dir,
-                    evaluate_every=30,
+                    evaluate_every=20,
                     embed_title=False,
                     num_positives=1,
                     num_hard_negatives=1

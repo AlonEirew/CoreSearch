@@ -11,12 +11,14 @@ from src.utils import io_utils, measurments, data_utils
 def main():
     # index_type = "elastic_bm25"
     index_type = "faiss_dpr"
-    run_pipe_str = "retriever"
-    # run_pipe_str = "qa"
+    # run_pipe_str = "retriever"
+    run_pipe_str = "qa"
     es_index = SPLIT.lower()
 
     faiss_index_file = "wec_" + es_index + "_index.faiss"
     sql_url = "sqlite:///weces_" + es_index + ".db"
+
+    retriever_model = "checkpoints/dpr"
 
     golds: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/" + SPLIT + "_gold_clusters.json")
     # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
@@ -25,7 +27,7 @@ def main():
         query.context = query.bm25_query.split(" ")
 
     if index_type == "faiss_dpr":
-        document_store, retriever = faiss_index.load_faiss_dpr(faiss_index_file, sql_url)
+        document_store, retriever = faiss_index.load_faiss_dpr(faiss_index_file, sql_url, retriever_model)
     elif index_type == "elastic_bm25":
         document_store, retriever = elastic_index.load_elastic_bm25(es_index)
     else:
