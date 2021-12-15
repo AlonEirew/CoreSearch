@@ -1,11 +1,12 @@
+import json
 from typing import List
 
 from haystack.reader import FARMReader
 
-from src.data_obj import Query, Cluster, TrainExample
+from src.data_obj import Cluster, TrainExample, Passage
 from src.index import faiss_index, elastic_index
 from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
-from src.utils import io_utils, measurments, data_utils
+from src.utils import io_utils, measurments, data_utils, eval_squad
 
 
 def main():
@@ -23,8 +24,12 @@ def main():
     golds: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/" + SPLIT + "_gold_clusters.json")
     # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
     query_examples: List[TrainExample] = io_utils.read_train_example_file("resources/train/" + SPLIT + "_training_queries.json")
+    passage_examples: List[Passage] = io_utils.read_passages_file("resources/train/" + SPLIT + "_training_passages.json")
+    passage_dict = {obj.id: obj for obj in passage_examples}
     for query in query_examples:
         query.context = query.bm25_query.split(" ")
+        for pass_id in query.positive_examples:
+            query.answers.append(" ".join(passage_dict[pass_id].mention))
 
     if index_type == "faiss_dpr":
         document_store, retriever = faiss_index.load_faiss_dpr(faiss_index_file, sql_url, retriever_model)
@@ -57,6 +62,7 @@ def predict_and_eval(pipeline, golds, query_examples):
     predictions = pipeline.run_end_to_end(query_examples=query_examples)
     predictions_arranged = data_utils.query_results_to_ids_list(predictions)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
+    print(json.dumps(eval_squad.eval_qa(predictions)))
 
     assert len(predictions) == len(golds_arranged)
     # print("HIT@10=" + str(measurments.hit_rate(predictions=predictions_arranged, golds=golds_arranged, topk=10)))

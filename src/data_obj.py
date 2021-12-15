@@ -106,6 +106,8 @@ class Passage(BasicMent):
         super().__init__(json_obj)
         if "score" in json_obj:
             self.score = json_obj["score"]
+        if "answer" in json_obj:
+            self.answer = json_obj["answer"]
 
 
 class Query(BasicMent):
@@ -116,6 +118,7 @@ class Query(BasicMent):
 class Cluster(object):
     def __init__(self, cluster_obj: Dict):
         self.cluster_id = str(cluster_obj["clusterId"])
+        self.cluster_title = cluster_obj["clusterTitle"]
         self.mention_ids = [str(id_) for id_ in cluster_obj["mentionIds"]]
 
 
@@ -132,6 +135,7 @@ class TrainExample(BasicMent):
         self.positive_examples = json_obj["positive_examples"]
         self.negative_examples = json_obj["negative_examples"]
         self.bm25_query = json_obj["bm25_query"]
+        self.answers = list()
 
 
 class DPRContext(object):

@@ -80,5 +80,6 @@ class QAPipeline(BasePipeline):
             meta["id"] = ans_id
             meta["context"] = ans_doc.text
             meta["score"] = ans_doc.score
+            meta["answer"] = result["answer"]
             converted_list.append(Passage(meta))
         return QueryResult(query, converted_list)
