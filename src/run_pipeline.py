@@ -20,6 +20,7 @@ def main():
     sql_url = "sqlite:///weces_" + es_index + ".db"
 
     retriever_model = "checkpoints/dpr"
+    reader_model = "checkpoints/squad_roberta_2it"
 
     golds: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/" + SPLIT + "_gold_clusters.json")
     # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
@@ -44,8 +45,9 @@ def main():
     if run_pipe_str == "qa":
         pipeline = QAPipeline(document_store=document_store,
                               retriever=retriever,
-                              reader=FARMReader(model_name_or_path="deepset/roberta-base-squad2", use_gpu=True),
-                              ret_topk=10,
+                              # reader=FARMReader(model_name_or_path="deepset/roberta-base-squad2", use_gpu=True),
+                              reader=FARMReader(model_name_or_path=reader_model, use_gpu=True),
+                              ret_topk=100,
                               read_topk=5)
     elif run_pipe_str == "retriever":
         pipeline = RetrievalOnlyPipeline(document_store=document_store,
@@ -55,17 +57,19 @@ def main():
         raise TypeError
 
     print("Running " + run_pipe_str + " pipeline..")
-    predict_and_eval(pipeline, golds, query_examples)
+    predict_and_eval(pipeline, golds, query_examples, run_pipe_str)
 
 
-def predict_and_eval(pipeline, golds, query_examples):
+def predict_and_eval(pipeline, golds, query_examples, run_pipe_str):
     predictions = pipeline.run_end_to_end(query_examples=query_examples)
     predictions_arranged = data_utils.query_results_to_ids_list(predictions)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
-    print(json.dumps(eval_squad.eval_qa(predictions)))
 
     assert len(predictions) == len(golds_arranged)
     # print("HIT@10=" + str(measurments.hit_rate(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
+
+    if run_pipe_str == "qa":
+        print(json.dumps(eval_squad.eval_qa(predictions)))
     print("MRR@10=" + str(measurments.mean_reciprocal_rank(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
     print("RECALL@10=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
     print("RECALL@50=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=50)))

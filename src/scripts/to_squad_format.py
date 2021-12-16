@@ -3,9 +3,7 @@ import os
 import re
 from typing import Dict, List
 
-from tqdm import tqdm
-
-from src.data_obj import TrainExample, Passage, Cluster
+from src.data_obj import TrainExample, Cluster
 from src.utils import io_utils
 
 
@@ -72,3 +70,4 @@ def create_qas_list(query_id_list, train_queries, query_ans, context, is_impossi
 if __name__ == '__main__':
     SPLIT = "Train"
     main()
+    print("Done generating for " + SPLIT)
