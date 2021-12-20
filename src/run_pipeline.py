@@ -20,7 +20,7 @@ def main():
     sql_url = "sqlite:///weces_" + es_index + ".db"
 
     retriever_model = "checkpoints/dpr"
-    reader_model = "checkpoints/squad_roberta_2it"
+    reader_model = "checkpoints/squad_roberta_1it"
 
     golds: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/" + SPLIT + "_gold_clusters.json")
     # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
@@ -48,7 +48,7 @@ def main():
                               # reader=FARMReader(model_name_or_path="deepset/roberta-base-squad2", use_gpu=True),
                               reader=FARMReader(model_name_or_path=reader_model, use_gpu=True),
                               ret_topk=100,
-                              read_topk=5)
+                              read_topk=10)
     elif run_pipe_str == "retriever":
         pipeline = RetrievalOnlyPipeline(document_store=document_store,
                                          retriever=retriever,

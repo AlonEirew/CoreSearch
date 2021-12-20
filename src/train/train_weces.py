@@ -30,25 +30,26 @@ def generate_queries_feats(tokenizer: Tokenization,
                            max_passage_length: int,
                            negative_sample_size: int,
                            remove_qbound: bool = False) -> List[SearchFeat]:
-    query_examples = io_utils.read_query_file(query_file)
+    query_examples = io_utils.read_train_example_file(query_file)
     passages_examples = io_utils.read_passages_file(passages_file)
+    passages_examples = {passage.id: passage for passage in passages_examples}
     logger.info("Done loading examples file, queries-" + query_file + ", passages-" + passages_file)
     logger.info("Total examples loaded, queries=" + str(len(query_examples)) + ", passages=" + str(len(passages_examples)))
     logger.info("Starting to generate examples...")
     query_feats = dict()
     passage_feats = dict()
     search_feats = list()
-    for query_obj in tqdm(query_examples.values(), "Loading Queries"):
+    for query_obj in tqdm(query_examples, "Loading Queries"):
         query_feat = tokenizer.get_query_feat(query_obj, max_query_length, remove_qbound)
-        query_feats[query_obj["id"]] = query_feat
+        query_feats[query_obj.id] = query_feat
         pos_passages = list()
         neg_passages = list()
-        for pos_id in query_obj["positivePassagesIds"]:
+        for pos_id in query_obj.positive_examples:
             if pos_id not in passage_feats:
                 passage_feats[pos_id] = tokenizer.get_passage_feat(passages_examples[pos_id], max_passage_length)
             pos_passages.append(passage_feats[pos_id])
 
-        for neg_id in query_obj["negativePassagesIds"]:
+        for neg_id in query_obj.negative_examples:
             if neg_id not in passage_feats:
                 passage_feats[neg_id] = tokenizer.get_passage_feat(passages_examples[neg_id], max_passage_length)
             passage_cpy = copy.copy(passage_feats[neg_id])
@@ -65,10 +66,10 @@ def train():
     start_time = datetime.now()
     dt_string = start_time.strftime("%d%m%Y_%H%M%S")
 
-    train_examples_file = "resources/train/wec_es_Train_qsent_psegment_examples.json"
-    train_passages_file = "resources/train/wec_es_Train_passages_segment.json"
-    dev_examples_file = "resources/train/wec_es_Dev_qsent_psegment_examples.json"
-    dev_passages_file = "resources/train/wec_es_Dev_passages_segment.json"
+    train_examples_file = "resources/train/Train_training_queries.json"
+    train_passages_file = "resources/train/Train_training_passages.json"
+    dev_examples_file = "resources/train/Dev_training_queries.json"
+    dev_passages_file = "resources/train/Dev_training_passages.json"
 
     # train_examples_file = "resources/train/wec_es_train_qsent_small.json"
     # train_passages_file = "resources/train/wec_es_Train_passages_segment.json"
@@ -110,7 +111,7 @@ def train():
     if n_gpu > 1:
         auxiliary_method = torch.nn.DataParallel(auxiliary_method)
 
-    similarity_method = SimilarityModel(in_batch_samples, device)
+    similarity_method = SimilarityModel(device)
 
     optimizer = AdamW(auxiliary_method.parameters(), lr=lr)
 
@@ -153,7 +154,7 @@ def train():
 
             span_lost = outputs.loss
             # Transform to vectors of (BatchSize, Num of examples {Negative + Positive), Embedding size)
-            passage_rep = passage_rep.view(in_batch_samples, train_negative_samples + 1, -1)
+            passage_rep = passage_rep.view(query_rep.shape[0], train_negative_samples + 1, -1)
             sim_loss, predictions = similarity_method.calc_similarity_loss(query_rep, passage_rep)
             if n_gpu > 1:
                 span_lost = span_lost.mean()

@@ -49,9 +49,10 @@ def faiss_index(documents: List[Document], faiss_file_path, sql_rul, retrieval_m
 
 def main():
     documents = io_utils.read_wec_to_haystack_doc_list("resources/WEC-ES/Dev_passages.json")
-    faiss_file_path = "wec_dev_index.faiss"
-    sql_rul = "sqlite:///weces_dev.db"
-    retrieval_model = "checkpoints/dpr"
+    faiss_file_path = "weces_index_for_my_dpr/wec_dev_index.faiss"
+    sql_rul = "sqlite:///weces_index_for_my_dpr/weces_dev.db"
+    # retrieval_model = "checkpoints/dpr"
+    retrieval_model = None
     faiss_index(documents, faiss_file_path, sql_rul, retrieval_model)
 
 

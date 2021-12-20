@@ -11,8 +11,7 @@ from src.data_obj import QuestionAnsweringModelOutput
 
 
 class SimilarityModel(object):
-    def __init__(self, in_batch_samples, device):
-        self.in_batch_samples = in_batch_samples
+    def __init__(self, device):
         self.device = device
 
     @staticmethod
@@ -30,14 +29,15 @@ class SimilarityModel(object):
         passage_rep = torch.cat((passages_start_embeds, passage_end_embeds), dim=1)
         return passage_rep
 
-    def extract_query_embeddings(self, query_hidden_states, query_event_starts, query_event_ends,
+    @staticmethod
+    def extract_query_embeddings(query_hidden_states, query_event_starts, query_event_ends,
                                  tot_exmp_per_query):
         # +1 for positive example
         query_indices = torch.arange(start=0, end=query_hidden_states.size(0), step=tot_exmp_per_query)
         query_event_starts = torch.index_select(query_event_starts, dim=0, index=query_indices)
         query_event_ends = torch.index_select(query_event_ends, dim=0, index=query_indices)
         if tot_exmp_per_query > 1:
-            query_hidden_avg = torch.mean(query_hidden_states.view(self.in_batch_samples, tot_exmp_per_query,
+            query_hidden_avg = torch.mean(query_hidden_states.view(int(query_hidden_states.shape[0] / tot_exmp_per_query), tot_exmp_per_query,
                                                                    query_hidden_states.shape[1], -1), dim=1)
         else:
             query_hidden_avg = query_hidden_states
@@ -51,7 +51,7 @@ class SimilarityModel(object):
         return query_rep
 
     def calc_similarity_loss(self, query_rep, passage_rep):
-        positive_idxs = torch.zeros(self.in_batch_samples, dtype=torch.long)
+        positive_idxs = torch.zeros(query_rep.shape[0], dtype=torch.long)
         predicted_idxs, softmax_scores = self.predict_softmax(query_rep, passage_rep)
         sim_loss = F.nll_loss(
             softmax_scores,

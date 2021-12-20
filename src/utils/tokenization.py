@@ -37,7 +37,7 @@ class Tokenization(object):
         return QueryFeat(query_input_ids=query_input_ids,
                          query_input_mask=query_input_mask,
                          query_segment_ids=query_segment_ids,
-                         query_id=query_obj["id"],
+                         query_id=query_obj.id,
                          query_event_start=query_event_start,
                          query_event_end=query_event_end)
 
@@ -65,7 +65,7 @@ class Tokenization(object):
             passage_input_ids=input_ids,
             passage_input_mask=passage_input_mask,
             passage_segment_ids=passage_segment_ids,
-            passage_id=passage_obj["id"],
+            passage_id=passage_obj.id,
             passage_event_start=passage_event_start,
             passage_event_end=passage_event_end,
             passage_end_bound=passage_end_bound
@@ -73,9 +73,9 @@ class Tokenization(object):
 
     def passage_tokenization(self, passage_obj, max_pass_length_exclude):
         passage_tokenized = list()
-        start_index = passage_obj["startIndex"]
-        end_index = passage_obj["endIndex"]
-        pass_context = passage_obj["context"]
+        start_index = passage_obj.startIndex
+        end_index = passage_obj.endIndex
+        pass_context = passage_obj.context
         passage_event_start_ind = passage_event_end_ind = 0
         for i in range(len(pass_context)):
             word_tokens = self.tokenizer.tokenize(pass_context[i])
@@ -106,7 +106,10 @@ class Tokenization(object):
     def query_tokenization(self, query_obj, max_query_length_exclude, remove_qbound):
         query_tokenized = list()
         query_event_start_ind = query_event_end_ind = 0
-        for word in query_obj["context"]:
+        query_context = query_obj.context
+        query_context.insert(query_obj.endIndex + 1, QUERY_SPAN_END)
+        query_context.insert(query_obj.startIndex, QUERY_SPAN_START)
+        for word in query_obj.context:
             query_tokenized.extend(self.tokenizer.tokenize(word))
             if word == QUERY_SPAN_START:
                 query_event_start_ind = len(query_tokenized)
@@ -142,6 +145,6 @@ class Tokenization(object):
             query_tokenized.append('[PAD]')
             query_input_mask.append(0)
 
-        assert "".join(query_obj["mention"]) == "".join(
+        assert "".join(query_obj.mention) == "".join(
             [s.strip('##') for s in query_tokenized[query_event_start_ind:query_event_end_ind + 1]])
         return query_event_start_ind, query_event_end_ind, query_tokenized, query_input_mask

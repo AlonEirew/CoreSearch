@@ -38,3 +38,17 @@ def recall(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk:
                 true_pos += 1
 
     return true_pos / relevant
+
+
+def accuracy(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):
+    true_pos = 0
+    false_pos = 0
+    for query_id in predictions.keys():
+        max_topk = topk if topk <= len(predictions[query_id]) else len(predictions[query_id])
+        for index in range(max_topk):
+            if predictions[query_id][index] in golds[query_id]:
+                true_pos += 1
+            else:
+                false_pos += 1
+
+    return true_pos / (true_pos + false_pos)
