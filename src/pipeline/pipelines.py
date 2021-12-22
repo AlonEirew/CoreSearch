@@ -27,6 +27,9 @@ class BasePipeline(object):
             results = self.run_pipeline(query_text)
             query_result = self.extract_results(query, results)
             print("query_text=" + query_text)
+            print("query_goldCoref=" + str(query.goldChain))
+            print("top_result_text=" + query_result.results[0].context)
+            print("top_result_goldCoref=" + query_result.results[0].goldChain)
             predictions.append(query_result)
         return predictions
 

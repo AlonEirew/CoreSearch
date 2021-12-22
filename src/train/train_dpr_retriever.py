@@ -1,6 +1,6 @@
 from typing import List
 
-from haystack.document_store import InMemoryDocumentStore, FAISSDocumentStore
+from haystack.document_store import FAISSDocumentStore
 from haystack.retriever import DensePassageRetriever
 
 from src import run_pipeline
@@ -10,23 +10,35 @@ from src.utils import io_utils
 
 
 def train():
-    doc_dir = "resources/dpr/"
+    doc_dir = "data/resources/dpr/"
 
     train_filename = "Train_dpr_format.json"
     dev_filename = "Dev_dpr_format.json"
 
-    query_model = "bert-base-uncased"
-    passage_model = "bert-base-uncased"
+    n_epochs = 3
 
-    save_dir = "checkpoints/dpr"
-    run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir)
+    # query_model = "bert-base-uncased"
+    # passage_model = "bert-base-uncased"
+    query_model = "SpanBERT/spanbert-base-cased"
+    passage_model = "SpanBERT/spanbert-base-cased"
+
+    faiss_file_path = "weces_index_for_spanbert_dpr/wec_dev_index.faiss"
+    sql_rul = "sqlite:///weces_index_for_spanbert_dpr/weces_dev.db"
+
+    save_dir = "data/checkpoints/dpr_spanbert_" + str(n_epochs) + "it"
+
+    dev_gold_clusters = "data/resources/WEC-ES/Dev_gold_clusters.json"
+    dev_train_queries = "data/resources/train/Dev_training_queries.json"
+
+    run(query_model, passage_model, doc_dir, train_filename, dev_filename,
+        save_dir, faiss_file_path, sql_rul, dev_gold_clusters, dev_train_queries, n_epochs)
 
 
-def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir):
-    faiss_file_path = "wec_dev_index.faiss"
-    sql_rul = "sqlite:///weces_dev.db"
+def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir, faiss_file_path,
+        sql_url, dev_gold_clusters, dev_train_queries, n_epochs):
+
     document_store = FAISSDocumentStore.load(faiss_file_path=faiss_file_path,
-                                             sql_url=sql_rul,
+                                             sql_url=sql_url,
                                              index="document")
 
     retriever = DensePassageRetriever(document_store=document_store,
@@ -40,7 +52,7 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
                     train_filename=train_filename,
                     dev_filename=dev_filename,
                     test_filename=dev_filename,
-                    n_epochs=2,
+                    n_epochs=n_epochs,
                     batch_size=16,
                     grad_acc_steps=8,
                     save_dir=save_dir,
@@ -51,23 +63,19 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
                     )
 
     document_store.update_embeddings(retriever=retriever)
+    document_store.save(faiss_file_path)
 
     pipeline = RetrievalOnlyPipeline(document_store=document_store,
                                      retriever=retriever,
                                      ret_topk=150)
 
-    golds: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/Dev_gold_clusters.json")
-    query_examples: List[TrainExample] = io_utils.read_train_example_file("resources/train/Dev_training_queries.json")
+    golds: List[Cluster] = io_utils.read_gold_file(dev_gold_clusters)
+    query_examples: List[TrainExample] = io_utils.read_train_example_file(dev_train_queries)
     for query in query_examples:
         query.context = query.bm25_query.split(" ")
 
-    run_pipeline.predict_and_eval(pipeline, golds, query_examples)
-
-
-def finetune():
-    pass
+    run_pipeline.predict_and_eval(pipeline, golds, query_examples, "retriever")
 
 
 if __name__ == "__main__":
     train()
-    # finetune()
