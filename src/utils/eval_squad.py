@@ -57,11 +57,13 @@ def eval_qa(predictions):
         qa = query_result.query
         total += 1
         ground_truths = qa.answers
-        prediction = query_result.results[0].answer
-        exact_match += metric_max_over_ground_truths(
-            exact_match_score, prediction, ground_truths)
-        f1 += metric_max_over_ground_truths(
-            f1_score, prediction, ground_truths)
+        top_result = query_result.results[0]
+        if top_result.goldChain == qa.goldChain:
+            prediction = top_result.answer
+            exact_match += metric_max_over_ground_truths(
+                exact_match_score, prediction, ground_truths)
+            f1 += metric_max_over_ground_truths(
+                f1_score, prediction, ground_truths)
 
     exact_match = 100.0 * exact_match / total
     f1 = 100.0 * f1 / total
@@ -108,5 +110,5 @@ if __name__ == '__main__':
                   file=sys.stderr)
         dataset = dataset_json['data']
     with open(args.prediction_file) as prediction_file:
-        predictions = json.load(prediction_file)
-    print(json.dumps(evaluate(dataset, predictions)))
+        _predictions = json.load(prediction_file)
+    print(json.dumps(evaluate(dataset, _predictions)))

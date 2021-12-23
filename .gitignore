@@ -1,5 +1,3 @@
 .idea
-resources
-external
-reports
-old_resources
+data
+results/old

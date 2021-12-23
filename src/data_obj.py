@@ -89,7 +89,7 @@ class EvaluationObject(object):
 class BasicMent(object):
     def __init__(self, json_obj: Dict):
         self.id = json_obj["id"]
-        self.goldChain = json_obj["goldChain"]
+        self.goldChain = str(json_obj["goldChain"])
         self.context = json_obj["context"]
         self.mention = json_obj["mention"]
         self.startIndex = json_obj["startIndex"]
@@ -137,7 +137,7 @@ class TrainExample(BasicMent):
         self.positive_examples = json_obj["positive_examples"]
         self.negative_examples = json_obj["negative_examples"]
         self.bm25_query = json_obj["bm25_query"]
-        self.answers = list()
+        self.answers = set()
 
 
 class DPRContext(object):
