@@ -1,4 +1,4 @@
-from haystack.reader import FARMReader
+from haystack.nodes import FARMReader
 
 
 def main():

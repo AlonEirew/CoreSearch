@@ -1,16 +1,15 @@
 from typing import List
 
 from haystack import Document
-from haystack.document_store import FAISSDocumentStore
-from haystack.retriever import DensePassageRetriever
+from haystack.document_stores import FAISSDocumentStore
+from haystack.nodes import DensePassageRetriever
 
 from src.utils import io_utils
 
 
-def load_faiss_dpr(faiss_file_path, sql_rul, retriever_model=None):
-    document_store = FAISSDocumentStore.load(faiss_file_path=faiss_file_path,
-                                             sql_url=sql_rul,
-                                             index="document")
+def load_faiss_dpr(faiss_file_path, faiss_config_file, retriever_model=None):
+    document_store = FAISSDocumentStore.load(index_path=faiss_file_path,
+                                             config_path=faiss_config_file)
 
     retriever = get_dpr(document_store, retriever_model)
 
@@ -23,11 +22,14 @@ def get_dpr(document_store,
             passage_embedding="facebook/dpr-ctx_encoder-single-nq-base"):
 
     if retriever_model:
-        return DensePassageRetriever.load(load_dir=retriever_model, document_store=document_store)
+        return DensePassageRetriever.load(load_dir=retriever_model,
+                                          document_store=document_store,
+                                          infer_tokenizer_classes=True)
     else:
         return DensePassageRetriever(document_store=document_store,
                                      query_embedding_model=query_embedding,
                                      passage_embedding_model=passage_embedding,
+                                     infer_tokenizer_classes=True,
                                      max_seq_len_query=64,
                                      max_seq_len_passage=256,
                                      batch_size=16,
@@ -61,14 +63,15 @@ def faiss_index(documents: List[Document],
 
 
 def main():
-    documents = io_utils.read_wec_to_haystack_doc_list("resources/WEC-ES/Dev_passages.json")
-    faiss_file_path = "weces_index_for_my_dpr/wec_dev_index.faiss"
-    sql_rul = "sqlite:///weces_index_for_my_dpr/weces_dev.db"
-    query_model = "SpanBERT/spanbert-base-cased"
-    passage_model = "SpanBERT/spanbert-base-cased"
+    # documents = io_utils.read_wec_to_haystack_doc_list("data/resources/WEC-ES/Dev_all_passages.json")
+    documents = io_utils.read_wec_to_haystack_doc_list("data/resources/train/Dev_training_passages.json")
+    faiss_file_path = "weces_index_for_test/weces_dev_index.faiss"
+    sql_rul = "sqlite:///weces_index_for_test/weces_dev.db"
+    _query_encode = "bert-base-uncased"# "SpanBERT/spanbert-base-cased"
+    _passage_encode = "bert-base-uncased"# "SpanBERT/spanbert-base-cased"
     # retrieval_model = "checkpoints/dpr"
     retrieval_model = None
-    faiss_index(documents, faiss_file_path, sql_rul, retrieval_model, query_model, passage_model)
+    faiss_index(documents, faiss_file_path, sql_rul, retrieval_model, _query_encode, _passage_encode)
 
 
 if __name__ == '__main__':

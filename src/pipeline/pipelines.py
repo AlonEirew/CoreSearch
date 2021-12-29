@@ -1,6 +1,7 @@
 from typing import Dict, List
 
-from haystack.pipeline import ExtractiveQAPipeline, DocumentSearchPipeline
+from haystack.pipelines import DocumentSearchPipeline, ExtractiveQAPipeline
+from tqdm import tqdm
 
 from src.data_obj import QueryResult, Passage, BasicMent
 
@@ -22,14 +23,14 @@ class BasePipeline(object):
 
     def run_end_to_end(self, query_examples: List[BasicMent]) -> List[QueryResult]:
         predictions = list()
-        for query in query_examples:
+        for query in tqdm(query_examples, "Running Queries"):
             query_text = " ".join(query.context)
             results = self.run_pipeline(query_text)
             query_result = self.extract_results(query, results)
-            print("query_text=" + query_text)
-            print("query_goldCoref=" + str(query.goldChain))
-            print("top_result_text=" + query_result.results[0].context)
-            print("top_result_goldCoref=" + query_result.results[0].goldChain)
+            # print("query_text=" + query_text)
+            # print("query_goldCoref=" + str(query.goldChain))
+            # print("top_result_text=" + query_result.results[0].context)
+            # print("top_result_goldCoref=" + query_result.results[0].goldChain)
             predictions.append(query_result)
         return predictions
 
@@ -48,11 +49,11 @@ class RetrievalOnlyPipeline(BasePipeline):
     def extract_results(self, query: BasicMent, results: Dict) -> QueryResult:
         converted_list = list()
         for result in results["documents"]:
-            if query.id != result["id"]:
-                meta = result["meta"]
-                meta["id"] = result["id"]
-                meta["context"] = result["text"]
-                meta["score"] = result["score"]
+            if query.id != result.id:
+                meta = result.meta
+                meta["id"] = result.id
+                meta["context"] = result.content
+                meta["score"] = result.score
                 converted_list.append(Passage(meta))
 
         return QueryResult(query, converted_list)
@@ -76,13 +77,13 @@ class QAPipeline(BasePipeline):
     def extract_results(self, query: BasicMent, results: Dict) -> QueryResult:
         converted_list = list()
         for result in results["answers"]:
-            ans_id = result["document_id"]
+            ans_id = result.document_id
             ans_doc = next((doc for doc in results["documents"] if doc.id == ans_id), None)
             assert ans_doc
             meta = ans_doc.meta
             meta["id"] = ans_id
-            meta["context"] = ans_doc.text
+            meta["context"] = ans_doc.content
             meta["score"] = ans_doc.score
-            meta["answer"] = result["answer"]
+            meta["answer"] = result.answer
             converted_list.append(Passage(meta))
         return QueryResult(query, converted_list)

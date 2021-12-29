@@ -90,7 +90,7 @@ def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
         meta["goldChain"] = passage.goldChain
         documents.append(
             Document(
-                text=" ".join(passage.context),
+                content=" ".join(passage.context),
                 id=passage.id,
                 meta=meta
             )

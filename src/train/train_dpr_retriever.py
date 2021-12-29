@@ -1,7 +1,7 @@
 from typing import List
 
-from haystack.document_store import FAISSDocumentStore
-from haystack.retriever import DensePassageRetriever
+from haystack.document_stores import FAISSDocumentStore
+from haystack.nodes import DensePassageRetriever
 
 from src import run_pipeline
 from src.data_obj import Cluster, TrainExample
@@ -15,35 +15,36 @@ def train():
     train_filename = "Train_dpr_format.json"
     dev_filename = "Dev_dpr_format.json"
 
-    n_epochs = 3
+    n_epochs = 1
 
-    # query_model = "bert-base-uncased"
-    # passage_model = "bert-base-uncased"
-    query_model = "SpanBERT/spanbert-base-cased"
-    passage_model = "SpanBERT/spanbert-base-cased"
+    query_model = "bert-base-uncased"
+    passage_model = "bert-base-uncased"
+    # query_model = "SpanBERT/spanbert-base-cased"
+    # passage_model = "SpanBERT/spanbert-base-cased"
 
-    faiss_file_path = "weces_index_for_spanbert_dpr/wec_dev_index.faiss"
-    sql_rul = "sqlite:///weces_index_for_spanbert_dpr/weces_dev.db"
+    faiss_path_prefix = "weces_index_for_test/weces_dev_index"
+    faiss_index_path = "%s.faiss" % faiss_path_prefix
+    faiss_config_path = "%s.json" % faiss_path_prefix
 
-    save_dir = "data/checkpoints/dpr_spanbert_" + str(n_epochs) + "it"
+    save_dir = "data/checkpoints/dpr_bert_" + str(n_epochs) + "it"
 
     dev_gold_clusters = "data/resources/WEC-ES/Dev_gold_clusters.json"
     dev_train_queries = "data/resources/train/Dev_training_queries.json"
 
     run(query_model, passage_model, doc_dir, train_filename, dev_filename,
-        save_dir, faiss_file_path, sql_rul, dev_gold_clusters, dev_train_queries, n_epochs)
+        save_dir, faiss_index_path, faiss_config_path, dev_gold_clusters, dev_train_queries, n_epochs)
 
 
-def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir, faiss_file_path,
-        sql_url, dev_gold_clusters, dev_train_queries, n_epochs):
+def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir, faiss_index_path,
+        faiss_config_path, dev_gold_clusters, dev_train_queries, n_epochs):
 
-    document_store = FAISSDocumentStore.load(faiss_file_path=faiss_file_path,
-                                             sql_url=sql_url,
-                                             index="document")
+    document_store = FAISSDocumentStore.load(index_path=faiss_index_path,
+                                             config_path=faiss_config_path)
 
     retriever = DensePassageRetriever(document_store=document_store,
                                       query_embedding_model=query_model,
                                       passage_embedding_model=passage_model,
+                                      infer_tokenizer_classes=True,
                                       max_seq_len_query=64,
                                       max_seq_len_passage=180
                                       )
@@ -63,7 +64,7 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
                     )
 
     document_store.update_embeddings(retriever=retriever)
-    document_store.save(faiss_file_path)
+    document_store.save(faiss_index_path)
 
     pipeline = RetrievalOnlyPipeline(document_store=document_store,
                                      retriever=retriever,

@@ -6,7 +6,7 @@ Usage:
 
 Options:
     -h --help                   Show this screen.
-    --input=<PassageFile>       Passage input file to index into ElasticSearch
+    --input=<PassageFile>       input file containing all passages to be indexed into ElasticSearch
     --index=<IndexName>         The index name to create in ElasticSearch
 
 """
@@ -14,8 +14,8 @@ from typing import List
 
 from docopt import docopt
 from haystack import Document
-from haystack.document_store import ElasticsearchDocumentStore
-from haystack.retriever import ElasticsearchRetriever
+from haystack.document_stores import ElasticsearchDocumentStore
+from haystack.nodes import ElasticsearchRetriever
 
 from src.utils import io_utils
 
