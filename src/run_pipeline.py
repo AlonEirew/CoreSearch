@@ -1,7 +1,7 @@
 import json
 from typing import List
 
-from haystack.reader import FARMReader
+from haystack.nodes import FARMReader
 
 from src.data_obj import Cluster, TrainExample, Passage, QueryResult
 from src.index import faiss_index, elastic_index
@@ -15,13 +15,14 @@ def main():
     # run_pipe_str = "retriever"
     run_pipe_str = "qa"
     es_index = SPLIT.lower()
-    lanuguage_model = "spanbert"
+    language_model = "bert"
 
-    faiss_index_file = "weces_index_for_" + lanuguage_model + "_dpr/wec_" + es_index + "_index.faiss"
-    sql_url = "sqlite:///weces_index_for_" + lanuguage_model + "_dpr/weces_" + es_index + ".db"
+    faiss_index_prefix = "weces_index_for_" + language_model + "_dpr/weces_" + es_index + "_index"
+    faiss_index_file = faiss_index_prefix + ".faiss"
+    faiss_config_file = faiss_index_prefix + ".json"
 
-    retriever_model = "data/checkpoints/dpr_" + lanuguage_model + "_best"
-    reader_model = "data/checkpoints/squad_spanbert_2it"
+    retriever_model = "data/checkpoints/dpr_" + language_model + "_1it"
+    reader_model = "data/checkpoints/squad_roberta_tmp"
 
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     queries_file = "data/resources/train/" + SPLIT + "_training_queries.json"
@@ -39,7 +40,7 @@ def main():
             query.answers.add(" ".join(passage_dict[pass_id].mention))
 
     if index_type == "faiss_dpr":
-        document_store, retriever = faiss_index.load_faiss_dpr(faiss_index_file, sql_url, retriever_model)
+        document_store, retriever = faiss_index.load_faiss_dpr(faiss_index_file, faiss_config_file, retriever_model)
     elif index_type == "elastic_bm25":
         document_store, retriever = elastic_index.load_elastic_bm25(es_index)
     else:
