@@ -1,12 +1,9 @@
 from typing import List
 
-from haystack.document_stores import FAISSDocumentStore
-from haystack.nodes import DensePassageRetriever
-
 from src import run_pipeline
 from src.data_obj import Cluster, TrainExample
 from src.pipeline.pipelines import RetrievalOnlyPipeline
-from src.utils import io_utils
+from src.utils import io_utils, dpr_utils
 
 
 def train():
@@ -38,16 +35,8 @@ def train():
 def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir, faiss_index_path,
         faiss_config_path, dev_gold_clusters, dev_train_queries, n_epochs):
 
-    document_store = FAISSDocumentStore.load(index_path=faiss_index_path,
-                                             config_path=faiss_config_path)
-
-    retriever = DensePassageRetriever(document_store=document_store,
-                                      query_embedding_model=query_model,
-                                      passage_embedding_model=passage_model,
-                                      infer_tokenizer_classes=True,
-                                      max_seq_len_query=64,
-                                      max_seq_len_passage=180
-                                      )
+    document_store = dpr_utils.load_faiss_doc_store(faiss_index_path, faiss_config_path)
+    retriever = dpr_utils.create_default_dpr(document_store, query_model, passage_model)
 
     retriever.train(data_dir=doc_dir,
                     train_filename=train_filename,
