@@ -2,8 +2,13 @@ from haystack.nodes import FARMReader
 
 
 def main():
-    # qa_model = "distilbert-base-uncased-distilled-squad", "facebook/dpr-reader-single-nq-base", "facebook/dpr-reader-multiset-base"
-    qa_model = "deepset/roberta-base-squad2"
+    '''
+    qa_models deepset/roberta-base-squad2,
+                distilbert-base-uncased-distilled-squad,
+                facebook/dpr-reader-single-nq-base,
+                facebook/dpr-reader-multiset-base
+    '''
+    qa_model = "facebook/dpr-reader-multiset-base"
     reader = FARMReader(model_name_or_path=qa_model, use_gpu=True)
     reader.train(
         data_dir="data/resources/squad",
