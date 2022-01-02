@@ -19,7 +19,7 @@ def create_default_dpr(document_store, query_encode, passage_encode, infer_token
                                  passage_embedding_model=passage_encode,
                                  infer_tokenizer_classes=infer_tokenizer_classes,
                                  max_seq_len_query=64,
-                                 max_seq_len_passage=256,
+                                 max_seq_len_passage=180,
                                  batch_size=16,
                                  use_gpu=True,
                                  embed_title=False,
