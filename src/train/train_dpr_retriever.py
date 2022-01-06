@@ -12,14 +12,15 @@ def train():
     train_filename = "Train_dpr_format.json"
     dev_filename = "Dev_dpr_format.json"
 
-    n_epochs = 5
-    run_update_eval = False
-
-    model_str = "bert"
-    query_model = "bert-base-cased"
-    passage_model = "bert-base-cased"
+    n_epochs = 2
+    run_update_eval = True
+    model_str = "multiset"
+    # query_model = "bert-base-cased"
+    # passage_model = "bert-base-cased"
     # query_model = "SpanBERT/spanbert-base-cased"
     # passage_model = "SpanBERT/spanbert-base-cased"
+    query_model = "facebook/dpr-question_encoder-multiset-base"
+    passage_model = "facebook/dpr-ctx_encoder-multiset-base"
 
     faiss_path_prefix = "weces_index_" + model_str + "/weces_dev_index"
     faiss_index_path = "%s.faiss" % faiss_path_prefix
@@ -54,7 +55,8 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
                     evaluate_every=40,
                     embed_title=False,
                     num_positives=1,
-                    num_hard_negatives=1
+                    num_hard_negatives=1,
+                    multiprocessing_strategy='file_system'
                     )
 
     if run_update_eval:

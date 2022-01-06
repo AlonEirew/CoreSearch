@@ -10,8 +10,8 @@ from src.utils import io_utils, measurments, data_utils, eval_squad, dpr_utils
 
 
 def main():
-    # index_type = "elastic_bm25"
-    index_type = "faiss_dpr"
+    index_type = "elastic_bm25"
+    # index_type = "faiss_dpr"
     run_pipe_str = "retriever"
     # run_pipe_str = "qa"
     es_index = SPLIT.lower()
@@ -22,16 +22,21 @@ def main():
     faiss_index_file = faiss_index_prefix + ".faiss"
     faiss_config_file = faiss_index_prefix + ".json"
 
-    query_encode = "facebook/dpr-question_encoder-multiset-base"
-    passage_encode = "facebook/dpr-ctx_encoder-multiset-base"
-    retriever_model_file = None # dpr_" + language_model + "_best"
-    reader_model_file = None # "squad_roberta_best"
+    query_encode = None #"facebook/dpr-question_encoder-multiset-base"
+    passage_encode = None #"facebook/dpr-ctx_encoder-multiset-base"
+    retriever_model_file = language_model + "_2it"
+
+    reader_model_file = "squad_roberta_1it"
+    reader_model_ofb = None #"deepset/roberta-base-squad2"
+    # reader_model_ofb = "facebook/dpr-reader-multiset-base"
 
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     queries_file = "data/resources/train/" + SPLIT + "_training_queries.json"
+    # queries_file = "data/resources/train/small_training_queries.json"
     passages_file = "data/resources/train/" + SPLIT + "_training_passages.json"
+
     result_out_file = "results/" + es_index + "_" + language_model + "_" + \
-                      str(retriever_model_file) + "_" + str(reader_model_file) + ".txt"
+                      str(retriever_model_file) + "_" + str("multiset") + ".txt"
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
@@ -60,13 +65,19 @@ def main():
     print("Total indexed documents to be searched=" + str(document_store.get_document_count()))
 
     if run_pipe_str == "qa":
-        reader_model = checkpoint_dir + reader_model_file
-        pipeline = QAPipeline(document_store=document_store,
-                              retriever=retriever,
-                              # reader=FARMReader(model_name_or_path="deepset/roberta-base-squad2", use_gpu=True),
-                              reader=FARMReader(model_name_or_path=reader_model, use_gpu=True),
-                              ret_topk=100,
-                              read_topk=10)
+        if reader_model_file:
+            reader_model = checkpoint_dir + reader_model_file
+            pipeline = QAPipeline(document_store=document_store,
+                                  retriever=retriever,
+                                  reader=FARMReader(model_name_or_path=reader_model, use_gpu=True),
+                                  ret_topk=100,
+                                  read_topk=10)
+        else:
+            pipeline = QAPipeline(document_store=document_store,
+                                  retriever=retriever,
+                                  reader=FARMReader(model_name_or_path=reader_model_ofb, use_gpu=True),
+                                  ret_topk=100,
+                                  read_topk=10)
     elif run_pipe_str == "retriever":
         pipeline = RetrievalOnlyPipeline(document_store=document_store,
                                          retriever=retriever,
@@ -78,9 +89,20 @@ def main():
     predict_and_eval(pipeline, golds, query_examples, run_pipe_str, result_out_file)
 
 
-def print_results(predictions_arranged, predictions, golds_arranged, result_out_file):
+def print_results(predictions_arranged, predictions, golds_arranged, run_pipe_str, result_out_file):
     # Print retriever evaluation matrices
     to_print = list()
+    if run_pipe_str == "qa":
+        # Print the squad evaluation matrices
+        to_print.append(json.dumps(eval_squad.eval_qa(predictions)))
+
+    to_print.append("mAP@10=" + str(measurments.mean_average_precision(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
+
+    if run_pipe_str == "retriever":
+        to_print.append("mAP@50=" + str(measurments.mean_average_precision(predictions=predictions_arranged, golds=golds_arranged, topk=50)))
+        to_print.append("mAP@100=" + str(measurments.mean_average_precision(predictions=predictions_arranged, golds=golds_arranged, topk=100)))
+
+    # Print retriever evaluation matrices
     to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
     to_print.append("RECALL@10=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
     to_print.append("RECALL@50=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=50)))
@@ -119,11 +141,7 @@ def predict_and_eval(pipeline, golds, query_examples, run_pipe_str, result_out_f
     # assert len(predictions) == len(golds_arranged)
     # print("HIT@10=" + str(measurments.hit_rate(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
 
-    if run_pipe_str == "qa":
-        # Print the squad evaluation matrices
-        print(json.dumps(eval_squad.eval_qa(predictions)))
-
-    print_results(predictions_arranged, predictions, golds_arranged, result_out_file)
+    print_results(predictions_arranged, predictions, golds_arranged, run_pipe_str, result_out_file)
 
 
 if __name__ == '__main__':

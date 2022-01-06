@@ -15,6 +15,29 @@ def hit_rate(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], top
     return sum(hit_rates) / len(golds)
 
 
+def mean_average_precision(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):
+    app_all = list()
+    for query_id in predictions.keys():
+        ap_top = list()
+        max_topk = topk if topk <= len(predictions[query_id]) else len(predictions[query_id])
+        for index in range(max_topk):
+            query_pre = precision(predictions[query_id], golds[query_id], index + 1)
+            rel = 1 if predictions[query_id][index] in golds[query_id] else 0
+            ap_top.append(query_pre * rel)
+        app_all.append(sum(ap_top) / len(golds[query_id]))
+
+    return sum(app_all) / len(predictions.keys())
+
+
+def precision(query_predictions: List[str], query_golds: List[str], till_idx: int):
+    true_pos = 0
+    for index in range(till_idx):
+        if query_predictions[index] in query_golds:
+            true_pos += 1
+
+    return true_pos / till_idx
+
+
 def mean_reciprocal_rank(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):
     mrr_topk = list()
     for query_id in predictions.keys():
