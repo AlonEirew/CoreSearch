@@ -1,5 +1,5 @@
 """
-This script generate the negative samples for training, similarly to what was done in DPR.
+This script generate the training files which include negative samples collected by the top BM25 negative results, similarly to what was done in DPR.
 Prerequisite for running this script is generating the Elasticsearch index using elastic_index.py script
 """
 import json
@@ -41,7 +41,7 @@ def create_train_examples(query_results, golds) -> Tuple[List[TrainExample], Set
     return train_examples, all_pass_ids
 
 
-def extract_query_and_run(nlp, pipeline, query_examples) -> List[QueryResult]:
+def extract_bm25_query_and_run(nlp, pipeline, query_examples) -> List[QueryResult]:
     assert query_examples
     query_results = list()
     for query in query_examples:
@@ -72,8 +72,10 @@ def main():
     passages_file = "resources/WEC-ES/" + SPLIT + "_passages.json"
     queries_file = "resources/WEC-ES/" + SPLIT + "_queries.json"
     gold_file = "resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
+
     train_exml_out_file = "resources/train/" + SPLIT + "_training_queries.json"
     train_filtered_pass_out = "resources/train/" + SPLIT + "_training_passages.json"
+
     topk = 20
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_file)
@@ -83,7 +85,7 @@ def main():
                                      retriever=retriever,
                                      ret_topk=topk)
     nlp = NLPUtils()
-    query_results = extract_query_and_run(nlp, pipeline, query_examples)
+    query_results = extract_bm25_query_and_run(nlp, pipeline, query_examples)
     train_examples, all_pass_ids = create_train_examples(query_results, golds)
     filtered_passages = filter_only_used_passages(passages_file, all_pass_ids)
 

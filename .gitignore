@@ -2,3 +2,5 @@
 data
 results/older
 results/old
+event_search.egg-info
+**/__pycache__/

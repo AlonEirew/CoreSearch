@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List
 
 from haystack.pipelines import DocumentSearchPipeline, ExtractiveQAPipeline
@@ -25,13 +26,12 @@ class BasePipeline(object):
         predictions = list()
         for query in tqdm(query_examples, "Running Queries"):
             query_text = " ".join(query.context)
-            results = self.run_pipeline(query_text)
-            query_result = self.extract_results(query, results)
-            # print("query_text=" + query_text)
-            # print("query_goldCoref=" + str(query.goldChain))
-            # print("top_result_text=" + query_result.results[0].context)
-            # print("top_result_goldCoref=" + query_result.results[0].goldChain)
-            predictions.append(query_result)
+            try:
+                results = self.run_pipeline(query_text)
+                query_result = self.extract_results(query, results)
+                predictions.append(query_result)
+            except TypeError:
+                print("Got Error:" + json.dumps(query_examples))
         return predictions
 
 
@@ -78,12 +78,14 @@ class QAPipeline(BasePipeline):
         converted_list = list()
         for result in results["answers"]:
             ans_id = result.document_id
-            ans_doc = next((doc for doc in results["documents"] if doc.id == ans_id), None)
-            assert ans_doc
-            meta = ans_doc.meta
-            meta["id"] = ans_id
-            meta["context"] = ans_doc.content
-            meta["score"] = ans_doc.score
-            meta["answer"] = result.answer
-            converted_list.append(Passage(meta))
+            if query.id != ans_id:
+                ans_doc = next((doc for doc in results["documents"] if doc.id == ans_id), None)
+                assert ans_doc
+                meta = ans_doc.meta
+                meta["id"] = ans_id
+                meta["context"] = ans_doc.content
+                meta["score"] = ans_doc.score
+                meta["answer"] = result.answer
+                meta["offsets_in_document"] = result.offsets_in_document
+                converted_list.append(Passage(meta))
         return QueryResult(query, converted_list)

@@ -18,3 +18,5 @@ Options:
 
 ### faiss_index.py
 
+### training env params
+CUDA_VISIBLE_DEVICES=0,1 TOKENIZERS_PARALLELISM=true python src/index/faiss_index.py

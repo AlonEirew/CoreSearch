@@ -106,10 +106,13 @@ class Passage(BasicMent):
         super().__init__(json_obj)
         self.score = 0.0
         self.answer = None
+        self.offsets_in_document = None
         if "score" in json_obj:
             self.score = json_obj["score"]
         if "answer" in json_obj:
             self.answer = json_obj["answer"]
+        if "offsets_in_document" in json_obj:
+            self.offsets_in_document = json_obj["offsets_in_document"]
 
 
 class Query(BasicMent):

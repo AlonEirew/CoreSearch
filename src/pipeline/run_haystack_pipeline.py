@@ -10,12 +10,12 @@ from src.utils import io_utils, measurments, data_utils, eval_squad, dpr_utils
 
 
 def main():
-    index_type = "elastic_bm25"
-    # index_type = "faiss_dpr"
-    run_pipe_str = "retriever"
-    # run_pipe_str = "qa"
+    # index_type = "elastic_bm25"
+    index_type = "faiss_dpr"
+    # run_pipe_str = "retriever"
+    run_pipe_str = "qa"
     es_index = SPLIT.lower()
-    language_model = "multiset"
+    language_model = "spanbert"
 
     checkpoint_dir = "data/checkpoints/"
     faiss_index_prefix = "weces_index_" + language_model + "/weces_" + es_index + "_index"
@@ -36,7 +36,7 @@ def main():
     passages_file = "data/resources/train/" + SPLIT + "_training_passages.json"
 
     result_out_file = "results/" + es_index + "_" + language_model + "_" + \
-                      str(retriever_model_file) + "_" + str("multiset") + ".txt"
+                      str(retriever_model_file) + "_" + str(reader_model_file) + ".txt"
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
