@@ -128,7 +128,7 @@ class Cluster(object):
 
 
 class QueryResult(object):
-    def __init__(self, query: BasicMent, results: List[Passage], searched_query: str = None):
+    def __init__(self, query: Query, results: List[Passage], searched_query: str = None):
         self.query = query
         self.results = results
         self.searched_query = searched_query

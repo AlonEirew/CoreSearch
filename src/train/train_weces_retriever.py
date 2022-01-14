@@ -2,8 +2,8 @@ import logging
 from typing import List
 
 from haystack.document_stores import FAISSDocumentStore
-
 from src import run_pipeline
+
 from src.data_obj import Cluster, TrainExample, Passage
 from src.override_classes.wec_dense import WECDensePassageRetriever
 from src.pipeline.pipelines import RetrievalOnlyPipeline

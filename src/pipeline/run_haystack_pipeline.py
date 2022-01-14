@@ -6,7 +6,8 @@ from haystack.nodes import FARMReader
 from src.data_obj import Cluster, TrainExample, Passage, QueryResult
 from src.index import elastic_index
 from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
-from src.utils import io_utils, measurments, data_utils, eval_squad, dpr_utils
+from src.utils import io_utils, measurments, data_utils, dpr_utils, measure_squad
+from src.utils.measurments import precision, precision_squad
 
 
 def main():
@@ -89,25 +90,39 @@ def main():
     predict_and_eval(pipeline, golds, query_examples, run_pipe_str, result_out_file)
 
 
-def print_results(predictions_arranged, predictions, golds_arranged, run_pipe_str, result_out_file):
+def print_results(predictions, golds_arranged, run_pipe_str, result_out_file):
     # Print retriever evaluation matrices
     to_print = list()
     if run_pipe_str == "qa":
+        to_print.append("---------- Evaluation of Reader Model ------------")
+        precision_method = precision_squad
         # Print the squad evaluation matrices
-        to_print.append(json.dumps(eval_squad.eval_qa(predictions)))
+        to_print.append(json.dumps(measure_squad.eval_qa(predictions)))
+        to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(
+            predictions=predictions, golds=golds_arranged, topk=10, method=run_pipe_str)))
+        to_print.append("mAP@10=" + str(measurments.mean_average_precision(
+            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=10)))
+        to_print.append("mAP@25=" + str(measurments.mean_average_precision(
+            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=25)))
+        to_print.append("mAP@50=" + str(measurments.mean_average_precision(
+            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=50)))
+        to_print.append("mAP@100=" + str(measurments.mean_average_precision(
+            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=100)))
 
-    to_print.append("mAP@10=" + str(measurments.mean_average_precision(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
+    to_print.append("---------- Evaluation of Retriever Model ------------")
+    precision_method = precision
+    to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(
+        predictions=predictions, golds=golds_arranged, topk=10, method=run_pipe_str)))
+    to_print.append("mAP@10=" + str(measurments.mean_average_precision(
+        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=10)))
+    to_print.append("mAP@25=" + str(measurments.mean_average_precision(
+        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=25)))
+    to_print.append("mAP@50=" + str(measurments.mean_average_precision(
+        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=50)))
+    to_print.append("mAP@100=" + str(measurments.mean_average_precision(
+        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=100)))
 
-    if run_pipe_str == "retriever":
-        to_print.append("mAP@50=" + str(measurments.mean_average_precision(predictions=predictions_arranged, golds=golds_arranged, topk=50)))
-        to_print.append("mAP@100=" + str(measurments.mean_average_precision(predictions=predictions_arranged, golds=golds_arranged, topk=100)))
-
-    # Print retriever evaluation matrices
-    to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
-    to_print.append("RECALL@10=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
-    to_print.append("RECALL@50=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=50)))
-    to_print.append("RECALL@100=" + str(measurments.recall(predictions=predictions_arranged, golds=golds_arranged, topk=100)))
-    to_print.append("####################################################################################################")
+    to_print.append("#################################################################################################")
     delimiter = "#################"
     for query_result in predictions:
         query_coref_id = str(query_result.query.goldChain)
@@ -135,13 +150,10 @@ def print_results(predictions_arranged, predictions, golds_arranged, run_pipe_st
 
 def predict_and_eval(pipeline, golds, query_examples, run_pipe_str, result_out_file):
     predictions: List[QueryResult] = pipeline.run_end_to_end(query_examples=query_examples)
-    predictions_arranged = data_utils.query_results_to_ids_list(predictions)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
 
     # assert len(predictions) == len(golds_arranged)
-    # print("HIT@10=" + str(measurments.hit_rate(predictions=predictions_arranged, golds=golds_arranged, topk=10)))
-
-    print_results(predictions_arranged, predictions, golds_arranged, run_pipe_str, result_out_file)
+    print_results(predictions, golds_arranged, run_pipe_str, result_out_file)
 
 
 if __name__ == '__main__':

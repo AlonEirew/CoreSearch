@@ -6,6 +6,9 @@ import re
 import argparse
 import json
 import sys
+from typing import List
+
+from src.data_obj import QueryResult, Passage
 
 
 def normalize_answer(s):
@@ -52,7 +55,7 @@ def metric_max_over_ground_truths(metric_fn, prediction, ground_truths):
     return max(scores_for_ground_truths)
 
 
-def eval_qa(predictions):
+def eval_qa(predictions: List[QueryResult]):
     f1 = exact_match = total = 0
     for query_result in predictions:
         qa = query_result.query
@@ -62,13 +65,8 @@ def eval_qa(predictions):
             total += 1
             if top_result.goldChain == qa.goldChain:
                 prediction = top_result.answer
-                gold_start_offset, gold_end_offset = extract_gold_span_idx(top_result)
-
                 # Only consider answers that are within the gold span or vice versa
-                if (gold_start_offset <= top_result.offsets_in_document[0].start and
-                    gold_end_offset >= top_result.offsets_in_document[0].end) or \
-                        (gold_start_offset >= top_result.offsets_in_document[0].start and
-                         gold_end_offset <= top_result.offsets_in_document[0].end):
+                if is_span_overlap(top_result):
                     is_match = metric_max_over_ground_truths(exact_match_score, prediction, ground_truths)
                     exact_match += is_match
                     f1 += metric_max_over_ground_truths(f1_score, prediction, ground_truths)
@@ -78,6 +76,14 @@ def eval_qa(predictions):
     f1 = 100.0 * f1 / total
 
     return {'exact_match': exact_match, 'f1': f1}
+
+
+def is_span_overlap(top_result: Passage):
+    gold_start_offset, gold_end_offset = extract_gold_span_idx(top_result)
+    return (gold_start_offset <= top_result.offsets_in_document[0].start and
+            gold_end_offset >= top_result.offsets_in_document[0].end) or \
+           (gold_start_offset >= top_result.offsets_in_document[0].start and
+            gold_end_offset <= top_result.offsets_in_document[0].end)
 
 
 def extract_gold_span_idx(top_result):
