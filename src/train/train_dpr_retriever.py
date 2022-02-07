@@ -1,8 +1,8 @@
 from typing import List
 
-from src import run_pipeline
 from src.data_obj import Cluster, TrainExample
 from src.pipeline.pipelines import RetrievalOnlyPipeline
+from src.pipeline.run_haystack_pipeline import predict_and_eval
 from src.utils import io_utils, dpr_utils
 
 
@@ -14,15 +14,15 @@ def train():
 
     n_epochs = 2
     run_update_eval = True
-    model_str = "multiset"
+    model_str = "spanbert"
     # query_model = "bert-base-cased"
     # passage_model = "bert-base-cased"
-    # query_model = "SpanBERT/spanbert-base-cased"
-    # passage_model = "SpanBERT/spanbert-base-cased"
-    query_model = "facebook/dpr-question_encoder-multiset-base"
-    passage_model = "facebook/dpr-ctx_encoder-multiset-base"
+    query_model = "SpanBERT/spanbert-base-cased"
+    passage_model = "SpanBERT/spanbert-base-cased"
+    # query_model = "facebook/dpr-question_encoder-multiset-base"
+    # passage_model = "facebook/dpr-ctx_encoder-multiset-base"
 
-    faiss_path_prefix = "weces_index_" + model_str + "/weces_dev_index"
+    faiss_path_prefix = "indexes/" + model_str + "_ft/dev_index"
     faiss_index_path = "%s.faiss" % faiss_path_prefix
     faiss_config_path = "%s.json" % faiss_path_prefix
 
@@ -72,7 +72,7 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
         for query in query_examples:
             query.context = query.bm25_query.split(" ")
 
-        run_pipeline.predict_and_eval(pipeline, golds, query_examples, "retriever", result_out_file)
+        predict_and_eval(pipeline, golds, query_examples, "retriever", result_out_file)
 
 
 if __name__ == "__main__":

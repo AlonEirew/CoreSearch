@@ -4,7 +4,6 @@ from haystack.nodes import DensePassageRetriever
 
 def create_default_faiss_doc_store(sql_rul):
     return FAISSDocumentStore(sql_url=sql_rul,
-                              faiss_index_factory_str="Flat",
                               similarity="dot_product")
 
 

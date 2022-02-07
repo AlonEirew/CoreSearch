@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import List
 
 from haystack import Document
@@ -27,16 +28,21 @@ def faiss_index(documents: List[Document],
 def main():
     documents = io_utils.read_wec_to_haystack_doc_list("data/resources/WEC-ES/Dev_all_passages.json")
     # documents = io_utils.read_wec_to_haystack_doc_list("data/resources/train/Dev_training_passages.json")
-    faiss_path_prefix = "weces_index_multiset/weces_dev_index"
+    faiss_dir = "indexes/spanbert_notft"
+    faiss_path_prefix = faiss_dir + "/dev_index"
     faiss_file_path = "%s.faiss" % faiss_path_prefix
     sql_rul = "sqlite:///%s.db" % faiss_path_prefix
+    Path(faiss_dir).mkdir(exist_ok=False)
+
     # query_encode = "bert-base-cased"
     # passage_encode = "bert-base-cased"
-    # query_encode = "SpanBERT/spanbert-base-cased"
-    # passage_encode = "SpanBERT/spanbert-base-cased"
-    query_encode = "facebook/dpr-question_encoder-multiset-base"
-    passage_encode = "facebook/dpr-ctx_encoder-multiset-base"
-    infer_tokenizer_classes = False
+    query_encode = "SpanBERT/spanbert-base-cased"
+    passage_encode = "SpanBERT/spanbert-base-cased"
+    # query_encode = "facebook/dpr-question_encoder-multiset-base"
+    # passage_encode = "facebook/dpr-ctx_encoder-multiset-base"
+    # query_encode = "data/checkpoints/spanbert_2it/query_encoder"
+    # passage_encode = "data/checkpoints/spanbert_2it/passage_encoder"
+    infer_tokenizer_classes = True
     faiss_index(documents, faiss_file_path, sql_rul, query_encode, passage_encode, infer_tokenizer_classes)
 
 

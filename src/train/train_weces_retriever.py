@@ -2,11 +2,11 @@ import logging
 from typing import List
 
 from haystack.document_stores import FAISSDocumentStore
-from src import run_pipeline
 
 from src.data_obj import Cluster, TrainExample, Passage
 from src.override_classes.wec_dense import WECDensePassageRetriever
 from src.pipeline.pipelines import RetrievalOnlyPipeline
+from src.pipeline.run_haystack_pipeline import predict_and_eval
 from src.utils import io_utils
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
         for pass_id in query.positive_examples:
             query.answers.add(" ".join(passage_dict[pass_id].mention))
 
-    run_pipeline.predict_and_eval(pipeline, golds, query_examples, "retriever")
+    predict_and_eval(pipeline, golds, query_examples, "retriever")
 
 
 def train():
@@ -75,4 +75,3 @@ def train():
 
 if __name__ == "__main__":
     train()
-    # finetune()

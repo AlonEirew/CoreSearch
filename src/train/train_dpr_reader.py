@@ -8,7 +8,7 @@ def main():
                 facebook/dpr-reader-single-nq-base,
                 facebook/dpr-reader-multiset-base
     '''
-    qa_model = "facebook/dpr-reader-multiset-base"
+    qa_model = "deepset/roberta-base-squad2"
     reader = FARMReader(model_name_or_path=qa_model, use_gpu=True)
     reader.train(
         data_dir="data/resources/squad",
