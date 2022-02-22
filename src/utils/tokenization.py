@@ -1,6 +1,6 @@
 from transformers import BertTokenizer
 
-from src.data_obj import QueryFeat, PassageFeat
+from src.data_obj import QueryFeat, PassageFeat, TrainExample
 
 QUERY_SPAN_START = "[QSPAN_START]"
 QUERY_SPAN_END = "[QSPAN_END]"
@@ -15,7 +15,7 @@ class Tokenization(object):
             self.tokenizer.add_tokens(QUERY_SPAN_START)
             self.tokenizer.add_tokens(QUERY_SPAN_END)
 
-    def get_query_feat(self, query_obj, max_query_length, remove_qbound=False) -> QueryFeat:
+    def get_query_feat(self, query_obj: TrainExample, max_query_length: int, remove_qbound: bool = False) -> QueryFeat:
         max_query_length_exclude = max_query_length - 1
         query_event_start, query_event_end, \
         query_tokenized, query_input_mask = self.query_tokenization(query_obj, max_query_length_exclude, remove_qbound)
@@ -103,7 +103,7 @@ class Tokenization(object):
         assert passage_event_start_ind <= passage_event_end_ind
         return passage_event_start_ind, passage_event_end_ind, passage_end_bound, passage_tokenized, passage_input_mask
 
-    def query_tokenization(self, query_obj, max_query_length_exclude, remove_qbound):
+    def query_tokenization(self, query_obj: TrainExample, max_query_length_exclude: int, remove_qbound: bool):
         query_tokenized = list()
         query_event_start_ind = query_event_end_ind = 0
         query_context = query_obj.context

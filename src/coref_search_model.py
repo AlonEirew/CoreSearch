@@ -34,8 +34,8 @@ class SimilarityModel(object):
                                  tot_exmp_per_query):
         # +1 for positive example
         query_indices = torch.arange(start=0, end=query_hidden_states.size(0), step=tot_exmp_per_query)
-        query_event_starts = torch.index_select(query_event_starts, dim=0, index=query_indices)
-        query_event_ends = torch.index_select(query_event_ends, dim=0, index=query_indices)
+        query_event_starts = torch.index_select(query_event_starts.cpu(), dim=0, index=query_indices)
+        query_event_ends = torch.index_select(query_event_ends.cpu(), dim=0, index=query_indices)
         if tot_exmp_per_query > 1:
             query_hidden_avg = torch.mean(query_hidden_states.view(int(query_hidden_states.shape[0] / tot_exmp_per_query), tot_exmp_per_query,
                                                                    query_hidden_states.shape[1], -1), dim=1)
@@ -86,12 +86,12 @@ class SimilarityModel(object):
 class SpanPredAuxiliary(nn.Module):
     def __init__(self, tokenizer_len):
         super(SpanPredAuxiliary, self).__init__()
-        self.cfg = BertConfig.from_pretrained("external/spanbert_hf_base")
+        self.cfg = BertConfig.from_pretrained("SpanBERT/spanbert-base-cased")
         self.qa_outputs = nn.Linear(self.cfg.hidden_size, self.cfg.num_labels)
 
-        self.query_spanbert = BertModel.from_pretrained('external/spanbert_hf_base')
-        self.query_spanbert.resize_token_embeddings(tokenizer_len)
-        self.passage_spanbert = BertModel.from_pretrained('external/spanbert_hf_base')
+        self.query_encoder = BertModel.from_pretrained('SpanBERT/spanbert-base-cased')
+        self.query_encoder.resize_token_embeddings(tokenizer_len)
+        self.passage_encoder = BertModel.from_pretrained('SpanBERT/spanbert-base-cased')
 
     def forward(self, passage_input_ids, query_input_ids,
                             passage_input_mask, query_input_mask,
@@ -99,13 +99,13 @@ class SpanPredAuxiliary(nn.Module):
                             start_positions, end_positions):
         head_mask = [None] * self.cfg.num_hidden_layers
 
-        passage_encode = self.segment_encode(self.passage_spanbert,
+        passage_encode = self.segment_encode(self.passage_encoder,
                                              passage_input_ids,
                                              passage_segment_ids,
                                              passage_input_mask,
                                              head_mask)
 
-        query_encode = self.segment_encode(self.query_spanbert,
+        query_encode = self.segment_encode(self.query_encoder,
                                            query_input_ids,
                                            query_segment_ids,
                                            query_input_mask,
@@ -161,8 +161,8 @@ class SpanPredAuxiliary(nn.Module):
             end_positions = end_positions.clamp(0, ignored_index)
 
             loss_fct = CrossEntropyLoss(ignore_index=ignored_index)
-            start_loss = loss_fct(start_logits, start_positions)
-            end_loss = loss_fct(end_logits, end_positions)
+            start_loss = loss_fct(start_logits.clone(), start_positions)
+            end_loss = loss_fct(end_logits.clone(), end_positions)
             total_loss = (start_loss + end_loss) / 2
 
         return total_loss, start_logits, end_logits

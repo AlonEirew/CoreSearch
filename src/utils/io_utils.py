@@ -1,12 +1,17 @@
+import copy
 import json
 import os
+from pathlib import Path
 from typing import Dict, List, Any
 
 import torch
 from haystack import Document
 from tqdm import tqdm
+from transformers import AdamW
 
+from src.coref_search_model import SpanPredAuxiliary
 from src.data_obj import Query, Passage, Cluster, TrainExample
+from src.utils.tokenization import Tokenization
 
 
 def load_json_file(json_file: str):
@@ -59,17 +64,46 @@ def read_id_sent_file(in_file: str) -> Dict[str, str]:
     return queries
 
 
-def save_checkpoint(path, epoch, model, optimizer):
-    model_file_name = os.path.join(path, "model-{}.pt".format(epoch))
-    print(f"Saving a checkpoint to {model_file_name}...")
+def save_checkpoint(path: str, epoch: int, model: SpanPredAuxiliary, tokenization: Tokenization, optimizer: AdamW):
+    model_dir = Path(os.path.join(path, "model-{}".format(epoch)))
+    qencoder_dir = Path.joinpath(model_dir, Path("query_encoder"))
+    pencoder_dir = Path.joinpath(model_dir, Path("passage_encoder"))
+    print(f"Saving a checkpoint to {model_dir}...")
+    if not os.path.exists(qencoder_dir):
+        os.makedirs(qencoder_dir)
+    if not os.path.exists(pencoder_dir):
+        os.makedirs(pencoder_dir)
 
-    if hasattr(model, 'module'):
-        model = model.module
+    query_encoder = copy.deepcopy(model.query_encoder)
+    passage_encoder = copy.deepcopy(model.passage_encoder)
+    if hasattr(query_encoder, 'module'):
+        query_encoder = query_encoder.module
+    if hasattr(passage_encoder, 'module'):
+        passage_encoder = passage_encoder.module
 
-    checkpoint = {'epoch': epoch, 'model_state_dict': model.state_dict(),
+    query_encoder_checkpoint = {'epoch': epoch, 'model_state_dict': query_encoder.state_dict(),
                   'optimizer_state_dict': optimizer.state_dict()}
+    passage_encoder_checkpoint = {'epoch': epoch, 'model_state_dict': passage_encoder.state_dict(),
+                                'optimizer_state_dict': optimizer.state_dict()}
 
-    torch.save(checkpoint, model_file_name)
+    qeury_conf_filename = Path(qencoder_dir) / "language_model_config.json"
+    passage_conf_filename = Path(pencoder_dir) / "language_model_config.json"
+
+    setattr(passage_encoder.config, "name", "DPRContextEncoder")
+    setattr(passage_encoder.config, "language", "english")
+    setattr(query_encoder.config, "name", "DPRQuestionEncoder")
+    setattr(query_encoder.config, "language", "english")
+    with open(qeury_conf_filename, "w") as q_conf_file:
+        string = query_encoder.config.to_json_string()
+        q_conf_file.write(string)
+    with open(passage_conf_filename, "w") as p_conf_file:
+        string = passage_encoder.config.to_json_string()
+        p_conf_file.write(string)
+
+    torch.save(query_encoder_checkpoint, Path(os.path.join(qencoder_dir, "language_model.bin")))
+    tokenization.tokenizer.save_pretrained(qencoder_dir)
+    torch.save(passage_encoder_checkpoint, Path(os.path.join(pencoder_dir, "language_model.bin")))
+    tokenization.tokenizer.save_pretrained(pencoder_dir)
 
 
 def load_checkpoint(path, model, optimizer=None):

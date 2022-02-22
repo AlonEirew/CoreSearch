@@ -13,17 +13,23 @@ from src.utils.measurments import precision, precision_squad
 def main():
     # index_type = "elastic_bm25"
     index_type = "faiss_dpr"
-    # run_pipe_str = "retriever"
-    run_pipe_str = "qa"
-    # Query methods can be one of {bm25, ment_sent, full_ctx}
+    run_pipe_str = "retriever"
+    # run_pipe_str = "qa"
+    # Query methods can be one of {bm25,ment_only, ment_sent, full_ctx}
     # query_method = "full_ctx"
-    query_method = "bm25"
+    query_method = "full_ctx"
     es_index = SPLIT.lower()
-    language_model = "spanbert_ft"
+    language_model = "mymodel_13it_1neg"
+    # language_model = "spanbert_ft"
 
-    query_encode = None #"SpanBERT/spanbert-base-cased"
-    passage_encode = None #"SpanBERT/spanbert-base-cased"
-    retriever_model_file = "dev_spanbert_2it"
+    infer_tokenizer_classes = True
+    max_seq_len_query = 50
+    max_seq_len_passage = 150
+    batch_size = 16
+
+    query_encode = "data/checkpoints/21022022_123254/model-13/query_encoder"
+    passage_encode = "data/checkpoints/21022022_123254/model-13/passage_encoder"
+    retriever_model_file = None #"dev_multi_2it"
 
     reader_model_file = "squad_roberta_1it"
     # reader_model_ofb = "deepset/roberta-base-squad2"
@@ -56,7 +62,13 @@ def main():
             document_store, retriever = dpr_utils.load_faiss_dpr(faiss_index_file, faiss_config_file, retriever_model)
         else:
             document_store = dpr_utils.load_faiss_doc_store(faiss_index_file, faiss_config_file)
-            retriever = dpr_utils.create_default_dpr(document_store, query_encode, passage_encode)
+            retriever = dpr_utils.create_default_dpr(document_store,
+                                                     query_encode,
+                                                     passage_encode,
+                                                     infer_tokenizer_classes,
+                                                     max_seq_len_query,
+                                                     max_seq_len_passage,
+                                                     batch_size)
     elif index_type == "elastic_bm25":
         document_store, retriever = elastic_index.load_elastic_bm25(es_index)
     else:
@@ -94,6 +106,8 @@ def generate_query_text(passage_dict, query_examples, query_method):
     for query in query_examples:
         if query_method == "bm25":
             query.context = query.bm25_query.split(" ")
+        elif query_method == "ment_only":
+            query.context = query.mention
         elif query_method == "ment_sent":
             query.context = query.bm25_query.split(" ")
         elif query_method == "full_ctx":

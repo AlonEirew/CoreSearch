@@ -12,7 +12,7 @@ from tqdm import tqdm
 from transformers import AdamW
 
 from src.coref_search_model import SpanPredAuxiliary, SimilarityModel
-from src.data_obj import SearchFeat
+from src.data_obj import SearchFeat, TrainExample
 from src.utils import io_utils
 from src.utils.data_utils import generate_batches
 from src.utils.evaluation import evaluate, generate_sim_results
@@ -30,7 +30,7 @@ def generate_queries_feats(tokenizer: Tokenization,
                            max_passage_length: int,
                            negative_sample_size: int,
                            remove_qbound: bool = False) -> List[SearchFeat]:
-    query_examples = io_utils.read_train_example_file(query_file)
+    query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
     passages_examples = io_utils.read_passages_file(passages_file)
     passages_examples = {passage.id: passage for passage in passages_examples}
     logger.info("Done loading examples file, queries-" + query_file + ", passages-" + passages_file)
@@ -66,27 +66,22 @@ def train():
     start_time = datetime.now()
     dt_string = start_time.strftime("%d%m%Y_%H%M%S")
 
-    train_examples_file = "resources/train/Train_training_queries.json"
-    train_passages_file = "resources/train/Train_training_passages.json"
-    dev_examples_file = "resources/train/Dev_training_queries.json"
-    dev_passages_file = "resources/train/Dev_training_passages.json"
+    # train_examples_file = "data/resources/train/small_training_queries.json"
+    # train_passages_file = "data/resources/train/Dev_training_passages.json"
+    train_examples_file = "data/resources/train/Train_training_queries.json"
+    train_passages_file = "data/resources/train/Train_training_passages.json"
+    dev_examples_file = "data/resources/train/Dev_training_queries.json"
+    dev_passages_file = "data/resources/train/Dev_training_passages.json"
 
-    # train_examples_file = "resources/train/wec_es_train_qsent_small.json"
-    # train_passages_file = "resources/train/wec_es_Train_passages_segment.json"
-    # dev_examples_file = train_examples_file
-    # dev_passages_file = train_passages_file
-
-    tokenizer_path = "checkpoints/" + dt_string + "/tokenizer"
-    checkpoints_path = "checkpoints/" + dt_string
+    checkpoints_path = "data/checkpoints/" + dt_string
     Path(checkpoints_path).mkdir(parents=True)
-    Path(tokenizer_path).mkdir()
     create_logger(log_file=checkpoints_path + "/log.txt")
     logger.info(f"{checkpoints_path}-folder created..")
 
     cpu_only = False
     epochs = 15
-    train_negative_samples = 2
-    dev_negative_samples = 2
+    train_negative_samples = 1
+    dev_negative_samples = 1
     in_batch_samples = 10
     # train_batch_size = 3 * (2 + 1) in training for 2 negatives and 1 positive samples
     train_batch_size = in_batch_samples * (train_negative_samples + 1)
@@ -101,11 +96,14 @@ def train():
     random.seed(1234)
     np.random.seed(1234)
     torch.manual_seed(1243)
+
+    logger.info("Using device-" + device.type)
+    logger.info("Number of available GPU's-" + str(n_gpu))
+
     if n_gpu > 0:
         torch.cuda.manual_seed_all(1234)
 
     tokenization = Tokenization()
-    tokenization.tokenizer.save_pretrained(tokenizer_path)
     auxiliary_method = SpanPredAuxiliary(len(tokenization.tokenizer))
     auxiliary_method.to(device)
     if n_gpu > 1:
@@ -130,6 +128,7 @@ def train():
     start_time = time.time()
     tot_steps = 0.0
     logger.info("Start training...")
+    torch.autograd.set_detect_anomaly(False)
     for epoch in range(epochs):
         auxiliary_method.train()
         random.shuffle(train_batches)
@@ -164,6 +163,8 @@ def train():
             tot_steps += 1
 
             loss.backward()
+            # span_lost.backward()
+            # sim_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
 
@@ -174,7 +175,7 @@ def train():
 
         logger.info("Train-Similarity: accuracy={}".format(generate_sim_results(batch_golds, batch_predictions)))
         evaluate(auxiliary_method, dev_batches, similarity_method, dev_negative_samples, n_gpu)
-        save_checkpoint(checkpoints_path, epoch, auxiliary_method, optimizer)
+        save_checkpoint(checkpoints_path, epoch, auxiliary_method, tokenization, optimizer)
 
 
 if __name__ == '__main__':
