@@ -2,12 +2,12 @@ import copy
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union
 
 import torch
 from haystack import Document
 from tqdm import tqdm
-from transformers import AdamW
+from transformers import AdamW, BertConfig, BertModel
 
 from src.coref_search_model import SpanPredAuxiliary
 from src.data_obj import Query, Passage, Cluster, TrainExample
@@ -131,3 +131,16 @@ def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
         )
 
     return documents
+
+
+def load_model(pretrained_model_name_or_path: Union[Path, str], **kwargs):
+    haystack_lm_config = Path(pretrained_model_name_or_path) / "language_model_config.json"
+    if os.path.exists(haystack_lm_config):
+        # Haystack style
+        bert_config = BertConfig.from_pretrained(haystack_lm_config)
+        haystack_lm_model = Path(pretrained_model_name_or_path) / "language_model.bin"
+        model = BertModel.from_pretrained(haystack_lm_model, config=bert_config, **kwargs)
+    else:
+        # Pytorch-transformer Style
+        model = BertModel.from_pretrained(str(pretrained_model_name_or_path), **kwargs)
+    return model

@@ -9,20 +9,27 @@ from src.utils import io_utils, dpr_utils
 def train():
     doc_dir = "data/resources/dpr/"
 
-    train_filename = "Train_dpr_format.json"
-    dev_filename = "Dev_dpr_format.json"
+    train_filename = "Train_full_dpr_format.json"
+    dev_filename = "Dev_full_dpr_format.json"
 
     n_epochs = 2
     run_update_eval = True
-    model_str = "spanbert"
+    model_str = "multi"
+
+    infer_tokenizer_classes = True
+    max_seq_len_query = 50
+    max_seq_len_passage = 150
+    batch_size = 16
+
     # query_model = "bert-base-cased"
     # passage_model = "bert-base-cased"
-    query_model = "SpanBERT/spanbert-base-cased"
-    passage_model = "SpanBERT/spanbert-base-cased"
-    # query_model = "facebook/dpr-question_encoder-multiset-base"
-    # passage_model = "facebook/dpr-ctx_encoder-multiset-base"
+    # query_model = "SpanBERT/spanbert-base-cased"
+    # passage_model = "SpanBERT/spanbert-base-cased"
+    query_model = "facebook/dpr-question_encoder-multiset-base"
+    passage_model = "facebook/dpr-ctx_encoder-multiset-base"
+    load_tokenizer = False
 
-    faiss_path_prefix = "indexes/" + model_str + "_ft/dev_index"
+    faiss_path_prefix = "indexes/" + model_str + "_full/dev_index"
     faiss_index_path = "%s.faiss" % faiss_path_prefix
     faiss_config_path = "%s.json" % faiss_path_prefix
 
@@ -35,14 +42,23 @@ def train():
 
     run(query_model, passage_model, doc_dir, train_filename, dev_filename,
         checkpoint_dir, faiss_index_path, faiss_config_path, dev_gold_clusters,
-        dev_train_queries, n_epochs, result_out_file, run_update_eval)
+        dev_train_queries, n_epochs, result_out_file, run_update_eval, infer_tokenizer_classes,
+        max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer)
 
 
 def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir, faiss_index_path,
-        faiss_config_path, dev_gold_clusters, dev_train_queries, n_epochs, result_out_file, run_update_eval):
+        faiss_config_path, dev_gold_clusters, dev_train_queries, n_epochs, result_out_file, run_update_eval,
+        infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer):
 
-    document_store = dpr_utils.load_faiss_doc_store(faiss_index_path, faiss_config_path)
-    retriever = dpr_utils.create_default_dpr(document_store, query_model, passage_model)
+    document_store, retriever = dpr_utils.load_faiss_dpr(faiss_index_path,
+                                                         faiss_config_path,
+                                                         query_model,
+                                                         passage_model,
+                                                         infer_tokenizer_classes,
+                                                         max_seq_len_query,
+                                                         max_seq_len_passage,
+                                                         batch_size,
+                                                         load_tokenizer)
 
     retriever.train(data_dir=doc_dir,
                     train_filename=train_filename,

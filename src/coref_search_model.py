@@ -50,9 +50,10 @@ class SimilarityModel(object):
         query_rep = torch.cat((query_start_embeds, query_end_embeds), dim=1)
         return query_rep
 
-    def calc_similarity_loss(self, query_rep, passage_rep):
+    @staticmethod
+    def calc_similarity_loss(query_rep, passage_rep):
         positive_idxs = torch.zeros(query_rep.shape[0], dtype=torch.long)
-        predicted_idxs, softmax_scores = self.predict_softmax(query_rep, passage_rep)
+        predicted_idxs, softmax_scores = SimilarityModel.predict_softmax(query_rep, passage_rep)
         sim_loss = F.nll_loss(
             softmax_scores,
             positive_idxs.to(softmax_scores.device),
@@ -60,8 +61,9 @@ class SimilarityModel(object):
         )
         return sim_loss, predicted_idxs
 
-    def predict_softmax(self, query_rep, passage_rep):
-        sim_batch = self.get_similarity_score(query_rep, passage_rep)
+    @staticmethod
+    def predict_softmax(query_rep, passage_rep):
+        sim_batch = SimilarityModel.get_similarity_score(query_rep, passage_rep)
         softmax_scores = F.log_softmax(sim_batch, dim=1)
         _, predicted_idxs = torch.max(softmax_scores, 1)
         return predicted_idxs, softmax_scores
@@ -131,7 +133,7 @@ class SpanPredAuxiliary(nn.Module):
         extended_attention_mask = query_input_mask[:, None, None, :]
         extended_attention_mask = extended_attention_mask.to(dtype=torch.float32)
         extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
-        query_encode = model.encoder(
+        encodings = model.encoder(
             embedding_output,
             attention_mask=extended_attention_mask,
             head_mask=head_mask,
@@ -140,7 +142,7 @@ class SpanPredAuxiliary(nn.Module):
             output_hidden_states=False,
             return_dict=True,
         )
-        return query_encode
+        return encodings
 
     def get_qa_answer(self, encoder_output, start_positions, end_positions):
         logits = self.qa_outputs(encoder_output)

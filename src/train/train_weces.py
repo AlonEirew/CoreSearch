@@ -4,7 +4,7 @@ import random
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import List, Dict
 
 import numpy as np
 import torch
@@ -12,9 +12,9 @@ from tqdm import tqdm
 from transformers import AdamW
 
 from src.coref_search_model import SpanPredAuxiliary, SimilarityModel
-from src.data_obj import SearchFeat, TrainExample
+from src.data_obj import SearchFeat, TrainExample, Passage
 from src.utils import io_utils
-from src.utils.data_utils import generate_batches
+from src.utils.data_utils import generate_train_batches
 from src.utils.evaluation import evaluate, generate_sim_results
 from src.utils.io_utils import save_checkpoint
 from src.utils.log_utils import create_logger
@@ -31,8 +31,8 @@ def generate_queries_feats(tokenizer: Tokenization,
                            negative_sample_size: int,
                            remove_qbound: bool = False) -> List[SearchFeat]:
     query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
-    passages_examples = io_utils.read_passages_file(passages_file)
-    passages_examples = {passage.id: passage for passage in passages_examples}
+    passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
+    passages_examples: Dict[str, Passage] = {passage.id: passage for passage in passages_examples}
     logger.info("Done loading examples file, queries-" + query_file + ", passages-" + passages_file)
     logger.info("Total examples loaded, queries=" + str(len(query_examples)) + ", passages=" + str(len(passages_examples)))
     logger.info("Starting to generate examples...")
@@ -66,10 +66,10 @@ def train():
     start_time = datetime.now()
     dt_string = start_time.strftime("%d%m%Y_%H%M%S")
 
-    # train_examples_file = "data/resources/train/small_training_queries.json"
-    # train_passages_file = "data/resources/train/Dev_training_passages.json"
-    train_examples_file = "data/resources/train/Train_training_queries.json"
-    train_passages_file = "data/resources/train/Train_training_passages.json"
+    train_examples_file = "data/resources/train/small_training_queries.json"
+    train_passages_file = "data/resources/train/Dev_training_passages.json"
+    # train_examples_file = "data/resources/train/Train_training_queries.json"
+    # train_passages_file = "data/resources/train/Train_training_passages.json"
     dev_examples_file = "data/resources/train/Dev_training_queries.json"
     dev_passages_file = "data/resources/train/Dev_training_passages.json"
 
@@ -121,8 +121,8 @@ def train():
                                               dev_passages_file, max_query_length,
                                               max_passage_length, dev_negative_samples, remove_qbound_tokens)
 
-    train_batches = generate_batches(train_search_feats, train_batch_size)
-    dev_batches = generate_batches(dev_search_feats, dev_batch_size)
+    train_batches = generate_train_batches(train_search_feats, train_batch_size)
+    dev_batches = generate_train_batches(dev_search_feats, dev_batch_size)
 
     accum_loss = 0.0
     start_time = time.time()

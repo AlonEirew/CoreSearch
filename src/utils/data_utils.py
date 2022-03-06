@@ -3,15 +3,15 @@ from typing import List, Dict
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
-from src.data_obj import SearchFeat, QueryResult, Cluster
+from src.data_obj import SearchFeat, QueryResult, Cluster, PassageFeat
 
 
-def generate_batches(search_features: List[SearchFeat], batch_size: int):
+def generate_train_batches(search_features: List[SearchFeat], batch_size: int):
     all_passage_input_ids, all_query_input_ids, \
     all_passage_input_mask, all_query_input_mask, \
     all_passage_segment_ids, all_query_segment_ids, \
     passage_event_starts, passage_event_ends, all_end_bounds, \
-    all_query_starts, all_query_ends = generate_span_feats(search_features)
+    all_query_starts, all_query_ends = generate_train_span_feats(search_features)
 
     data = TensorDataset(all_passage_input_ids, all_query_input_ids,
                          all_passage_input_mask, all_query_input_mask,
@@ -23,7 +23,38 @@ def generate_batches(search_features: List[SearchFeat], batch_size: int):
     return batches
 
 
-def generate_span_feats(search_features: List[SearchFeat]):
+def generate_index_batches(index_features: List[PassageFeat], batch_size: int):
+    all_passage_ids, all_passage_input_ids, all_passage_input_mask, all_passage_segment_ids = generate_index_span_feats(index_features)
+
+    data = TensorDataset(all_passage_input_ids,
+                         all_passage_input_mask,
+                         all_passage_segment_ids)
+    dataloader = DataLoader(data, batch_size=batch_size, shuffle=False)
+    batches = [batch for batch in dataloader]
+    ids = [all_passage_ids[i:i + batch_size] for i in range(0, len(all_passage_ids), batch_size)]
+    return ids, batches
+
+
+def generate_index_span_feats(index_features: List[PassageFeat]):
+    passages_ids = list()
+    passages_input_ids = list()
+    passage_input_mask = list()
+    passage_segment_ids = list()
+
+    for index_feat in index_features:
+        passages_ids.append(index_feat.passage_id)
+        passages_input_ids.append(index_feat.passage_input_ids)
+        passage_input_mask.append(index_feat.passage_input_mask)
+        passage_segment_ids.append(index_feat.passage_segment_ids)
+
+    all_passage_input_ids = torch.tensor([f for f in passages_input_ids], dtype=torch.long)
+    all_passage_input_mask = torch.tensor([f for f in passage_input_mask], dtype=torch.long)
+    all_passage_segment_ids = torch.tensor([f for f in passage_segment_ids], dtype=torch.long)
+
+    return passages_ids, all_passage_input_ids, all_passage_input_mask, all_passage_segment_ids
+
+
+def generate_train_span_feats(search_features: List[SearchFeat]):
     passages_input_ids = list()
     query_input_ids = list()
     passage_input_mask = list()

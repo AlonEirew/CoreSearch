@@ -1,15 +1,17 @@
 from transformers import BertTokenizer
 
-from src.data_obj import QueryFeat, PassageFeat, TrainExample
+from src.data_obj import QueryFeat, PassageFeat, TrainExample, Passage
 
 QUERY_SPAN_START = "[QSPAN_START]"
 QUERY_SPAN_END = "[QSPAN_END]"
 
 
 class Tokenization(object):
-    def __init__(self, model_file=None):
+    def __init__(self, model_file=None, tokenizer=None):
         if model_file:
             self.tokenizer = BertTokenizer.from_pretrained(model_file)
+        elif tokenizer:
+            self.tokenizer = tokenizer
         else:
             self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
             self.tokenizer.add_tokens(QUERY_SPAN_START)
@@ -41,7 +43,7 @@ class Tokenization(object):
                          query_event_start=query_event_start,
                          query_event_end=query_event_end)
 
-    def get_passage_feat(self, passage_obj, max_passage_length) -> PassageFeat:
+    def get_passage_feat(self, passage_obj: Passage, max_passage_length: int) -> PassageFeat:
         max_pass_length_exclude = max_passage_length - 2
         passage_event_start, passage_event_end, passage_end_bound, passage_tokenized, passage_input_mask = \
             self.passage_tokenization(passage_obj, max_pass_length_exclude)
@@ -71,7 +73,7 @@ class Tokenization(object):
             passage_end_bound=passage_end_bound
         )
 
-    def passage_tokenization(self, passage_obj, max_pass_length_exclude):
+    def passage_tokenization(self, passage_obj: Passage, max_pass_length_exclude: int):
         passage_tokenized = list()
         start_index = passage_obj.startIndex
         end_index = passage_obj.endIndex
@@ -106,9 +108,7 @@ class Tokenization(object):
     def query_tokenization(self, query_obj: TrainExample, max_query_length_exclude: int, remove_qbound: bool):
         query_tokenized = list()
         query_event_start_ind = query_event_end_ind = 0
-        query_context = query_obj.context
-        query_context.insert(query_obj.endIndex + 1, QUERY_SPAN_END)
-        query_context.insert(query_obj.startIndex, QUERY_SPAN_START)
+        self.add_query_bound(query_obj)
         for word in query_obj.context:
             query_tokenized.extend(self.tokenizer.tokenize(word))
             if word == QUERY_SPAN_START:
@@ -148,3 +148,8 @@ class Tokenization(object):
         assert "".join(query_obj.mention) == "".join(
             [s.strip('##') for s in query_tokenized[query_event_start_ind:query_event_end_ind + 1]])
         return query_event_start_ind, query_event_end_ind, query_tokenized, query_input_mask
+
+    @staticmethod
+    def add_query_bound(query_obj: TrainExample):
+        query_obj.context.insert(query_obj.endIndex + 1, QUERY_SPAN_END)
+        query_obj.context.insert(query_obj.startIndex, QUERY_SPAN_START)

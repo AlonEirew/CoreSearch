@@ -3,9 +3,9 @@ from pathlib import Path
 from typing import Union, Optional, List
 
 import torch
-from farm.modeling.biadaptive_model import BiAdaptiveModel
-from farm.modeling.prediction_head import TextSimilarityHead
 from haystack.document_stores import BaseDocumentStore
+from haystack.modeling.model.biadaptive_model import BiAdaptiveModel
+from haystack.modeling.model.prediction_head import TextSimilarityHead
 from haystack.nodes import DensePassageRetriever
 from torch.nn import DataParallel
 

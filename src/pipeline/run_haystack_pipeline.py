@@ -1,5 +1,6 @@
 import json
-from typing import List
+import logging
+from typing import List, Dict
 
 from haystack.nodes import FARMReader
 
@@ -8,6 +9,10 @@ from src.index import elastic_index
 from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
 from src.utils import io_utils, measurments, data_utils, dpr_utils, measure_squad
 from src.utils.measurments import precision, precision_squad
+from src.utils.tokenization import Tokenization
+
+logger = logging.getLogger("run_haystack_pipeline")
+logger.setLevel(logging.DEBUG)
 
 
 def main():
@@ -17,10 +22,11 @@ def main():
     # run_pipe_str = "qa"
     # Query methods can be one of {bm25,ment_only, ment_sent, full_ctx}
     # query_method = "full_ctx"
-    query_method = "full_ctx"
+    query_method = "with_bounds"
     es_index = SPLIT.lower()
-    language_model = "mymodel_13it_1neg"
-    # language_model = "spanbert_ft"
+    index_folder = "test"
+    # index_folder = "spanbert_ft"
+    experiment_name = "test"
 
     infer_tokenizer_classes = True
     max_seq_len_query = 50
@@ -29,14 +35,14 @@ def main():
 
     query_encode = "data/checkpoints/21022022_123254/model-13/query_encoder"
     passage_encode = "data/checkpoints/21022022_123254/model-13/passage_encoder"
-    retriever_model_file = None #"dev_multi_2it"
+    load_tokenizer = True
 
     reader_model_file = "squad_roberta_1it"
     # reader_model_ofb = "deepset/roberta-base-squad2"
     reader_model_ofb = None #"facebook/dpr-reader-multiset-base"
 
     checkpoint_dir = "data/checkpoints/"
-    faiss_index_prefix = "indexes/" + language_model + "/" + es_index + "_index"
+    faiss_index_prefix = "indexes/" + index_folder + "/" + es_index + "_index"
     faiss_index_file = faiss_index_prefix + ".faiss"
     faiss_config_file = faiss_index_prefix + ".json"
 
@@ -45,37 +51,34 @@ def main():
     # queries_file = "data/resources/train/small_training_queries.json"
     passages_file = "data/resources/train/" + SPLIT + "_training_passages.json"
 
-    result_out_file = "results/" + es_index + "_" + query_method + "_" + index_type + "_" + language_model + "_" + \
-                      str(retriever_model_file) + "_" + str(reader_model_file) + ".txt"
+    result_out_file = "results/" + es_index + "_" + query_method + "_" + index_type + "_" + index_folder + "_" + \
+                      experiment_name + "_" + str(reader_model_file) + ".txt"
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
     query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
     passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
 
-    passage_dict = {obj.id: obj for obj in passage_examples}
+    passage_dict: Dict[str, Passage] = {obj.id: obj for obj in passage_examples}
     generate_query_text(passage_dict, query_examples, query_method)
 
     if index_type == "faiss_dpr":
-        if retriever_model_file:
-            retriever_model = checkpoint_dir + retriever_model_file
-            document_store, retriever = dpr_utils.load_faiss_dpr(faiss_index_file, faiss_config_file, retriever_model)
-        else:
-            document_store = dpr_utils.load_faiss_doc_store(faiss_index_file, faiss_config_file)
-            retriever = dpr_utils.create_default_dpr(document_store,
-                                                     query_encode,
-                                                     passage_encode,
-                                                     infer_tokenizer_classes,
-                                                     max_seq_len_query,
-                                                     max_seq_len_passage,
-                                                     batch_size)
+        document_store, retriever = dpr_utils.load_faiss_dpr(faiss_index_file,
+                                                             faiss_config_file,
+                                                             query_encode,
+                                                             passage_encode,
+                                                             infer_tokenizer_classes,
+                                                             max_seq_len_query,
+                                                             max_seq_len_passage,
+                                                             batch_size,
+                                                             load_tokenizer)
     elif index_type == "elastic_bm25":
         document_store, retriever = elastic_index.load_elastic_bm25(es_index)
     else:
         raise TypeError
 
-    print(index_type + " Document store and retriever created..")
-    print("Total indexed documents to be searched=" + str(document_store.get_document_count()))
+    logger.info(index_type + " Document store and retriever created..")
+    logger.info("Total indexed documents to be searched=" + str(document_store.get_document_count()))
 
     if run_pipe_str == "qa":
         if reader_model_file:
@@ -98,18 +101,19 @@ def main():
     else:
         raise TypeError
 
-    print("Running " + run_pipe_str + " pipeline..")
+    logger.info("Running " + run_pipe_str + " pipeline..")
     predict_and_eval(pipeline, golds, query_examples, run_pipe_str, result_out_file)
 
 
-def generate_query_text(passage_dict, query_examples, query_method):
+def generate_query_text(passage_dict: Dict[str, Passage], query_examples: List[TrainExample], query_method: str):
+    logger.info("Using query style-" + query_method)
     for query in query_examples:
         if query_method == "bm25":
             query.context = query.bm25_query.split(" ")
         elif query_method == "ment_only":
             query.context = query.mention
-        elif query_method == "ment_sent":
-            query.context = query.bm25_query.split(" ")
+        elif query_method == "with_bounds":
+            Tokenization.add_query_bound(query)
         elif query_method == "full_ctx":
             pass
 
@@ -169,7 +173,7 @@ def print_results(predictions, golds_arranged, run_pipe_str, result_out_file):
 
     join_result = "\n".join(to_print)
     # print(join_result)
-    print("Saving report to-" + result_out_file)
+    logger.info("Saving report to-" + result_out_file)
     with open(result_out_file, 'w') as f:
         f.write(join_result)
 
