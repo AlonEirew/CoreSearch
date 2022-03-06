@@ -14,46 +14,9 @@ class SimilarityModel(object):
     def __init__(self, device):
         self.device = device
 
-    @staticmethod
-    def extract_passage_embeddings(outputs: QuestionAnsweringModelOutput, passages_bounds):
-        for i in range(outputs.start_logits.shape[0]):
-            outputs.start_logits[i][passages_bounds[i]:] = -math.inf
-            outputs.end_logits[i][passages_bounds[i]:] = -math.inf
-
-        softmax_starts = torch.softmax(outputs.start_logits, dim=1)
-        softmax_ends = torch.softmax(outputs.end_logits, dim=1)
-        start_idxs, end_idxs = torch.argmax(softmax_starts, dim=1), torch.argmax(softmax_ends, dim=1)
-        indicies = torch.arange(outputs.passage_hidden_states.size(0))
-        passages_start_embeds = outputs.passage_hidden_states[indicies, start_idxs]
-        passage_end_embeds = outputs.passage_hidden_states[indicies, end_idxs]
-        passage_rep = torch.cat((passages_start_embeds, passage_end_embeds), dim=1)
-        return passage_rep
-
-    @staticmethod
-    def extract_query_embeddings(query_hidden_states, query_event_starts, query_event_ends,
-                                 tot_exmp_per_query):
-        # +1 for positive example
-        query_indices = torch.arange(start=0, end=query_hidden_states.size(0), step=tot_exmp_per_query)
-        query_event_starts = torch.index_select(query_event_starts.cpu(), dim=0, index=query_indices)
-        query_event_ends = torch.index_select(query_event_ends.cpu(), dim=0, index=query_indices)
-        if tot_exmp_per_query > 1:
-            query_hidden_avg = torch.mean(query_hidden_states.view(int(query_hidden_states.shape[0] / tot_exmp_per_query), tot_exmp_per_query,
-                                                                   query_hidden_states.shape[1], -1), dim=1)
-        else:
-            query_hidden_avg = query_hidden_states
-
-        query_div_inds = torch.arange(query_hidden_avg.size(0))
-        query_start_embeds = query_hidden_states[query_div_inds, query_event_starts]
-        query_end_embeds = query_hidden_states[query_div_inds, query_event_ends]
-        # in_batch_samples, neg + pos for each query, concat embeddings of start + end)
-        # passage_rep = torch.cat((passages_start_embeds, passage_end_embeds), dim=1)
-        query_rep = torch.cat((query_start_embeds, query_end_embeds), dim=1)
-        return query_rep
-
-    @staticmethod
-    def calc_similarity_loss(query_rep, passage_rep):
+    def calc_similarity_loss(self, query_rep, passage_rep):
         positive_idxs = torch.zeros(query_rep.shape[0], dtype=torch.long)
-        predicted_idxs, softmax_scores = SimilarityModel.predict_softmax(query_rep, passage_rep)
+        predicted_idxs, softmax_scores = self.predict_softmax(query_rep, passage_rep)
         sim_loss = F.nll_loss(
             softmax_scores,
             positive_idxs.to(softmax_scores.device),
@@ -61,9 +24,8 @@ class SimilarityModel(object):
         )
         return sim_loss, predicted_idxs
 
-    @staticmethod
-    def predict_softmax(query_rep, passage_rep):
-        sim_batch = SimilarityModel.get_similarity_score(query_rep, passage_rep)
+    def predict_softmax(self, query_rep, passage_rep):
+        sim_batch = self.get_similarity_score(query_rep, passage_rep)
         softmax_scores = F.log_softmax(sim_batch, dim=1)
         _, predicted_idxs = torch.max(softmax_scores, 1)
         return predicted_idxs, softmax_scores
@@ -96,9 +58,9 @@ class SpanPredAuxiliary(nn.Module):
         self.passage_encoder = BertModel.from_pretrained('SpanBERT/spanbert-base-cased')
 
     def forward(self, passage_input_ids, query_input_ids,
-                            passage_input_mask, query_input_mask,
-                            passage_segment_ids, query_segment_ids,
-                            start_positions, end_positions):
+                passage_input_mask, query_input_mask,
+                passage_segment_ids, query_segment_ids,
+                start_positions, end_positions):
         head_mask = [None] * self.cfg.num_hidden_layers
 
         passage_encode = self.segment_encode(self.passage_encoder,
@@ -128,9 +90,9 @@ class SpanPredAuxiliary(nn.Module):
         )
 
     @staticmethod
-    def segment_encode(model, input_ids, token_type_ids, query_input_mask, head_mask):
+    def segment_encode(model, input_ids, token_type_ids, input_mask, head_mask):
         embedding_output = model.embeddings(input_ids=input_ids, token_type_ids=token_type_ids)
-        extended_attention_mask = query_input_mask[:, None, None, :]
+        extended_attention_mask = input_mask[:, None, None, :]
         extended_attention_mask = extended_attention_mask.to(dtype=torch.float32)
         extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
         encodings = model.encoder(
@@ -168,3 +130,40 @@ class SpanPredAuxiliary(nn.Module):
             total_loss = (start_loss + end_loss) / 2
 
         return total_loss, start_logits, end_logits
+
+    @staticmethod
+    def extract_passage_embeddings(outputs: QuestionAnsweringModelOutput, passages_bounds):
+        for i in range(outputs.start_logits.shape[0]):
+            outputs.start_logits[i][passages_bounds[i]:] = -math.inf
+            outputs.end_logits[i][passages_bounds[i]:] = -math.inf
+
+        softmax_starts = torch.softmax(outputs.start_logits, dim=1)
+        softmax_ends = torch.softmax(outputs.end_logits, dim=1)
+        start_idxs, end_idxs = torch.argmax(softmax_starts, dim=1), torch.argmax(softmax_ends, dim=1)
+        indicies = torch.arange(outputs.passage_hidden_states.size(0))
+        passages_start_embeds = outputs.passage_hidden_states[indicies, start_idxs]
+        passage_end_embeds = outputs.passage_hidden_states[indicies, end_idxs]
+        passage_rep = torch.cat((passages_start_embeds, passage_end_embeds), dim=1)
+        return passage_rep
+
+    @staticmethod
+    def extract_query_embeddings(query_hidden_states, query_event_starts, query_event_ends,
+                                 tot_exmp_per_query):
+        # +1 for positive example
+        query_indices = torch.arange(start=0, end=query_hidden_states.size(0), step=tot_exmp_per_query)
+        query_event_starts = torch.index_select(query_event_starts.cpu(), dim=0, index=query_indices)
+        query_event_ends = torch.index_select(query_event_ends.cpu(), dim=0, index=query_indices)
+        if tot_exmp_per_query > 1:
+            query_hidden_avg = torch.mean(
+                query_hidden_states.view(int(query_hidden_states.shape[0] / tot_exmp_per_query), tot_exmp_per_query,
+                                         query_hidden_states.shape[1], -1), dim=1)
+        else:
+            query_hidden_avg = query_hidden_states
+
+        query_div_inds = torch.arange(query_hidden_avg.size(0))
+        query_start_embeds = query_hidden_states[query_div_inds, query_event_starts]
+        query_end_embeds = query_hidden_states[query_div_inds, query_event_ends]
+        # in_batch_samples, neg + pos for each query, concat embeddings of start + end)
+        # passage_rep = torch.cat((passages_start_embeds, passage_end_embeds), dim=1)
+        query_rep = torch.cat((query_start_embeds, query_end_embeds), dim=1)
+        return query_rep

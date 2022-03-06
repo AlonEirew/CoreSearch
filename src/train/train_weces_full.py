@@ -1,19 +1,15 @@
-import copy
+import logging
 import logging
 import random
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict
 
 import numpy as np
 import torch
-from tqdm import tqdm
 from transformers import AdamW
 
-from src.coref_search_model import SpanPredAuxiliary, SimilarityModel
-from src.data_obj import SearchFeat, TrainExample, Passage
-from src.utils import io_utils
+from src.models.coref_search_model import SimilarityModel, SpanPredAuxiliary
 from src.utils.data_utils import generate_train_batches
 from src.utils.evaluation import evaluate, generate_sim_results
 from src.utils.io_utils import save_checkpoint
@@ -21,45 +17,6 @@ from src.utils.log_utils import create_logger
 from src.utils.tokenization import Tokenization
 
 logger = logging.getLogger("event-search")
-
-
-def generate_queries_feats(tokenizer: Tokenization,
-                           query_file: str,
-                           passages_file: str,
-                           max_query_length: int,
-                           max_passage_length: int,
-                           negative_sample_size: int,
-                           remove_qbound: bool = False) -> List[SearchFeat]:
-    query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
-    passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
-    passages_examples: Dict[str, Passage] = {passage.id: passage for passage in passages_examples}
-    logger.info("Done loading examples file, queries-" + query_file + ", passages-" + passages_file)
-    logger.info("Total examples loaded, queries=" + str(len(query_examples)) + ", passages=" + str(len(passages_examples)))
-    logger.info("Starting to generate examples...")
-    query_feats = dict()
-    passage_feats = dict()
-    search_feats = list()
-    for query_obj in tqdm(query_examples, "Loading Queries"):
-        query_feat = tokenizer.get_query_feat(query_obj, max_query_length, remove_qbound)
-        query_feats[query_obj.id] = query_feat
-        pos_passages = list()
-        neg_passages = list()
-        for pos_id in query_obj.positive_examples:
-            if pos_id not in passage_feats:
-                passage_feats[pos_id] = tokenizer.get_passage_feat(passages_examples[pos_id], max_passage_length)
-            pos_passages.append(passage_feats[pos_id])
-
-        for neg_id in query_obj.negative_examples:
-            if neg_id not in passage_feats:
-                passage_feats[neg_id] = tokenizer.get_passage_feat(passages_examples[neg_id], max_passage_length)
-            passage_cpy = copy.copy(passage_feats[neg_id])
-            passage_cpy.passage_event_start = passage_cpy.passage_event_end = 0
-            neg_passages.append(passage_cpy)
-
-        for pos_pass in pos_passages:
-            search_feats.append(SearchFeat(query_feat, pos_pass, random.sample(neg_passages, negative_sample_size)))
-
-    return search_feats
 
 
 def train():
@@ -113,13 +70,15 @@ def train():
 
     optimizer = AdamW(auxiliary_method.parameters(), lr=lr)
 
-    train_search_feats = generate_queries_feats(tokenization, train_examples_file,
-                                                train_passages_file, max_query_length,
-                                                max_passage_length, train_negative_samples, remove_qbound_tokens)
+    train_search_feats = tokenization.generate_queries_feats(train_examples_file,
+                                                             train_passages_file, max_query_length,
+                                                             max_passage_length, train_negative_samples,
+                                                             remove_qbound_tokens)
 
-    dev_search_feats = generate_queries_feats(tokenization, dev_examples_file,
-                                              dev_passages_file, max_query_length,
-                                              max_passage_length, dev_negative_samples, remove_qbound_tokens)
+    dev_search_feats = tokenization.generate_queries_feats(dev_examples_file,
+                                                           dev_passages_file, max_query_length,
+                                                           max_passage_length, dev_negative_samples,
+                                                           remove_qbound_tokens)
 
     train_batches = generate_train_batches(train_search_feats, train_batch_size)
     dev_batches = generate_train_batches(dev_search_feats, dev_batch_size)
@@ -147,9 +106,9 @@ def train():
                             passage_segment_ids, query_segment_ids,
                             passage_start_position, passage_end_position)
 
-            passage_rep = similarity_method.extract_passage_embeddings(outputs, passage_end_bound)
-            query_rep = similarity_method.extract_query_embeddings(outputs.query_hidden_states, query_event_starts,
-                                                                   query_event_ends, train_negative_samples + 1)
+            passage_rep = auxiliary_method.extract_passage_embeddings(outputs, passage_end_bound)
+            query_rep = auxiliary_method.extract_query_embeddings(outputs.query_hidden_states, query_event_starts,
+                                                                  query_event_ends, train_negative_samples + 1)
 
             span_lost = outputs.loss
             # Transform to vectors of (BatchSize, Num of examples {Negative + Positive), Embedding size)

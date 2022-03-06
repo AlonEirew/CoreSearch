@@ -1,9 +1,18 @@
+import copy
+import logging
+import random
+from typing import List, Dict
+
+from tqdm import tqdm
 from transformers import BertTokenizer
 
-from src.data_obj import QueryFeat, PassageFeat, TrainExample, Passage
+from src.data_obj import QueryFeat, PassageFeat, TrainExample, Passage, SearchFeat
+from src.utils import io_utils
 
 QUERY_SPAN_START = "[QSPAN_START]"
 QUERY_SPAN_END = "[QSPAN_END]"
+
+logger = logging.getLogger("event-search")
 
 
 class Tokenization(object):
@@ -16,6 +25,45 @@ class Tokenization(object):
             self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
             self.tokenizer.add_tokens(QUERY_SPAN_START)
             self.tokenizer.add_tokens(QUERY_SPAN_END)
+
+    def generate_queries_feats(self,
+                               query_file: str,
+                               passages_file: str,
+                               max_query_length: int,
+                               max_passage_length: int,
+                               negative_sample_size: int,
+                               remove_qbound: bool = False) -> List[SearchFeat]:
+        query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
+        passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
+        passages_examples: Dict[str, Passage] = {passage.id: passage for passage in passages_examples}
+        logger.info("Done loading examples file, queries-" + query_file + ", passages-" + passages_file)
+        logger.info(
+            "Total examples loaded, queries=" + str(len(query_examples)) + ", passages=" + str(len(passages_examples)))
+        logger.info("Starting to generate examples...")
+        query_feats = dict()
+        passage_feats = dict()
+        search_feats = list()
+        for query_obj in tqdm(query_examples, "Loading Queries"):
+            query_feat = self.get_query_feat(query_obj, max_query_length, remove_qbound)
+            query_feats[query_obj.id] = query_feat
+            pos_passages = list()
+            neg_passages = list()
+            for pos_id in query_obj.positive_examples:
+                if pos_id not in passage_feats:
+                    passage_feats[pos_id] = self.get_passage_feat(passages_examples[pos_id], max_passage_length)
+                pos_passages.append(passage_feats[pos_id])
+
+            for neg_id in query_obj.negative_examples:
+                if neg_id not in passage_feats:
+                    passage_feats[neg_id] = self.get_passage_feat(passages_examples[neg_id], max_passage_length)
+                passage_cpy = copy.copy(passage_feats[neg_id])
+                passage_cpy.passage_event_start = passage_cpy.passage_event_end = 0
+                neg_passages.append(passage_cpy)
+
+            for pos_pass in pos_passages:
+                search_feats.append(SearchFeat(query_feat, pos_pass, random.sample(neg_passages, negative_sample_size)))
+
+        return search_feats
 
     def get_query_feat(self, query_obj: TrainExample, max_query_length: int, remove_qbound: bool = False) -> QueryFeat:
         max_query_length_exclude = max_query_length - 1
