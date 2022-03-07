@@ -66,6 +66,15 @@ def read_id_sent_file(in_file: str) -> Dict[str, str]:
 
 def save_checkpoint(path: str, epoch: int, model: SpanPredAuxiliary, tokenization: Tokenization, optimizer: AdamW):
     model_dir = Path(os.path.join(path, "model-{}".format(epoch)))
+    print(f"Saving a checkpoint to {model_dir}...")
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
+    torch.save(model, Path(os.path.join(model_dir, "language_model.bin")))
+    tokenization.tokenizer.save_pretrained(model_dir)
+
+
+def save_checkpoint_dpr(path: str, epoch: int, model: SpanPredAuxiliary, tokenization: Tokenization, optimizer: AdamW):
+    model_dir = Path(os.path.join(path, "model-{}".format(epoch)))
     qencoder_dir = Path.joinpath(model_dir, Path("query_encoder"))
     pencoder_dir = Path.joinpath(model_dir, Path("passage_encoder"))
     print(f"Saving a checkpoint to {model_dir}...")
@@ -86,14 +95,14 @@ def save_checkpoint(path: str, epoch: int, model: SpanPredAuxiliary, tokenizatio
     passage_encoder_checkpoint = {'epoch': epoch, 'model_state_dict': passage_encoder.state_dict(),
                                 'optimizer_state_dict': optimizer.state_dict()}
 
-    qeury_conf_filename = Path(qencoder_dir) / "language_model_config.json"
+    query_conf_filename = Path(qencoder_dir) / "language_model_config.json"
     passage_conf_filename = Path(pencoder_dir) / "language_model_config.json"
 
     setattr(passage_encoder.config, "name", "DPRContextEncoder")
     setattr(passage_encoder.config, "language", "english")
     setattr(query_encoder.config, "name", "DPRQuestionEncoder")
     setattr(query_encoder.config, "language", "english")
-    with open(qeury_conf_filename, "w") as q_conf_file:
+    with open(query_conf_filename, "w") as q_conf_file:
         string = query_encoder.config.to_json_string()
         q_conf_file.write(string)
     with open(passage_conf_filename, "w") as p_conf_file:

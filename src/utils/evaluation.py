@@ -60,10 +60,10 @@ def generate_sim_results(golds, predictions):
     golds_st = np.concatenate(golds)
     pred_st = np.concatenate(predictions)
     accuracy = accuracy_score(golds_st, pred_st)
-    logger.info("Similarity: accuracy={}".format(accuracy))
+    return accuracy
 
 
-def evaluate(model, dev_batches, similarity_method, negatives, n_gpu):
+def evaluate_reader(model, dev_batches, similarity_method, negatives, n_gpu):
     model.eval()
     evaluation_objects = list()
     predictions = list()
@@ -115,3 +115,28 @@ def evaluate(model, dev_batches, similarity_method, negatives, n_gpu):
     generate_span_results(evaluation_objects)
     generate_sim_results(gold_labs, predictions)
     # generate_results_inspection(tokenization.tokenizer, evaluation_objects)
+
+
+def evaluate_retriever(model, dev_batches, samples, similarity_method, n_gpu):
+    model.eval()
+    all_predictions = list()
+    gold_labs = list()
+    for step, batch in enumerate(dev_batches):
+        if n_gpu == 1:
+            batch = tuple(t.to(similarity_method.device) for t in batch)
+        passage_input_ids, query_input_ids, \
+        passage_input_mask, query_input_mask, \
+        passage_segment_ids, query_segment_ids, \
+        passage_event_starts, passage_event_ends, \
+        passage_end_bound, query_event_starts, query_event_ends = batch
+
+        with torch.no_grad():
+            _, predictions = model(passage_input_ids, query_input_ids,
+                                   passage_input_mask, query_input_mask,
+                                   passage_segment_ids, query_segment_ids,
+                                   query_event_starts, query_event_ends, samples)
+
+        all_predictions.append(predictions.detach().cpu().numpy())
+        gold_labs.append(np.zeros(len(predictions)))
+
+    logger.info("Dev-Similarity: accuracy={}".format(generate_sim_results(gold_labs, all_predictions)))

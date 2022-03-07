@@ -61,7 +61,12 @@ class Tokenization(object):
                 neg_passages.append(passage_cpy)
 
             for pos_pass in pos_passages:
-                search_feats.append(SearchFeat(query_feat, pos_pass, random.sample(neg_passages, negative_sample_size)))
+                if len(neg_passages) > negative_sample_size:
+                    search_feats.append(
+                        SearchFeat(query_feat, pos_pass, random.sample(neg_passages, negative_sample_size)))
+                else:
+                    search_feats.append(
+                        SearchFeat(query_feat, pos_pass, random.choices(neg_passages, k=negative_sample_size)))
 
         return search_feats
 
