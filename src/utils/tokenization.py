@@ -32,7 +32,7 @@ class Tokenization(object):
                                max_query_length: int,
                                max_passage_length: int,
                                negative_sample_size: int,
-                               remove_qbound: bool = False) -> List[SearchFeat]:
+                               add_qbound: bool = False) -> List[SearchFeat]:
         query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
         passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
         passages_examples: Dict[str, Passage] = {passage.id: passage for passage in passages_examples}
@@ -44,7 +44,7 @@ class Tokenization(object):
         passage_feats = dict()
         search_feats = list()
         for query_obj in tqdm(query_examples, "Loading Queries"):
-            query_feat = self.get_query_feat(query_obj, max_query_length, remove_qbound)
+            query_feat = self.get_query_feat(query_obj, max_query_length, add_qbound)
             query_feats[query_obj.id] = query_feat
             pos_passages = list()
             neg_passages = list()
@@ -70,10 +70,10 @@ class Tokenization(object):
 
         return search_feats
 
-    def get_query_feat(self, query_obj: TrainExample, max_query_length: int, remove_qbound: bool = False) -> QueryFeat:
+    def get_query_feat(self, query_obj: TrainExample, max_query_length: int, add_qbound: bool = False) -> QueryFeat:
         max_query_length_exclude = max_query_length - 1
         query_event_start, query_event_end, \
-        query_tokenized, query_input_mask = self.query_tokenization(query_obj, max_query_length_exclude, remove_qbound)
+        query_tokenized, query_input_mask = self.query_tokenization(query_obj, max_query_length_exclude, add_qbound)
 
         query_tokenized.append("[SEP]")
         query_input_mask.append(0)
@@ -158,10 +158,11 @@ class Tokenization(object):
         assert passage_event_start_ind <= passage_event_end_ind
         return passage_event_start_ind, passage_event_end_ind, passage_end_bound, passage_tokenized, passage_input_mask
 
-    def query_tokenization(self, query_obj: TrainExample, max_query_length_exclude: int, remove_qbound: bool):
+    def query_tokenization(self, query_obj: TrainExample, max_query_length_exclude: int, add_qbound: bool):
         query_tokenized = list()
         query_event_start_ind = query_event_end_ind = 0
-        self.add_query_bound(query_obj)
+        if add_qbound:
+            self.add_query_bound(query_obj)
         for word in query_obj.context:
             query_tokenized.extend(self.tokenizer.tokenize(word))
             if word == QUERY_SPAN_START:
@@ -171,13 +172,6 @@ class Tokenization(object):
 
         pointer_start = query_event_start_ind - 1
         pointer_end = query_event_end_ind + 1
-        if remove_qbound:
-            query_tokenized.remove(QUERY_SPAN_START)
-            query_tokenized.remove(QUERY_SPAN_END)
-            query_event_start_ind -= 1
-            query_event_end_ind -= 1
-            pointer_start = query_event_start_ind
-            pointer_end = query_event_end_ind
 
         if len(query_tokenized) > max_query_length_exclude:
             trimmed_query_tok = query_tokenized[pointer_start:pointer_end + 1]
@@ -198,8 +192,9 @@ class Tokenization(object):
             query_tokenized.append('[PAD]')
             query_input_mask.append(0)
 
-        assert "".join(query_obj.mention) == "".join(
-            [s.strip('##') for s in query_tokenized[query_event_start_ind:query_event_end_ind + 1]])
+        if query_obj.mention:
+            assert "".join(query_obj.mention) == "".join(
+                [s.strip('##') for s in query_tokenized[query_event_start_ind:query_event_end_ind + 1]])
         return query_event_start_ind, query_event_end_ind, query_tokenized, query_input_mask
 
     @staticmethod

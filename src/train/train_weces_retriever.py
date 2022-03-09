@@ -1,5 +1,4 @@
 import logging
-import logging
 import random
 import time
 from datetime import datetime
@@ -10,7 +9,7 @@ import torch
 from transformers import AdamW
 
 from src.models.coref_search_model import SimilarityModel
-from src.models.wece_retriever import WECESRetriever
+from src.models.weces_retriever import WECESRetriever
 from src.utils.data_utils import generate_train_batches
 from src.utils.evaluation import generate_sim_results, evaluate_retriever
 from src.utils.io_utils import save_checkpoint
@@ -37,7 +36,7 @@ def train():
     logger.info(f"{checkpoints_path}-folder created..")
 
     cpu_only = False
-    epochs = 15
+    epochs = 8
     train_negative_samples = 1
     dev_negative_samples = 5
     in_batch_samples = 10
@@ -45,7 +44,7 @@ def train():
     train_batch_size = in_batch_samples * (train_negative_samples + 1)
     dev_batch_size = in_batch_samples * (dev_negative_samples + 1)
     lr = 1e-6
-    remove_qbound_tokens = False
+    add_qbound_tokens = True
     max_query_length = 50
     max_passage_length = 150
     assert (max_query_length + max_passage_length + 3) <= 512
@@ -67,19 +66,17 @@ def train():
     if n_gpu > 1:
         weces_retriever = torch.nn.DataParallel(weces_retriever)
 
-    similarity_method = SimilarityModel(device)
-
     optimizer = AdamW(weces_retriever.parameters(), lr=lr)
 
     train_search_feats = tokenization.generate_queries_feats(train_examples_file,
                                                              train_passages_file, max_query_length,
                                                              max_passage_length, train_negative_samples,
-                                                             remove_qbound_tokens)
+                                                             add_qbound_tokens)
 
     dev_search_feats = tokenization.generate_queries_feats(dev_examples_file,
                                                            dev_passages_file, max_query_length,
                                                            max_passage_length, dev_negative_samples,
-                                                           remove_qbound_tokens)
+                                                           add_qbound_tokens)
 
     train_batches = generate_train_batches(train_search_feats, train_batch_size)
     dev_batches = generate_train_batches(dev_search_feats, dev_batch_size)
@@ -125,7 +122,7 @@ def train():
                 epoch, step + 1, len(train_batches), time.time() - start_time, accum_loss / tot_steps))
 
         logger.info("Train-Similarity: accuracy={}".format(generate_sim_results(batch_golds, batch_predictions)))
-        evaluate_retriever(weces_retriever, dev_batches, dev_negative_samples + 1, similarity_method, n_gpu)
+        evaluate_retriever(weces_retriever, dev_batches, dev_negative_samples + 1, n_gpu)
         save_checkpoint(checkpoints_path, epoch, weces_retriever, tokenization, optimizer)
 
 

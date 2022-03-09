@@ -44,7 +44,7 @@ def train():
     train_batch_size = in_batch_samples * (train_negative_samples + 1)
     dev_batch_size = in_batch_samples * (dev_negative_samples + 1)
     lr = 1e-6
-    remove_qbound_tokens = False
+    add_qbound_tokens = True
     max_query_length = 50
     max_passage_length = 150
     assert (max_query_length + max_passage_length + 3) <= 512
@@ -73,12 +73,12 @@ def train():
     train_search_feats = tokenization.generate_queries_feats(train_examples_file,
                                                              train_passages_file, max_query_length,
                                                              max_passage_length, train_negative_samples,
-                                                             remove_qbound_tokens)
+                                                             add_qbound_tokens)
 
     dev_search_feats = tokenization.generate_queries_feats(dev_examples_file,
                                                            dev_passages_file, max_query_length,
                                                            max_passage_length, dev_negative_samples,
-                                                           remove_qbound_tokens)
+                                                           add_qbound_tokens)
 
     train_batches = generate_train_batches(train_search_feats, train_batch_size)
     dev_batches = generate_train_batches(dev_search_feats, dev_batch_size)

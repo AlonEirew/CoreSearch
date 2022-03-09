@@ -12,7 +12,7 @@ from transformers import BertTokenizer
 from src.data_obj import Passage, PassageFeat
 from src.utils import io_utils, dpr_utils
 from src.utils.data_utils import generate_index_batches
-from src.utils.io_utils import load_model
+from src.utils.io_utils import load_model_bkp
 from src.utils.tokenization import Tokenization
 
 
@@ -48,7 +48,7 @@ def faiss_orig_index(passages_file,
 
 def faiss_mymodel_index(passages_file, sql_url, passage_model_file, max_seq_len_passage, batch_size, device):
     document_store = create_default_faiss_doc_store(sql_url)
-    passage_encoder = load_model(passage_model_file)
+    passage_encoder = load_model_bkp(passage_model_file)
     passage_encoder.eval()
     if device == "gpu":
         passage_encoder.cuda()

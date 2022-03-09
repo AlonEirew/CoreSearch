@@ -88,12 +88,21 @@ class EvaluationObject(object):
 
 class BasicMent(object):
     def __init__(self, json_obj: Dict):
+        self.context = json_obj["context"]
+        if "dummy" in json_obj and json_obj["dummy"]:
+            self.id = None
+            self.goldChain = None
+            self.mention = None
+            self.startIndex = None
+            self.endIndex = None
+            return
+
         self.id = json_obj["id"]
         self.goldChain = str(json_obj["goldChain"])
-        self.context = json_obj["context"]
         self.mention = json_obj["mention"]
         self.startIndex = json_obj["startIndex"]
         self.endIndex = json_obj["endIndex"]
+        self.context = json_obj["context"]
 
     @staticmethod
     def list_to_map(list_to_convert) -> Dict:
@@ -137,6 +146,9 @@ class QueryResult(object):
 class TrainExample(BasicMent):
     def __init__(self, json_obj: Dict):
         super().__init__(json_obj)
+        if "dummy" in json_obj and json_obj["dummy"]:
+            return
+
         self.positive_examples = json_obj["positive_examples"]
         self.negative_examples = json_obj["negative_examples"]
         self.bm25_query = json_obj["bm25_query"]

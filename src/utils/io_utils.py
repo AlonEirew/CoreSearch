@@ -6,11 +6,13 @@ from typing import Dict, List, Any, Union
 
 import torch
 from haystack import Document
+from haystack.modeling.model.biadaptive_model import BiAdaptiveModel
+from haystack.modeling.model.prediction_head import TextSimilarityHead
 from tqdm import tqdm
-from transformers import AdamW, BertConfig, BertModel
+from transformers import AdamW, BertConfig, BertModel, BertTokenizer
 
-from src.coref_search_model import SpanPredAuxiliary
 from src.data_obj import Query, Passage, Cluster, TrainExample
+from src.override_classes.wec_text_processor import WECSimilarityProcessor
 from src.utils.tokenization import Tokenization
 
 
@@ -64,7 +66,7 @@ def read_id_sent_file(in_file: str) -> Dict[str, str]:
     return queries
 
 
-def save_checkpoint(path: str, epoch: int, model: SpanPredAuxiliary, tokenization: Tokenization, optimizer: AdamW):
+def save_checkpoint(path: str, epoch: int, model, tokenization: Tokenization, optimizer: AdamW):
     model_dir = Path(os.path.join(path, "model-{}".format(epoch)))
     print(f"Saving a checkpoint to {model_dir}...")
     if not os.path.exists(model_dir):
@@ -73,7 +75,7 @@ def save_checkpoint(path: str, epoch: int, model: SpanPredAuxiliary, tokenizatio
     tokenization.tokenizer.save_pretrained(model_dir)
 
 
-def save_checkpoint_dpr(path: str, epoch: int, model: SpanPredAuxiliary, tokenization: Tokenization, optimizer: AdamW):
+def save_checkpoint_dpr(path: str, epoch: int, model, tokenization: Tokenization, optimizer: AdamW):
     model_dir = Path(os.path.join(path, "model-{}".format(epoch)))
     qencoder_dir = Path.joinpath(model_dir, Path("query_encoder"))
     pencoder_dir = Path.joinpath(model_dir, Path("passage_encoder"))
@@ -91,9 +93,9 @@ def save_checkpoint_dpr(path: str, epoch: int, model: SpanPredAuxiliary, tokeniz
         passage_encoder = passage_encoder.module
 
     query_encoder_checkpoint = {'epoch': epoch, 'model_state_dict': query_encoder.state_dict(),
-                  'optimizer_state_dict': optimizer.state_dict()}
-    passage_encoder_checkpoint = {'epoch': epoch, 'model_state_dict': passage_encoder.state_dict(),
                                 'optimizer_state_dict': optimizer.state_dict()}
+    passage_encoder_checkpoint = {'epoch': epoch, 'model_state_dict': passage_encoder.state_dict(),
+                                  'optimizer_state_dict': optimizer.state_dict()}
 
     query_conf_filename = Path(qencoder_dir) / "language_model_config.json"
     passage_conf_filename = Path(pencoder_dir) / "language_model_config.json"
@@ -115,11 +117,10 @@ def save_checkpoint_dpr(path: str, epoch: int, model: SpanPredAuxiliary, tokeniz
     tokenization.tokenizer.save_pretrained(pencoder_dir)
 
 
-def load_checkpoint(path, model, optimizer=None):
-    checkpoint = torch.load(path)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    if optimizer:
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+def load_checkpoint(path):
+    model = torch.load(Path(os.path.join(path, "language_model.bin")))
+    tokenizer = BertTokenizer.from_pretrained(path)
+    return model, tokenizer
 
 
 def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
@@ -142,7 +143,39 @@ def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
     return documents
 
 
-def load_model(pretrained_model_name_or_path: Union[Path, str], **kwargs):
+def replace_retriever_model(retriever, model_path, max_seq_len_query, max_seq_len_passage):
+    print("Replacing retriever model..")
+    model, tokenizer = load_checkpoint(model_path)
+    prediction_head = TextSimilarityHead(similarity_function="dot_product",
+                                         global_loss_buffer_size=150000)
+    retriever.passage_encoder = model.passage_encoder
+    retriever.passage_tokenizer = tokenizer
+    retriever.query_encoder = model.query_encoder
+    retriever.query_tokenizer = tokenizer
+
+    retriever.model = BiAdaptiveModel(
+        language_model1=model.query_encoder,
+        language_model2=model.passage_encoder,
+        prediction_heads=[prediction_head],
+        embeds_dropout_prob=0.1,
+        lm1_output_types=["per_sequence"],
+        lm2_output_types=["per_sequence"],
+        device=str(retriever.devices[0]),
+    )
+
+    retriever.processor = WECSimilarityProcessor(query_tokenizer=tokenizer,
+                                                 passage_tokenizer=tokenizer,
+                                                 max_seq_len_passage=max_seq_len_passage,
+                                                 max_seq_len_query=max_seq_len_query,
+                                                 label_list=["hard_negative", "positive"],
+                                                 metric="text_similarity_metric",
+                                                 embed_title=False,
+                                                 num_hard_negatives=0,
+                                                 num_positives=1,
+                                                 tokenization=Tokenization(tokenizer=tokenizer))
+
+
+def load_model_bkp(pretrained_model_name_or_path: Union[Path, str], **kwargs):
     haystack_lm_config = Path(pretrained_model_name_or_path) / "language_model_config.json"
     if os.path.exists(haystack_lm_config):
         # Haystack style

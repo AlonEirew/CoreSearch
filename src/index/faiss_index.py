@@ -1,17 +1,14 @@
 from pathlib import Path
-from typing import List, Dict
+from typing import List
 
 from haystack import Document
-from tqdm import tqdm
 
-from src.data_obj import Passage, PassageFeat
 from src.utils import io_utils, dpr_utils
-from src.utils.data_utils import generate_index_batches
-from src.utils.tokenization import Tokenization
+from src.utils.io_utils import replace_retriever_model
 
 
 def faiss_index(passages_file,
-                extract_embed,
+                load_model,
                 faiss_file_path,
                 sql_rul,
                 query_encode,
@@ -34,30 +31,11 @@ def faiss_index(passages_file,
     print("Writing document to FAISS index (may take a while)..")
 
     documents: List[Document] = io_utils.read_wec_to_haystack_doc_list(passages_file)
-    doc_dict: Dict[str, Document] = {
-        doc.id: doc for doc in documents
-    }
-    if extract_embed:
-        tokenizer = Tokenization(tokenizer=retriever.passage_tokenizer)
-        passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
-        passages_feats: List[PassageFeat] = [
-            tokenizer.get_passage_feat(passage, max_seq_len_passage) for passage in passages_examples
-        ]
-        ids, batches = generate_index_batches(passages_feats, batch_size)
-        for i, batch in enumerate(tqdm(batches)):
-            batch = tuple(t.cuda() for t in batch)
-            pass_input_tensor, pass_segment_tensor, pass_input_mask_tensor = batch
-            embeddings = retriever.passage_encoder(passage_input_ids=pass_input_tensor,
-                                                   passage_segment_ids=pass_segment_tensor,
-                                                   passage_attention_mask=pass_input_mask_tensor)[0]
-            for j, _id in enumerate(ids[i]):
-                doc_dict[_id].embedding = embeddings[j].detach().cpu().view(-1).numpy()
+    if load_model:
+        replace_retriever_model(retriever, load_model, max_seq_len_query, max_seq_len_passage)
 
-        document_store.write_documents(documents=documents)
-    else:
-        document_store.write_documents(documents=documents)
-        document_store.update_embeddings(retriever=retriever)
-
+    document_store.write_documents(documents=documents)
+    document_store.update_embeddings(retriever=retriever)
     document_store.save(faiss_file_path)
     print("FAISS index creation done!")
 
@@ -78,25 +56,25 @@ def main():
     max_seq_len_query = 50
     max_seq_len_passage = 150
 
-    # passages_file = "data/resources/WEC-ES/Dev_all_passages.json"
-    passages_file = "data/resources/WEC-ES/Tiny_passages.json"
+    passages_file = "data/resources/WEC-ES/Dev_all_passages.json"
+    # passages_file = "data/resources/WEC-ES/Tiny_passages.json"
 
-    # query_encode = "bert-base-cased"
-    # passage_encode = "bert-base-cased"
+    query_encode = "bert-base-cased"
+    passage_encode = "bert-base-cased"
     # query_encode = "SpanBERT/spanbert-base-cased"
     # passage_encode = "SpanBERT/spanbert-base-cased"
     # query_encode = "facebook/dpr-question_encoder-multiset-base"
     # passage_encode = "facebook/dpr-ctx_encoder-multiset-base"
     # query_encode = "data/checkpoints/spanbert_2it/query_encoder"
     # passage_encode = "data/checkpoints/spanbert_2it/passage_encoder"
-    query_encode = "data/checkpoints/21022022_123254/model-13/query_encoder"
-    passage_encode = "data/checkpoints/21022022_123254/model-13/passage_encoder"
+    # query_encode = "data/checkpoints/08032022_092845/model-3/query_encoder"
+    # passage_encode = "data/checkpoints/08032022_092845/model-3/passage_encoder"
 
-    load_tokenizer = True
+    load_tokenizer = False
     infer_tokenizer_classes = True
-    extract_embed = True
+    load_model = None #"data/checkpoints/08032022_143409/model-3"
 
-    faiss_index(passages_file, extract_embed, faiss_file_path, sql_rul, query_encode, passage_encode,
+    faiss_index(passages_file, load_model, faiss_file_path, sql_rul, query_encode, passage_encode,
                 infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer)
 
 

@@ -117,13 +117,13 @@ def evaluate_reader(model, dev_batches, similarity_method, negatives, n_gpu):
     # generate_results_inspection(tokenization.tokenizer, evaluation_objects)
 
 
-def evaluate_retriever(model, dev_batches, samples, similarity_method, n_gpu):
+def evaluate_retriever(model, dev_batches, samples, n_gpu):
     model.eval()
     all_predictions = list()
     gold_labs = list()
     for step, batch in enumerate(dev_batches):
         if n_gpu == 1:
-            batch = tuple(t.to(similarity_method.device) for t in batch)
+            batch = tuple(t.to(model.device) for t in batch)
         passage_input_ids, query_input_ids, \
         passage_input_mask, query_input_mask, \
         passage_segment_ids, query_segment_ids, \

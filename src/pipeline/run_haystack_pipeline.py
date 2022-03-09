@@ -8,6 +8,7 @@ from src.data_obj import Cluster, TrainExample, Passage, QueryResult
 from src.index import elastic_index
 from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
 from src.utils import io_utils, measurments, data_utils, dpr_utils, measure_squad
+from src.utils.io_utils import replace_retriever_model
 from src.utils.measurments import precision, precision_squad
 from src.utils.tokenization import Tokenization
 
@@ -22,20 +23,22 @@ def main():
     # run_pipe_str = "qa"
     # Query methods can be one of {bm25,ment_only, ment_sent, full_ctx}
     # query_method = "full_ctx"
-    query_method = "with_bounds"
+    query_method = "bm25"
     es_index = SPLIT.lower()
-    index_folder = "test"
+    index_folder = "test_bert"
     # index_folder = "spanbert_ft"
-    experiment_name = "test"
+    experiment_name = "test_bert"
 
     infer_tokenizer_classes = True
     max_seq_len_query = 50
     max_seq_len_passage = 150
     batch_size = 16
 
-    query_encode = "data/checkpoints/21022022_123254/model-13/query_encoder"
-    passage_encode = "data/checkpoints/21022022_123254/model-13/passage_encoder"
-    load_tokenizer = True
+    query_encode = "bert-base-cased"
+    passage_encode = "bert-base-cased"
+    # load_model = None use the query & passage encoders, is set to value, replace with model from value
+    load_model = None #"data/checkpoints/08032022_143409/model-3"
+    load_tokenizer = False
 
     reader_model_file = "squad_roberta_1it"
     # reader_model_ofb = "deepset/roberta-base-squad2"
@@ -72,6 +75,8 @@ def main():
                                                              max_seq_len_passage,
                                                              batch_size,
                                                              load_tokenizer)
+        if load_model:
+            replace_retriever_model(retriever, load_model, max_seq_len_query, max_seq_len_passage)
     elif index_type == "elastic_bm25":
         document_store, retriever = elastic_index.load_elastic_bm25(es_index)
     else:
@@ -82,10 +87,10 @@ def main():
 
     if run_pipe_str == "qa":
         if reader_model_file:
-            reader_model = checkpoint_dir + reader_model_file
+            retriever_model = checkpoint_dir + reader_model_file
             pipeline = QAPipeline(document_store=document_store,
                                   retriever=retriever,
-                                  reader=FARMReader(model_name_or_path=reader_model, use_gpu=True, num_processes=8),
+                                  reader=FARMReader(model_name_or_path=retriever_model, use_gpu=True, num_processes=8),
                                   ret_topk=150,
                                   read_topk=50)
         else:
