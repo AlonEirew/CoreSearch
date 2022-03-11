@@ -56,5 +56,5 @@ class WECESRetriever(nn.Module):
     @staticmethod
     def predict_pairwise(query_rep, passage_rep):
         prediction = torch.cosine_similarity(query_rep, passage_rep)
-        prediction = torch.round(prediction)
+        # prediction = torch.round(prediction)
         return prediction

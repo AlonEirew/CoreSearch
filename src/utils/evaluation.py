@@ -83,8 +83,8 @@ def evaluate_reader(model, dev_batches, similarity_method, negatives, n_gpu):
                             passage_segment_ids, query_segment_ids,
                             passage_event_starts, passage_event_ends)
             passage_rep = similarity_method.extract_passage_embeddings(outputs, passage_end_bound)
-            query_rep = similarity_method.extract_query_embeddings(outputs.query_hidden_states, query_event_starts,
-                                                                   query_event_ends, negatives+1)
+            query_rep = similarity_method.extract_query_startend_embeddings(outputs.query_hidden_states, query_event_starts,
+                                                                            query_event_ends, negatives + 1)
 
             passage_rep = passage_rep.view(query_rep.size(0), negatives + 1, -1)
             predicted_idxs, _ = similarity_method.predict_softmax(query_rep, passage_rep)

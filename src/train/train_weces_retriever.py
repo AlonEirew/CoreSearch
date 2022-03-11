@@ -36,7 +36,7 @@ def train():
     logger.info(f"{checkpoints_path}-folder created..")
 
     cpu_only = False
-    epochs = 8
+    epochs = 1
     train_negative_samples = 1
     dev_negative_samples = 5
     in_batch_samples = 10

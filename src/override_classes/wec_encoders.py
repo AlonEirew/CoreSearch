@@ -1,10 +1,7 @@
-import os
 from abc import ABC
-from pathlib import Path
-from typing import Union
 
 import torch
-from haystack.modeling.model.language_model import LanguageModel, silence_transformers_logs
+from haystack.modeling.model.language_model import LanguageModel
 from transformers import BertModel, BertConfig
 
 
@@ -18,25 +15,13 @@ class WECEncoder(LanguageModel, ABC):
         self.model.resize_token_embeddings(token_len)
         self.device = device
 
-    def segment_encode(self, input_ids, token_type_ids, input_mask, head_mask):
+    def segment_encode(self, input_ids, token_type_ids, input_mask):
         if len(input_ids.size()) > 2:
             input_ids = torch.squeeze(input_ids)
             token_type_ids = torch.squeeze(token_type_ids)
             input_mask = torch.squeeze(input_mask)
 
-        embedding_output = self.model.embeddings(input_ids=input_ids, token_type_ids=token_type_ids)
-        extended_attention_mask = input_mask[:, None, None, :]
-        extended_attention_mask = extended_attention_mask.to(dtype=torch.float32)
-        extended_attention_mask = (1.0 - extended_attention_mask) * -10000.0
-        encodings = self.model.encoder(
-            embedding_output,
-            attention_mask=extended_attention_mask,
-            head_mask=head_mask,
-            use_cache=False,
-            output_attentions=False,
-            output_hidden_states=False,
-            return_dict=True,
-        )
+        encodings = self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=input_mask)
         return encodings
 
 
@@ -48,14 +33,13 @@ class WECContextEncoder(WECEncoder):
 
     def forward(self, passage_input_ids: torch.Tensor, passage_segment_ids: torch.Tensor,
                 passage_attention_mask: torch.Tensor, **kwargs):
-        head_mask = [None] * self.config.num_hidden_layers
         passage_encode = self.segment_encode(passage_input_ids,
                                              passage_segment_ids,
-                                             passage_attention_mask,
-                                             head_mask)
+                                             passage_attention_mask)
 
-        # extract the last-hidden-state and then only the CLS token embeddings
+        # extract the last-hidden-state CLS token embeddings
         return passage_encode[0][:, 0, :], None
+        # return passage_encode.pooler_output, None
 
     def freeze(self, layers):
         pass
@@ -78,7 +62,6 @@ class WECQuestionEncoder(WECEncoder):
         if "sample_size" in kwargs:
             samples_size = kwargs["sample_size"]
 
-        head_mask = [None] * self.config.num_hidden_layers
         query_indices = torch.arange(start=0, end=query_input_ids.size(0), step=samples_size, device=self.device)
         query_input_ids_slc = torch.index_select(query_input_ids, dim=0, index=query_indices)
         query_segment_ids_slc = torch.index_select(query_segment_ids, dim=0, index=query_indices)
@@ -88,11 +71,11 @@ class WECQuestionEncoder(WECEncoder):
 
         query_encode = self.segment_encode(query_input_ids_slc,
                                            query_segment_ids_slc,
-                                           query_input_mask_slc,
-                                           head_mask)
+                                           query_input_mask_slc)
 
-        out_query_embed = self.extract_query_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
+        out_query_embed = self.extract_query_span_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
         return out_query_embed, None
+        # return query_encode[0][:, 0, :], None
 
     def freeze(self, layers):
         pass
@@ -101,10 +84,22 @@ class WECQuestionEncoder(WECEncoder):
         pass
 
     @staticmethod
-    def extract_query_embeddings(query_hidden_states,
-                                 query_event_starts,
-                                 query_event_ends):
+    def extract_query_startend_embeddings(query_hidden_states,
+                                          query_event_starts,
+                                          query_event_ends):
         query_start_embeds = query_hidden_states[range(0, query_hidden_states.shape[0]), query_event_starts]
         query_end_embeds = query_hidden_states[range(0, query_hidden_states.shape[0]), query_event_ends]
         query_rep = (query_start_embeds * query_end_embeds) / 2
         return query_rep
+
+    @staticmethod
+    def extract_query_span_embeddings(query_hidden_states,
+                                      query_event_starts,
+                                      query_event_ends):
+        # query_span = query_hidden_states[range(0, query_hidden_states.shape[0]), torch.cat((query_event_starts.view(-1,1), query_event_ends.view(-1,1)), dim=1)]
+        # result = torch.empty(query_hidden_states.size(0), query_hidden_states.size(2))
+        result = list()
+        for i in range(query_hidden_states.size(0)):
+            query_span = query_hidden_states[0][query_event_starts[0]:query_event_ends[0]]
+            result.append(torch.mean(query_span, dim=0))
+        return torch.stack(result)

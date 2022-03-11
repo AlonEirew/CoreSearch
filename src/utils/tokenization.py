@@ -71,23 +71,29 @@ class Tokenization(object):
         return search_feats
 
     def get_query_feat(self, query_obj: TrainExample, max_query_length: int, add_qbound: bool = False) -> QueryFeat:
-        max_query_length_exclude = max_query_length - 1
+        max_query_length_exclude = max_query_length - 2
         query_event_start, query_event_end, \
         query_tokenized, query_input_mask = self.query_tokenization(query_obj, max_query_length_exclude, add_qbound)
+        query_tokenized.insert(0, "[CLS]")
+        query_input_mask.insert(0, 1)
+        query_event_start += 1
+        query_event_end += 1
 
         query_tokenized.append("[SEP]")
         query_input_mask.append(0)
         query_segment_ids = [1] * len(query_tokenized)
-
-        # if query_event_start != 0 and query_event_end != 0:
-        #     query_event_start += max_passage_length
-        #     query_event_end += max_passage_length
-
         query_input_ids = self.tokenizer.convert_tokens_to_ids(query_tokenized)
 
         assert len(query_input_ids) == max_query_length
         assert len(query_input_mask) == max_query_length
         assert len(query_segment_ids) == max_query_length
+        assert query_input_ids[query_event_start] == self.tokenizer.added_tokens_encoder["[QSPAN_START]"]
+        assert query_input_ids[query_event_end] == self.tokenizer.added_tokens_encoder["[QSPAN_END]"]
+
+        # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
+        if query_obj.mention:
+            assert "".join(query_obj.mention) == "".join(
+                [s.strip('##') for s in query_tokenized[query_event_start + 1:query_event_end]])
 
         return QueryFeat(query_input_ids=query_input_ids,
                          query_input_mask=query_input_mask,
@@ -166,12 +172,12 @@ class Tokenization(object):
         for word in query_obj.context:
             query_tokenized.extend(self.tokenizer.tokenize(word))
             if word == QUERY_SPAN_START:
-                query_event_start_ind = len(query_tokenized)
+                query_event_start_ind = len(query_tokenized) - 1
             elif word == QUERY_SPAN_END:
-                query_event_end_ind = len(query_tokenized) - 2
+                query_event_end_ind = len(query_tokenized) - 1
 
-        pointer_start = query_event_start_ind - 1
-        pointer_end = query_event_end_ind + 1
+        pointer_start = query_event_start_ind
+        pointer_end = query_event_end_ind
 
         if len(query_tokenized) > max_query_length_exclude:
             trimmed_query_tok = query_tokenized[pointer_start:pointer_end + 1]
@@ -192,9 +198,6 @@ class Tokenization(object):
             query_tokenized.append('[PAD]')
             query_input_mask.append(0)
 
-        if query_obj.mention:
-            assert "".join(query_obj.mention) == "".join(
-                [s.strip('##') for s in query_tokenized[query_event_start_ind:query_event_end_ind + 1]])
         return query_event_start_ind, query_event_end_ind, query_tokenized, query_input_mask
 
     @staticmethod

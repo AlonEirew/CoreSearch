@@ -21,13 +21,13 @@ def main():
     index_type = "faiss_dpr"
     run_pipe_str = "retriever"
     # run_pipe_str = "qa"
-    # Query methods can be one of {bm25,ment_only, ment_sent, full_ctx}
+    # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
     # query_method = "full_ctx"
-    query_method = "bm25"
+    query_method = "with_bounds"
     es_index = SPLIT.lower()
-    index_folder = "test_bert"
+    index_folder = "080322_it3"
     # index_folder = "spanbert_ft"
-    experiment_name = "test_bert"
+    experiment_name = "080322_it3"
 
     infer_tokenizer_classes = True
     max_seq_len_query = 50
@@ -37,7 +37,7 @@ def main():
     query_encode = "bert-base-cased"
     passage_encode = "bert-base-cased"
     # load_model = None use the query & passage encoders, is set to value, replace with model from value
-    load_model = None #"data/checkpoints/08032022_143409/model-3"
+    load_model = "data/checkpoints/08032022_143409/model-3"
     load_tokenizer = False
 
     reader_model_file = "squad_roberta_1it"
