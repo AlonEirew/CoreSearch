@@ -38,6 +38,15 @@ def read_query_file(queries_file: str) -> List[Query]:
     return queries
 
 
+def read_passages_file_filtered(passages_file: str, fileter_list: List[str]) -> List[Passage]:
+    passages_json = load_json_file(passages_file)
+    passages = list()
+    for pass_obj in tqdm(passages_json, desc="Reading passages"):
+        if pass_obj["id"] in fileter_list:
+            passages.append(Passage(pass_obj))
+    return passages
+
+
 def read_passages_file(passages_file: str) -> List[Passage]:
     passages_json = load_json_file(passages_file)
     passages = list()

@@ -26,7 +26,8 @@ def faiss_index(passages_file,
                                                            max_seq_len_query,
                                                            max_seq_len_passage,
                                                            batch_size,
-                                                           load_tokenizer)
+                                                           load_tokenizer,
+                                                           similarity="cosine")
     document_store.delete_documents()
     print("Writing document to FAISS index (may take a while)..")
     if load_model:
@@ -39,7 +40,7 @@ def faiss_index(passages_file,
 
 
 def main():
-    faiss_dir = "indexes/100322_it3"
+    faiss_dir = "indexes/110322_it3"
     faiss_path_prefix = faiss_dir + "/dev_index"
     faiss_file_path = "%s.faiss" % faiss_path_prefix
     sql_rul = "sqlite:///%s.db" % faiss_path_prefix
@@ -70,7 +71,7 @@ def main():
 
     load_tokenizer = False
     infer_tokenizer_classes = True
-    load_model = "data/checkpoints/10032022_142432/model-3"
+    load_model = "data/checkpoints/mul_start_end_spacial_tokens/model-3"
 
     faiss_index(passages_file, load_model, faiss_file_path, sql_rul, query_encode, passage_encode,
                 infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer)

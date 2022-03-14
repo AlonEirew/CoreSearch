@@ -54,7 +54,14 @@ class WECESRetriever(nn.Module):
         return predicted_idxs, softmax_scores
 
     @staticmethod
-    def predict_pairwise(query_rep, passage_rep):
+    def predict_pairwise_cosine(query_rep, passage_rep):
         prediction = torch.cosine_similarity(query_rep, passage_rep)
+        # prediction = torch.round(prediction)
+        return prediction
+
+    @staticmethod
+    def predict_pairwise_dot_product(query_rep, passage_rep):
+        # prediction = torch.dot(query_rep, passage_rep)
+        prediction = query_rep @ passage_rep.T
         # prediction = torch.round(prediction)
         return prediction

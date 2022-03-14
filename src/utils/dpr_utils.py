@@ -8,9 +8,9 @@ logger = logging.getLogger("dpr_utils")
 logger.setLevel(logging.DEBUG)
 
 
-def create_default_faiss_doc_store(sql_rul):
+def create_default_faiss_doc_store(sql_rul, similarity):
     return FAISSDocumentStore(sql_url=sql_rul,
-                              similarity="dot_product")
+                              similarity=similarity)
 
 
 def load_faiss_doc_store(faiss_file_path, faiss_config_file):
@@ -35,8 +35,8 @@ def load_dpr(document_store, query_encode, passage_encode, infer_tokenizer_class
 
 
 def create_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_classes,
-                     max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer):
-    document_store = create_default_faiss_doc_store(sql_rul)
+                     max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer, similarity):
+    document_store = create_default_faiss_doc_store(sql_rul, similarity)
     retriever = load_dpr(document_store, query_encode, passage_encode,
                          infer_tokenizer_classes,
                          max_seq_len_query,

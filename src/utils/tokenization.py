@@ -87,13 +87,22 @@ class Tokenization(object):
         assert len(query_input_ids) == max_query_length
         assert len(query_input_mask) == max_query_length
         assert len(query_segment_ids) == max_query_length
-        assert query_input_ids[query_event_start] == self.tokenizer.added_tokens_encoder["[QSPAN_START]"]
-        assert query_input_ids[query_event_end] == self.tokenizer.added_tokens_encoder["[QSPAN_END]"]
-
-        # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
-        if query_obj.mention:
-            assert "".join(query_obj.mention) == "".join(
-                [s.strip('##') for s in query_tokenized[query_event_start + 1:query_event_end]])
+        if add_qbound:
+            assert query_input_ids[query_event_start] == self.tokenizer.added_tokens_encoder[QUERY_SPAN_START]
+            assert query_input_ids[query_event_end] == self.tokenizer.added_tokens_encoder[QUERY_SPAN_END]
+            # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
+            if query_obj.mention:
+                assert "".join(query_obj.mention) == "".join(
+                    [s.strip('##') for s in query_tokenized[query_event_start+1:query_event_end]])
+        else:
+            assert query_input_ids[query_event_start] == self.tokenizer.convert_tokens_to_ids(
+                self.tokenizer.tokenize(query_obj.mention[0])[0])
+            assert query_input_ids[query_event_end] == self.tokenizer.convert_tokens_to_ids(
+                self.tokenizer.tokenize(query_obj.mention[-1])[-1])
+            # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
+            if query_obj.mention:
+                assert "".join(query_obj.mention) == "".join(
+                    [s.strip('##') for s in query_tokenized[query_event_start:query_event_end + 1]])
 
         return QueryFeat(query_input_ids=query_input_ids,
                          query_input_mask=query_input_mask,
@@ -167,14 +176,20 @@ class Tokenization(object):
     def query_tokenization(self, query_obj: TrainExample, max_query_length_exclude: int, add_qbound: bool):
         query_tokenized = list()
         query_event_start_ind = query_event_end_ind = 0
-        if add_qbound:
+        if add_qbound and QUERY_SPAN_END not in query_obj.context and QUERY_SPAN_START not in query_obj.context:
             self.add_query_bound(query_obj)
-        for word in query_obj.context:
+        for index, word in enumerate(query_obj.context):
             query_tokenized.extend(self.tokenizer.tokenize(word))
-            if word == QUERY_SPAN_START:
-                query_event_start_ind = len(query_tokenized) - 1
-            elif word == QUERY_SPAN_END:
-                query_event_end_ind = len(query_tokenized) - 1
+            if add_qbound:
+                if word == QUERY_SPAN_START:
+                    query_event_start_ind = len(query_tokenized) - 1
+                elif word == QUERY_SPAN_END:
+                    query_event_end_ind = len(query_tokenized) - 1
+            else:
+                if index == query_obj.startIndex:
+                    query_event_start_ind = len(query_tokenized) - len(self.tokenizer.tokenize(word))
+                if index == query_obj.endIndex:
+                    query_event_end_ind = len(query_tokenized) - 1
 
         pointer_start = query_event_start_ind
         pointer_end = query_event_end_ind
