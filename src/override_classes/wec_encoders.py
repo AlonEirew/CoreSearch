@@ -2,6 +2,7 @@ from abc import ABC
 
 import torch
 from haystack.modeling.model.language_model import LanguageModel
+from torch import nn
 from transformers import BertModel, BertConfig
 
 
@@ -26,9 +27,10 @@ class WECEncoder(LanguageModel, ABC):
 
 
 class WECContextEncoder(WECEncoder):
-    def __init__(self):
+    def __init__(self, model):
         super(WECContextEncoder, self).__init__()
-        self.model = BertModel.from_pretrained('SpanBERT/spanbert-base-cased')
+        self.model = BertModel.from_pretrained(model)
+        self.dropout = nn.Dropout(0.1)
         self.name = "wec_context_encoder"
 
     def forward(self, passage_input_ids: torch.Tensor, passage_segment_ids: torch.Tensor,
@@ -37,9 +39,13 @@ class WECContextEncoder(WECEncoder):
                                              passage_segment_ids,
                                              passage_attention_mask)
 
-        # extract the last-hidden-state CLS token embeddings
-        return passage_encode[0][:, 0, :], None
-        # return passage_encode.pooler_output, None
+        if len(kwargs) > 1:
+            # extract the last-hidden-state CLS token embeddings
+            # return self.dropout(passage_encode[0][:, 0, :]), None
+            return passage_encode[0][:, 0, :], None
+            # return passage_encode.pooler_output, None
+        else:
+            return passage_encode[0][:, 0, :], None
 
     def freeze(self, layers):
         pass
@@ -49,15 +55,19 @@ class WECContextEncoder(WECEncoder):
 
 
 class WECQuestionEncoder(WECEncoder):
-    def __init__(self):
+    def __init__(self, model):
         super(WECQuestionEncoder, self).__init__()
-        self.model = BertModel.from_pretrained('SpanBERT/spanbert-base-cased')
+        self.model = BertModel.from_pretrained(model)
+        self.dropout = nn.Dropout(0.1)
         self.name = "wec_quesion_encoder"
 
     def forward(self, query_input_ids: torch.Tensor, query_segment_ids: torch.Tensor,
                 query_attention_mask: torch.Tensor, **kwargs):
-        query_event_starts = kwargs["query_start"]
-        query_event_ends = kwargs["query_end"]
+        query_event_starts = None
+        query_event_ends = None
+        if "query_start" in kwargs and "query_end" in kwargs:
+            query_event_starts = kwargs["query_start"]
+            query_event_ends = kwargs["query_end"]
         samples_size = 1
         if "sample_size" in kwargs:
             samples_size = kwargs["sample_size"]
@@ -66,16 +76,23 @@ class WECQuestionEncoder(WECEncoder):
         query_input_ids_slc = torch.index_select(query_input_ids, dim=0, index=query_indices)
         query_segment_ids_slc = torch.index_select(query_segment_ids, dim=0, index=query_indices)
         query_input_mask_slc = torch.index_select(query_segment_ids, dim=0, index=query_indices)
-        query_event_starts_slc = torch.index_select(query_event_starts, dim=0, index=query_indices)
-        query_event_ends_slc = torch.index_select(query_event_ends, dim=0, index=query_indices)
-
         query_encode = self.segment_encode(query_input_ids_slc,
                                            query_segment_ids_slc,
                                            query_input_mask_slc)
 
-        out_query_embed = self.extract_query_span_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
-        return out_query_embed, None
-        # return query_encode[0][:, 0, :], None
+        if query_event_starts is not None and query_event_ends is not None:
+            # Will trigger while training
+            # query_event_starts_slc = torch.index_select(query_event_starts, dim=0, index=query_indices)
+            # query_event_ends_slc = torch.index_select(query_event_ends, dim=0, index=query_indices)
+            # out_query_embed = self.extract_query_start_end_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
+            # return out_query_embed, None
+            # return self.dropout(query_encode[0][:, 0, :]), Noneֿ
+            return query_encode[0][:, 0, :], None
+            # return query_encode.pooler_output, None
+        else:
+            # Will trigger at inference
+            return query_encode[0][:, 0, :], None
+            # return query_encode.pooler_output, None
 
     def freeze(self, layers):
         pass
@@ -84,14 +101,15 @@ class WECQuestionEncoder(WECEncoder):
         pass
 
     @staticmethod
-    def extract_query_startend_embeddings(query_hidden_states,
-                                          query_event_starts,
-                                          query_event_ends):
+    def extract_query_start_end_embeddings(query_hidden_states,
+                                           query_event_starts,
+                                           query_event_ends):
         query_start_embeds = query_hidden_states[range(0, query_hidden_states.shape[0]), query_event_starts]
         query_end_embeds = query_hidden_states[range(0, query_hidden_states.shape[0]), query_event_ends]
-        query_rep = (query_start_embeds * query_end_embeds) / 2
+        query_rep = query_start_embeds * query_end_embeds
         return query_rep
 
+    # This method expects no spacial tokens (QUERY_START/QUERY_END)
     @staticmethod
     def extract_query_span_embeddings(query_hidden_states,
                                       query_event_starts,
@@ -100,6 +118,6 @@ class WECQuestionEncoder(WECEncoder):
         # result = torch.empty(query_hidden_states.size(0), query_hidden_states.size(2))
         result = list()
         for i in range(query_hidden_states.size(0)):
-            query_span = query_hidden_states[0][query_event_starts[0]:query_event_ends[0]]
+            query_span = query_hidden_states[0][query_event_starts[0]:query_event_ends[0]+1]
             result.append(torch.mean(query_span, dim=0))
         return torch.stack(result)

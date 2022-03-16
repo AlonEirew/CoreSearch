@@ -77,11 +77,17 @@ def read_id_sent_file(in_file: str) -> Dict[str, str]:
 
 def save_checkpoint(path: str, epoch: int, model, tokenization: Tokenization, optimizer: AdamW):
     model_dir = Path(os.path.join(path, "model-{}".format(epoch)))
+    query_tokenizer = Path.joinpath(model_dir, Path("query_tokenizer"))
+    passage_tokenizer = Path.joinpath(model_dir, Path("passage_tokenizer"))
     print(f"Saving a checkpoint to {model_dir}...")
-    if not os.path.exists(model_dir):
-        os.makedirs(model_dir)
+    if not os.path.exists(query_tokenizer):
+        os.makedirs(query_tokenizer)
+    if not os.path.exists(passage_tokenizer):
+        os.makedirs(passage_tokenizer)
+
     torch.save(model, Path(os.path.join(model_dir, "language_model.bin")))
-    tokenization.tokenizer.save_pretrained(model_dir)
+    tokenization.query_tokenizer.save_pretrained(query_tokenizer)
+    tokenization.passage_tokenizer.save_pretrained(passage_tokenizer)
 
 
 def save_checkpoint_dpr(path: str, epoch: int, model, tokenization: Tokenization, optimizer: AdamW):
@@ -121,15 +127,16 @@ def save_checkpoint_dpr(path: str, epoch: int, model, tokenization: Tokenization
         p_conf_file.write(string)
 
     torch.save(query_encoder_checkpoint, Path(os.path.join(qencoder_dir, "language_model.bin")))
-    tokenization.tokenizer.save_pretrained(qencoder_dir)
+    tokenization.query_tokenizer.save_pretrained(qencoder_dir)
     torch.save(passage_encoder_checkpoint, Path(os.path.join(pencoder_dir, "language_model.bin")))
-    tokenization.tokenizer.save_pretrained(pencoder_dir)
+    tokenization.query_tokenizer.save_pretrained(pencoder_dir)
 
 
 def load_checkpoint(path):
     model = torch.load(Path(os.path.join(path, "language_model.bin")))
-    tokenizer = BertTokenizer.from_pretrained(path)
-    return model, tokenizer
+    query_tokenizer = BertTokenizer.from_pretrained(os.path.join(path, "query_tokenizer"))
+    passage_tokenizer = BertTokenizer.from_pretrained(os.path.join(path, "passage_tokenizer"))
+    return model, query_tokenizer, passage_tokenizer
 
 
 def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
@@ -181,7 +188,7 @@ def replace_retriever_model(retriever, model_path, max_seq_len_query, max_seq_le
                                                  embed_title=False,
                                                  num_hard_negatives=0,
                                                  num_positives=1,
-                                                 tokenization=Tokenization(tokenizer=tokenizer))
+                                                 tokenization=Tokenization(query_tokenizer=tokenizer))
 
 
 def load_model_bkp(pretrained_model_name_or_path: Union[Path, str], **kwargs):

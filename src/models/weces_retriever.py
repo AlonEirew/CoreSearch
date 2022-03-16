@@ -6,31 +6,32 @@ from src.override_classes.wec_encoders import WECQuestionEncoder, WECContextEnco
 
 
 class WECESRetriever(nn.Module):
-    def __init__(self, token_len, device):
+    def __init__(self, query_model, passage_model, token_len, device):
         super(WECESRetriever, self).__init__()
-        self.query_encoder = WECQuestionEncoder()
+        self.query_encoder = WECQuestionEncoder(query_model)
         self.query_encoder.set_tokenizer_size(token_len, device)
 
-        self.passage_encoder = WECContextEncoder()
+        self.passage_encoder = WECContextEncoder(passage_model)
         self.passage_encoder.set_tokenizer_size(token_len, device)
 
         self.device = device
 
     def forward(self, passage_input_ids, query_input_ids,
                 passage_input_mask, query_input_mask,
-                passage_segment_ids, query_segment_ids,
-                query_event_starts, query_event_ends, samples_size):
+                passage_segment_ids, query_segment_ids, **kwargs):
+        samples_size = 1
+        if "sample_size" in kwargs:
+            samples_size = kwargs["sample_size"]
 
         passage_encode, _ = self.passage_encoder(passage_input_ids,
-                                              passage_segment_ids,
-                                              passage_input_mask)
+                                                 passage_segment_ids,
+                                                 passage_input_mask,
+                                                 **kwargs)
 
         query_encode, _ = self.query_encoder(query_input_ids,
-                                          query_input_mask,
-                                          query_segment_ids,
-                                          query_start=query_event_starts,
-                                          query_end=query_event_ends,
-                                          sample_size=samples_size)
+                                             query_input_mask,
+                                             query_segment_ids,
+                                             **kwargs)
 
         shape_dim0 = passage_encode.shape[0]
         passage_seq_to_expls = passage_encode.view(int(shape_dim0 / samples_size), samples_size, -1)

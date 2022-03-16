@@ -78,7 +78,8 @@ class WECSimilarityProcessor(TextSimilarityProcessor):
             if "query" in basket.raw:
                 try:
                     query_obj = {"context": basket.raw["query"].split(" "), "dummy": True}
-                    query_feat = self.tokenization.get_query_feat(TrainExample(query_obj), self.max_seq_len_query, False)
+                    query_feat = self.tokenization.get_query_feat(TrainExample(query_obj),
+                                                                  self.max_seq_len_query, add_qbound=False)
 
                     # tokenize query
                     tokenized_query = self.query_tokenizer.convert_ids_to_tokens(query_feat.query_input_ids)
@@ -93,8 +94,8 @@ class WECSimilarityProcessor(TextSimilarityProcessor):
                     features[0]["query_input_ids"] = query_feat.query_input_ids
                     features[0]["query_segment_ids"] = query_feat.query_segment_ids
                     features[0]["query_attention_mask"] = query_feat.query_input_mask
-                    features[0]["query_start"] = query_feat.query_event_start
-                    features[0]["query_end"] = query_feat.query_event_end
+                    # features[0]["query_start"] = query_feat.query_event_start
+                    # features[0]["query_end"] = query_feat.query_event_end
                 except Exception as e:
                     features = None  # type: ignore
 

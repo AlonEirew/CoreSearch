@@ -13,10 +13,10 @@ def train():
     dev_filename = "Dev_full_dpr_format.json"
 
     n_epochs = 2
-    run_update_eval = True
-    model_str = "multi"
+    run_update_eval = False
+    model_str = "multi2"
 
-    infer_tokenizer_classes = True
+    infer_tokenizer_classes = False
     max_seq_len_query = 50
     max_seq_len_passage = 150
     batch_size = 16
@@ -29,7 +29,7 @@ def train():
     passage_model = "facebook/dpr-ctx_encoder-multiset-base"
     load_tokenizer = False
 
-    faiss_path_prefix = "indexes/" + model_str + "_full/dev_index"
+    faiss_path_prefix = "indexes/multi_notft/dev_index"
     faiss_index_path = "%s.faiss" % faiss_path_prefix
     faiss_config_path = "%s.json" % faiss_path_prefix
 

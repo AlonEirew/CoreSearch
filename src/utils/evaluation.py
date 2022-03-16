@@ -134,7 +134,7 @@ def evaluate_retriever(model, dev_batches, samples, n_gpu):
             _, predictions = model(passage_input_ids, query_input_ids,
                                    passage_input_mask, query_input_mask,
                                    passage_segment_ids, query_segment_ids,
-                                   query_event_starts, query_event_ends, samples)
+                                   sample_size=samples)
 
         all_predictions.append(predictions.detach().cpu().numpy())
         gold_labs.append(np.zeros(len(predictions)))

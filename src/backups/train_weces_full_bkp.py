@@ -61,7 +61,7 @@ def train():
         torch.cuda.manual_seed_all(1234)
 
     tokenization = Tokenization()
-    auxiliary_method = SpanPredAuxiliary(len(tokenization.tokenizer))
+    auxiliary_method = SpanPredAuxiliary(len(tokenization.query_tokenizer))
     auxiliary_method.to(device)
     if n_gpu > 1:
         auxiliary_method = torch.nn.DataParallel(auxiliary_method)

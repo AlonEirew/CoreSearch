@@ -1,3 +1,4 @@
+import random
 from typing import List, Dict
 
 import torch
@@ -6,12 +7,12 @@ from torch.utils.data import TensorDataset, DataLoader
 from src.data_obj import SearchFeat, QueryResult, Cluster, PassageFeat
 
 
-def generate_train_batches(search_features: List[SearchFeat], batch_size: int):
+def generate_train_batches(search_features: List[SearchFeat], negative_samples: int, batch_size: int):
     all_passage_input_ids, all_query_input_ids, \
     all_passage_input_mask, all_query_input_mask, \
     all_passage_segment_ids, all_query_segment_ids, \
     passage_event_starts, passage_event_ends, all_end_bounds, \
-    all_query_starts, all_query_ends = generate_train_span_feats(search_features)
+    all_query_starts, all_query_ends = generate_train_span_feats(search_features, negative_samples)
 
     data = TensorDataset(all_passage_input_ids, all_query_input_ids,
                          all_passage_input_mask, all_query_input_mask,
@@ -54,7 +55,7 @@ def generate_index_span_feats(index_features: List[PassageFeat]):
     return passages_ids, all_passage_input_ids, all_passage_input_mask, all_passage_segment_ids
 
 
-def generate_train_span_feats(search_features: List[SearchFeat]):
+def generate_train_span_feats(search_features: List[SearchFeat], negative_samples: int):
     passages_input_ids = list()
     query_input_ids = list()
     passage_input_mask = list()
@@ -85,7 +86,7 @@ def generate_train_span_feats(search_features: List[SearchFeat]):
         query_event_start.append(query_feat.query_event_start)
         query_event_end.append(query_feat.query_event_end)
 
-        for neg_feat in neg_passage_feat:
+        for neg_feat in random.choices(neg_passage_feat, k=negative_samples):
             passages_input_ids.append(neg_feat.passage_input_ids)
             query_input_ids.append(query_feat.query_input_ids)
             passage_input_mask.append(neg_feat.passage_input_mask)

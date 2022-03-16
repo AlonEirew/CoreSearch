@@ -25,19 +25,19 @@ def main():
     # query_method = "full_ctx"
     query_method = "with_bounds"
     es_index = SPLIT.lower()
-    index_folder = "080322_it3"
+    index_folder = "110322_it3"
     # index_folder = "spanbert_ft"
-    experiment_name = "080322_it3"
+    experiment_name = "110322_it3"
 
     infer_tokenizer_classes = True
     max_seq_len_query = 50
     max_seq_len_passage = 150
     batch_size = 16
 
-    query_encode = "bert-base-cased"
-    passage_encode = "bert-base-cased"
-    # load_model = None use the query & passage encoders, is set to value, replace with model from value
-    load_model = "data/checkpoints/08032022_143409/model-3"
+    query_encode = "data/checkpoints/dev_spanbert_2it/query_encoder"
+    passage_encode = "data/checkpoints/dev_spanbert_2it/passage_encoder"
+    load_model = None #use the query & passage encoders, is set to value, replace with model from value
+    # load_model = "data/checkpoints/mul_start_end_spacial_tokens/model-3"
     load_tokenizer = False
 
     reader_model_file = "squad_roberta_1it"
@@ -60,6 +60,10 @@ def main():
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
     query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
+
+    # NEED TO REMOVE THIS LINE
+    del query_examples[1:len(query_examples)]
+
     passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
 
     passage_dict: Dict[str, Passage] = {obj.id: obj for obj in passage_examples}

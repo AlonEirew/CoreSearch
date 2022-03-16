@@ -59,7 +59,7 @@ def faiss_mymodel_index(passages_file, sql_url, passage_model_file, max_seq_len_
     doc_dict: Dict[str, Document] = {
         doc.id: doc for doc in documents
     }
-    tokenizer = Tokenization(tokenizer=passage_tokenizer)
+    tokenizer = Tokenization(query_tokenizer=passage_tokenizer)
     passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
     passages_feats: List[PassageFeat] = [
         tokenizer.get_passage_feat(passage, max_seq_len_passage) for passage in passages_examples

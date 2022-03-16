@@ -8,7 +8,6 @@ import numpy as np
 import torch
 from transformers import AdamW
 
-from src.models.coref_search_model import SimilarityModel
 from src.models.weces_retriever import WECESRetriever
 from src.utils.data_utils import generate_train_batches
 from src.utils.evaluation import generate_sim_results, evaluate_retriever
@@ -30,13 +29,21 @@ def train():
     dev_examples_file = "data/resources/train/Dev_training_queries.json"
     dev_passages_file = "data/resources/train/Dev_training_passages.json"
 
+    query_model = "SpanBERT/spanbert-base-cased"
+    passage_model = "SpanBERT/spanbert-base-cased"
+    query_tokenizer_model = "SpanBERT/spanbert-base-cased"
+    passage_tokenizer_model = "SpanBERT/spanbert-base-cased"
+    logger.info(f"query_model:{query_model}, passage_model:{passage_model}, "
+                f"query_tokenizer:{query_tokenizer_model}, passage_tokenizer:{passage_tokenizer_model}")
+
     checkpoints_path = "data/checkpoints/" + dt_string
     Path(checkpoints_path).mkdir(parents=True)
     create_logger(log_file=checkpoints_path + "/log.txt")
     logger.info(f"{checkpoints_path}-folder created..")
 
+    add_qbound_tokens = False
     cpu_only = False
-    epochs = 1
+    epochs = 2
     train_negative_samples = 1
     dev_negative_samples = 5
     in_batch_samples = 10
@@ -44,7 +51,6 @@ def train():
     train_batch_size = in_batch_samples * (train_negative_samples + 1)
     dev_batch_size = in_batch_samples * (dev_negative_samples + 1)
     lr = 1e-6
-    add_qbound_tokens = True
     max_query_length = 50
     max_passage_length = 150
     assert (max_query_length + max_passage_length + 3) <= 512
@@ -60,8 +66,8 @@ def train():
     if n_gpu > 0:
         torch.cuda.manual_seed_all(1234)
 
-    tokenization = Tokenization()
-    weces_retriever = WECESRetriever(len(tokenization.tokenizer), device)
+    tokenization = Tokenization(query_tok_file=query_tokenizer_model, passage_tok_file=passage_tokenizer_model)
+    weces_retriever = WECESRetriever(query_model, passage_model, len(tokenization.query_tokenizer), device)
     weces_retriever.to(device)
     if n_gpu > 1:
         weces_retriever = torch.nn.DataParallel(weces_retriever)
@@ -70,16 +76,11 @@ def train():
 
     train_search_feats = tokenization.generate_queries_feats(train_examples_file,
                                                              train_passages_file, max_query_length,
-                                                             max_passage_length, train_negative_samples,
-                                                             add_qbound_tokens)
+                                                             max_passage_length, add_qbound_tokens)
 
     dev_search_feats = tokenization.generate_queries_feats(dev_examples_file,
                                                            dev_passages_file, max_query_length,
-                                                           max_passage_length, dev_negative_samples,
-                                                           add_qbound_tokens)
-
-    train_batches = generate_train_batches(train_search_feats, train_batch_size)
-    dev_batches = generate_train_batches(dev_search_feats, dev_batch_size)
+                                                           max_passage_length, add_qbound_tokens)
 
     accum_loss = 0.0
     start_time = time.time()
@@ -88,6 +89,8 @@ def train():
     torch.autograd.set_detect_anomaly(False)
     for epoch in range(epochs):
         weces_retriever.train()
+        train_batches = generate_train_batches(train_search_feats, train_negative_samples, train_batch_size)
+        dev_batches = generate_train_batches(dev_search_feats, dev_negative_samples, dev_batch_size)
         random.shuffle(train_batches)
         batch_predictions, batch_golds = list(), list()
         for step, batch in enumerate(train_batches):
@@ -102,8 +105,8 @@ def train():
             sim_loss, predictions = weces_retriever(passage_input_ids, query_input_ids,
                                                     passage_input_mask, query_input_mask,
                                                     passage_segment_ids, query_segment_ids,
-                                                    query_event_starts, query_event_ends,
-                                                    train_negative_samples + 1)
+                                                    query_start=query_event_starts, query_end=query_event_ends,
+                                                    sample_size=train_negative_samples + 1)
 
             if n_gpu > 1:
                 sim_loss = sim_loss.mean()
