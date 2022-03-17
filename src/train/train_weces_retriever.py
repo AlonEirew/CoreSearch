@@ -1,3 +1,5 @@
+import wandb
+
 import logging
 import random
 import time
@@ -22,11 +24,11 @@ def train():
     start_time = datetime.now()
     dt_string = start_time.strftime("%d%m%Y_%H%M%S")
 
-    # train_examples_file = "data/resources/train/small_training_queries.json"
-    # train_passages_file = "data/resources/train/Dev_training_passages.json"
-    train_examples_file = "data/resources/train/Train_training_queries.json"
-    train_passages_file = "data/resources/train/Train_training_passages.json"
-    dev_examples_file = "data/resources/train/Dev_training_queries.json"
+    train_examples_file = "data/resources/train/small_training_queries.json"
+    train_passages_file = "data/resources/train/Dev_training_passages.json"
+    # train_examples_file = "data/resources/train/Train_training_queries.json"
+    # train_passages_file = "data/resources/train/Train_training_passages.json"
+    dev_examples_file = "data/resources/train/small_training_queries.json"
     dev_passages_file = "data/resources/train/Dev_training_passages.json"
 
     query_model = "SpanBERT/spanbert-base-cased"
@@ -43,7 +45,7 @@ def train():
 
     add_qbound_tokens = False
     cpu_only = False
-    epochs = 2
+    epochs = 20
     train_negative_samples = 1
     dev_negative_samples = 5
     in_batch_samples = 10
@@ -60,6 +62,13 @@ def train():
     np.random.seed(1234)
     torch.manual_seed(1243)
 
+    wandb.config = {
+        "learning_rate": lr,
+        "epochs": epochs,
+        "batch_size": train_batch_size,
+        "negative_samples": train_negative_samples
+    }
+
     logger.info("Using device-" + device.type)
     logger.info("Number of available GPU's-" + str(n_gpu))
 
@@ -74,13 +83,13 @@ def train():
 
     optimizer = AdamW(weces_retriever.parameters(), lr=lr)
 
-    train_search_feats = tokenization.generate_queries_feats(train_examples_file,
-                                                             train_passages_file, max_query_length,
-                                                             max_passage_length, add_qbound_tokens)
+    train_search_feats = tokenization.generate_train_search_feats(train_examples_file,
+                                                                  train_passages_file, max_query_length,
+                                                                  max_passage_length, add_qbound_tokens)
 
-    dev_search_feats = tokenization.generate_queries_feats(dev_examples_file,
-                                                           dev_passages_file, max_query_length,
-                                                           max_passage_length, add_qbound_tokens)
+    dev_search_feats = tokenization.generate_train_search_feats(dev_examples_file,
+                                                                dev_passages_file, max_query_length,
+                                                                max_passage_length, add_qbound_tokens)
 
     accum_loss = 0.0
     start_time = time.time()
@@ -102,18 +111,18 @@ def train():
             passage_segment_ids, query_segment_ids, \
             passage_start_position, passage_end_position, \
             passage_end_bound, query_event_starts, query_event_ends = batch
-            sim_loss, predictions = weces_retriever(passage_input_ids, query_input_ids,
+            loss, predictions = weces_retriever(passage_input_ids, query_input_ids,
                                                     passage_input_mask, query_input_mask,
                                                     passage_segment_ids, query_segment_ids,
                                                     query_start=query_event_starts, query_end=query_event_ends,
                                                     sample_size=train_negative_samples + 1)
 
             if n_gpu > 1:
-                sim_loss = sim_loss.mean()
-            accum_loss += sim_loss.item()
+                loss = loss.mean()
+            accum_loss += loss.item()
             tot_steps += 1
 
-            sim_loss.backward()
+            loss.backward()
             # span_lost.backward()
             # sim_loss.backward()
             optimizer.step()
@@ -124,10 +133,17 @@ def train():
             logger.info('Epoch: {}, Step: {} / {}, used_time = {:.2f}s, loss = {:.6f}'.format(
                 epoch, step + 1, len(train_batches), time.time() - start_time, accum_loss / tot_steps))
 
-        logger.info("Train-Similarity: accuracy={}".format(generate_sim_results(batch_golds, batch_predictions)))
-        evaluate_retriever(weces_retriever, dev_batches, dev_negative_samples + 1, n_gpu)
+        wandb.log({"loss": accum_loss / tot_steps, })
+        train_accuracy = generate_sim_results(batch_golds, batch_predictions)
+        logger.info("Train-Similarity: accuracy={}".format(train_accuracy))
+        dev_accuracy = evaluate_retriever(weces_retriever, dev_batches, dev_negative_samples + 1, n_gpu)
+        wandb.log({"train-accurach": train_accuracy, "dev-accuracy": dev_accuracy, "loss": accum_loss / tot_steps})
+        wandb.watch(weces_retriever)
         save_checkpoint(checkpoints_path, epoch, weces_retriever, tokenization, optimizer)
+
+    wandb.finish()
 
 
 if __name__ == '__main__':
+    wandb.init(project="weces", entity="eirew")
     train()

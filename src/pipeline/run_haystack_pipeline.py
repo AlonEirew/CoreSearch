@@ -23,11 +23,11 @@ def main():
     # run_pipe_str = "qa"
     # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
     # query_method = "full_ctx"
-    query_method = "with_bounds"
+    query_method = "bm25"
     es_index = SPLIT.lower()
-    index_folder = "110322_it3"
+    index_folder = "spanbert_ft"
     # index_folder = "spanbert_ft"
-    experiment_name = "110322_it3"
+    experiment_name = "spanbert_train_bm25_inference_bm25"
 
     infer_tokenizer_classes = True
     max_seq_len_query = 50
@@ -50,8 +50,8 @@ def main():
     faiss_config_file = faiss_index_prefix + ".json"
 
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
-    queries_file = "data/resources/train/" + SPLIT + "_training_queries.json"
-    # queries_file = "data/resources/train/small_training_queries.json"
+    # queries_file = "data/resources/train/" + SPLIT + "_training_queries.json"
+    queries_file = "data/resources/train/small_training_queries.json"
     passages_file = "data/resources/train/" + SPLIT + "_training_passages.json"
 
     result_out_file = "results/" + es_index + "_" + query_method + "_" + index_type + "_" + index_folder + "_" + \
@@ -62,7 +62,7 @@ def main():
     query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
 
     # NEED TO REMOVE THIS LINE
-    del query_examples[1:len(query_examples)]
+    # del query_examples[1:len(query_examples)]
 
     passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
 
@@ -130,35 +130,9 @@ def generate_query_text(passage_dict: Dict[str, Passage], query_examples: List[T
             query.answers.add(" ".join(passage_dict[pass_id].mention))
 
 
-def print_results(predictions, golds_arranged, run_pipe_str, result_out_file):
+def print_results(predictions, golds_arranged, run_pipe_str, result_out_file=None):
     # Print retriever evaluation matrices
-    to_print = list()
-    if run_pipe_str == "qa":
-        to_print.append("---------- Evaluation of Reader Model ------------")
-        precision_method = precision_squad
-        # Print the squad evaluation matrices
-        to_print.append(json.dumps(measure_squad.eval_qa(predictions)))
-        to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(
-            predictions=predictions, golds=golds_arranged, topk=10, method=run_pipe_str)))
-        to_print.append("mAP@10=" + str(measurments.mean_average_precision(
-            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=10)))
-        to_print.append("mAP@25=" + str(measurments.mean_average_precision(
-            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=25)))
-        to_print.append("mAP@50=" + str(measurments.mean_average_precision(
-            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=50)))
-
-    to_print.append("---------- Evaluation of Retriever Model ------------")
-    precision_method = precision
-    to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(
-        predictions=predictions, golds=golds_arranged, topk=10, method=run_pipe_str)))
-    to_print.append("mAP@10=" + str(measurments.mean_average_precision(
-        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=10)))
-    to_print.append("mAP@25=" + str(measurments.mean_average_precision(
-        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=25)))
-    to_print.append("mAP@50=" + str(measurments.mean_average_precision(
-        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=50)))
-    to_print.append("mAP@100=" + str(measurments.mean_average_precision(
-        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=100)))
+    to_print = print_measurements(predictions, golds_arranged, run_pipe_str)
 
     to_print.append("#################################################################################################")
     delimiter = "#################"
@@ -177,14 +151,45 @@ def print_results(predictions, golds_arranged, run_pipe_str, result_out_file):
             if result.answer:
                 result_answer = result.answer
             to_print.append("\t\tANSWER=" + str(result_answer))
-            to_print.append("\t\tGOLD_MENTION=" + result_mention)
+            to_print.append("\t\tGOLD_MENTION=" + str(result_mention))
             to_print.append("\t\tCONTEXT=" + str(result_context))
 
     join_result = "\n".join(to_print)
     # print(join_result)
-    logger.info("Saving report to-" + result_out_file)
-    with open(result_out_file, 'w') as f:
-        f.write(join_result)
+    if result_out_file:
+        logger.info("Saving report to-" + result_out_file)
+        with open(result_out_file, 'w') as f:
+            f.write(join_result)
+
+
+def print_measurements(predictions, golds_arranged, run_pipe_str):
+    to_print = list()
+    if run_pipe_str == "qa":
+        to_print.append("---------- Evaluation of Reader Model ------------")
+        precision_method = precision_squad
+        # Print the squad evaluation matrices
+        to_print.append(json.dumps(measure_squad.eval_qa(predictions)))
+        to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(
+            predictions=predictions, golds=golds_arranged, topk=10, method=run_pipe_str)))
+        to_print.append("mAP@10=" + str(measurments.mean_average_precision(
+            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=10)))
+        to_print.append("mAP@25=" + str(measurments.mean_average_precision(
+            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=25)))
+        to_print.append("mAP@50=" + str(measurments.mean_average_precision(
+            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=50)))
+    to_print.append("---------- Evaluation of Retriever Model ------------")
+    precision_method = precision
+    to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(
+        predictions=predictions, golds=golds_arranged, topk=10, method=run_pipe_str)))
+    to_print.append("mAP@10=" + str(measurments.mean_average_precision(
+        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=10)))
+    to_print.append("mAP@25=" + str(measurments.mean_average_precision(
+        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=25)))
+    to_print.append("mAP@50=" + str(measurments.mean_average_precision(
+        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=50)))
+    to_print.append("mAP@100=" + str(measurments.mean_average_precision(
+        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=100)))
+    return to_print
 
 
 def predict_and_eval(pipeline, golds, query_examples, run_pipe_str, result_out_file):

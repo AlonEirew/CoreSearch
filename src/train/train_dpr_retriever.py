@@ -9,12 +9,12 @@ from src.utils import io_utils, dpr_utils
 def train():
     doc_dir = "data/resources/dpr/"
 
-    train_filename = "Train_full_dpr_format.json"
-    dev_filename = "Dev_full_dpr_format.json"
+    train_filename = "Test_dpr_format.json"
+    dev_filename = "Dev_dpr_format.json"
 
     n_epochs = 2
     run_update_eval = False
-    model_str = "multi2"
+    model_str = "spanbert_bm25"
 
     infer_tokenizer_classes = False
     max_seq_len_query = 50
@@ -23,15 +23,13 @@ def train():
 
     # query_model = "bert-base-cased"
     # passage_model = "bert-base-cased"
-    # query_model = "SpanBERT/spanbert-base-cased"
-    # passage_model = "SpanBERT/spanbert-base-cased"
-    query_model = "facebook/dpr-question_encoder-multiset-base"
-    passage_model = "facebook/dpr-ctx_encoder-multiset-base"
+    query_model = "SpanBERT/spanbert-base-cased"
+    passage_model = "SpanBERT/spanbert-base-cased"
+    # query_model = "facebook/dpr-question_encoder-multiset-base"
+    # passage_model = "facebook/dpr-ctx_encoder-multiset-base"
     load_tokenizer = False
 
-    faiss_path_prefix = "indexes/multi_notft/dev_index"
-    faiss_index_path = "%s.faiss" % faiss_path_prefix
-    faiss_config_path = "%s.json" % faiss_path_prefix
+    faiss_path_prefix = "indexes/spanbert_bm25/dev_index"
 
     dev_gold_clusters = "data/resources/WEC-ES/Dev_gold_clusters.json"
     dev_train_queries = "data/resources/train/Dev_training_queries.json"
@@ -41,24 +39,33 @@ def train():
     result_out_file = "results/" + out_model_name + ".txt"
 
     run(query_model, passage_model, doc_dir, train_filename, dev_filename,
-        checkpoint_dir, faiss_index_path, faiss_config_path, dev_gold_clusters,
+        checkpoint_dir, faiss_path_prefix, dev_gold_clusters,
         dev_train_queries, n_epochs, result_out_file, run_update_eval, infer_tokenizer_classes,
         max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer)
 
 
-def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir, faiss_index_path,
-        faiss_config_path, dev_gold_clusters, dev_train_queries, n_epochs, result_out_file, run_update_eval,
+def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir, faiss_path_prefix,
+        dev_gold_clusters, dev_train_queries, n_epochs, result_out_file, run_update_eval,
         infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer):
 
-    document_store, retriever = dpr_utils.load_faiss_dpr(faiss_index_path,
-                                                         faiss_config_path,
-                                                         query_model,
-                                                         passage_model,
-                                                         infer_tokenizer_classes,
-                                                         max_seq_len_query,
-                                                         max_seq_len_passage,
-                                                         batch_size,
-                                                         load_tokenizer)
+    faiss_index_path = "%s.faiss" % faiss_path_prefix
+    faiss_config_path = "%s.json" % faiss_path_prefix
+    if run_update_eval:
+        document_store, retriever = dpr_utils.load_faiss_dpr(faiss_index_path,
+                                                             faiss_config_path,
+                                                             query_model,
+                                                             passage_model,
+                                                             infer_tokenizer_classes,
+                                                             max_seq_len_query,
+                                                             max_seq_len_passage,
+                                                             batch_size,
+                                                             load_tokenizer)
+    else:
+        sql_rul = "sqlite:///%s.db" % faiss_path_prefix
+        document_store = dpr_utils.create_default_faiss_doc_store(sql_rul, "dot_product")
+        retriever = dpr_utils.load_dpr(document_store,
+                                       query_model, passage_model, infer_tokenizer_classes, max_seq_len_query,
+                                       max_seq_len_passage, batch_size, load_tokenizer)
 
     retriever.train(data_dir=doc_dir,
                     train_filename=train_filename,

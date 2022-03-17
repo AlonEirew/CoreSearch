@@ -4,7 +4,7 @@ from typing import List, Dict
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 
-from src.data_obj import SearchFeat, QueryResult, Cluster, PassageFeat
+from src.data_obj import SearchFeat, QueryResult, Cluster, PassageFeat, Feat
 
 
 def generate_train_batches(search_features: List[SearchFeat], negative_samples: int, batch_size: int):
@@ -24,35 +24,35 @@ def generate_train_batches(search_features: List[SearchFeat], negative_samples: 
     return batches
 
 
-def generate_index_batches(index_features: List[PassageFeat], batch_size: int):
-    all_passage_ids, all_passage_input_ids, all_passage_input_mask, all_passage_segment_ids = generate_index_span_feats(index_features)
+def generate_index_batches(index_features: List[Feat], batch_size: int):
+    all_ids, all_input_ids, all_input_mask, all_segment_ids = generate_index_span_feats(index_features)
 
-    data = TensorDataset(all_passage_input_ids,
-                         all_passage_input_mask,
-                         all_passage_segment_ids)
+    data = TensorDataset(all_input_ids,
+                         all_input_mask,
+                         all_segment_ids)
     dataloader = DataLoader(data, batch_size=batch_size, shuffle=False)
     batches = [batch for batch in dataloader]
-    ids = [all_passage_ids[i:i + batch_size] for i in range(0, len(all_passage_ids), batch_size)]
+    ids = [all_ids[i:i + batch_size] for i in range(0, len(all_ids), batch_size)]
     return ids, batches
 
 
-def generate_index_span_feats(index_features: List[PassageFeat]):
-    passages_ids = list()
-    passages_input_ids = list()
-    passage_input_mask = list()
-    passage_segment_ids = list()
+def generate_index_span_feats(index_features: List[Feat]):
+    ids = list()
+    input_ids = list()
+    input_mask = list()
+    segment_ids = list()
 
     for index_feat in index_features:
-        passages_ids.append(index_feat.passage_id)
-        passages_input_ids.append(index_feat.passage_input_ids)
-        passage_input_mask.append(index_feat.passage_input_mask)
-        passage_segment_ids.append(index_feat.passage_segment_ids)
+        ids.append(index_feat.feat_id)
+        input_ids.append(index_feat.input_ids)
+        input_mask.append(index_feat.input_mask)
+        segment_ids.append(index_feat.segment_ids)
 
-    all_passage_input_ids = torch.tensor([f for f in passages_input_ids], dtype=torch.long)
-    all_passage_input_mask = torch.tensor([f for f in passage_input_mask], dtype=torch.long)
-    all_passage_segment_ids = torch.tensor([f for f in passage_segment_ids], dtype=torch.long)
+    all_input_ids = torch.tensor([f for f in input_ids], dtype=torch.long)
+    all_input_mask = torch.tensor([f for f in input_mask], dtype=torch.long)
+    all_segment_ids = torch.tensor([f for f in segment_ids], dtype=torch.long)
 
-    return passages_ids, all_passage_input_ids, all_passage_input_mask, all_passage_segment_ids
+    return ids, all_input_ids, all_input_mask, all_segment_ids
 
 
 def generate_train_span_feats(search_features: List[SearchFeat], negative_samples: int):
@@ -74,12 +74,12 @@ def generate_train_span_feats(search_features: List[SearchFeat], negative_sample
         pos_passage_feats = search_feat.positive_passage
         neg_passage_feat = search_feat.negative_passages
 
-        passages_input_ids.append(pos_passage_feats.passage_input_ids)
-        query_input_ids.append(query_feat.query_input_ids)
-        passage_input_mask.append(pos_passage_feats.passage_input_mask)
-        query_input_mask.append(query_feat.query_input_mask)
-        passage_segment_ids.append(pos_passage_feats.passage_segment_ids)
-        query_segment_ids.append(query_feat.query_segment_ids)
+        passages_input_ids.append(pos_passage_feats.input_ids)
+        query_input_ids.append(query_feat.input_ids)
+        passage_input_mask.append(pos_passage_feats.input_mask)
+        query_input_mask.append(query_feat.input_mask)
+        passage_segment_ids.append(pos_passage_feats.segment_ids)
+        query_segment_ids.append(query_feat.segment_ids)
         passage_start_position.append(pos_passage_feats.passage_event_start)
         passage_end_position.append(pos_passage_feats.passage_event_end)
         passage_end_bound.append(pos_passage_feats.passage_end_bound)
@@ -87,12 +87,12 @@ def generate_train_span_feats(search_features: List[SearchFeat], negative_sample
         query_event_end.append(query_feat.query_event_end)
 
         for neg_feat in random.choices(neg_passage_feat, k=negative_samples):
-            passages_input_ids.append(neg_feat.passage_input_ids)
-            query_input_ids.append(query_feat.query_input_ids)
-            passage_input_mask.append(neg_feat.passage_input_mask)
-            query_input_mask.append(query_feat.query_input_mask)
-            passage_segment_ids.append(neg_feat.passage_segment_ids)
-            query_segment_ids.append(query_feat.query_segment_ids)
+            passages_input_ids.append(neg_feat.input_ids)
+            query_input_ids.append(query_feat.input_ids)
+            passage_input_mask.append(neg_feat.input_mask)
+            query_input_mask.append(query_feat.input_mask)
+            passage_segment_ids.append(neg_feat.segment_ids)
+            query_segment_ids.append(query_feat.segment_ids)
             passage_start_position.append(neg_feat.passage_event_start)
             passage_end_position.append(neg_feat.passage_event_end)
             passage_end_bound.append(neg_feat.passage_end_bound)

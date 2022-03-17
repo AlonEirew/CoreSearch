@@ -139,4 +139,6 @@ def evaluate_retriever(model, dev_batches, samples, n_gpu):
         all_predictions.append(predictions.detach().cpu().numpy())
         gold_labs.append(np.zeros(len(predictions)))
 
-    logger.info("Dev-Similarity: accuracy={}".format(generate_sim_results(gold_labs, all_predictions)))
+    accuracy = generate_sim_results(gold_labs, all_predictions)
+    logger.info("Dev-Similarity: accuracy={}".format(accuracy))
+    return accuracy

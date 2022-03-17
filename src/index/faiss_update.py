@@ -18,7 +18,7 @@ def faiss_update(faiss_file_path, faiss_config_file, query_encode, passage_encod
 
 
 def main():
-    faiss_path_prefix = "weces_index_for_bert_dpr/weces_dev_index"
+    faiss_path_prefix = "indexes/spanbert_ft_new/dev_index"
     _faiss_file_path = "%s.faiss" % faiss_path_prefix
     _faiss_config_path = "%s.json" % faiss_path_prefix
 
@@ -27,10 +27,11 @@ def main():
     _max_seq_len_passage = 150
     _batch_size = 16
 
-    _query_encode = "data/checkpoints/21022022_123254/model-13/query_encoder"
-    _passage_encode = "data/checkpoints/21022022_123254/model-13/passage_encoder"
-    _load_tokenizer = True
+    _query_encode = "data/checkpoints/dev_spanbert_2it/query_encoder"
+    _passage_encode = "data/checkpoints/dev_spanbert_2it/passage_encoder"
+    _load_tokenizer = False
 
+    print(f"Preparing to update index: {faiss_path_prefix}, with query_model:{_query_encode}, passage_model:{_passage_encode}")
     faiss_update(_faiss_file_path, _faiss_config_path, _query_encode, _passage_encode,
                  _infer_tokenizer_classes, _max_seq_len_query, _max_seq_len_passage, _batch_size, _load_tokenizer)
 

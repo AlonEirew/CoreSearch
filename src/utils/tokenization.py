@@ -1,7 +1,7 @@
 import copy
 import logging
 import random
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 from tqdm import tqdm
 from transformers import BertTokenizer
@@ -30,15 +30,16 @@ class Tokenization(object):
             self.query_tokenizer.add_tokens(QUERY_SPAN_START)
             self.query_tokenizer.add_tokens(QUERY_SPAN_END)
 
-    def generate_queries_feats(self,
-                               query_file: str,
-                               passages_file: str,
-                               max_query_length: int,
-                               max_passage_length: int,
-                               add_qbound: bool = False) -> List[SearchFeat]:
+    def generate_train_search_feats(self,
+                                    query_file: str,
+                                    passages_file: str,
+                                    max_query_length: int,
+                                    max_passage_length: int,
+                                    add_qbound: bool = False) -> List[SearchFeat]:
         query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
         passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
         passages_examples: Dict[str, Passage] = {passage.id: passage for passage in passages_examples}
+
         logger.info("Done loading examples file, queries-" + query_file + ", passages-" + passages_file)
         logger.info(
             "Total examples loaded, queries=" + str(len(query_examples)) + ", passages=" + str(len(passages_examples)))
@@ -71,6 +72,23 @@ class Tokenization(object):
                 #         SearchFeat(query_feat, pos_pass, random.choices(neg_passages, k=negative_sample_size)))
 
         return search_feats
+
+    def generate_query_feats(self, query_file: str,
+                             max_query_length: int,
+                             add_qbound: bool = False) -> Tuple[List[QueryFeat], List[TrainExample]]:
+        query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
+        query_feats = list()
+        for query_obj in tqdm(query_examples, "Loading Queries"):
+            query_feats.append(self.get_query_feat(query_obj, max_query_length, add_qbound))
+        return query_feats, query_examples
+
+    def generate_passage_feats(self, passage_file: str,
+                               max_passage_length: int) -> Tuple[List[PassageFeat], List[Passage]]:
+        passage_examples: List[Passage] = io_utils.read_passages_file(passage_file)
+        passage_feats = list()
+        for passage_obj in tqdm(passage_examples, "Loading Passages"):
+            passage_feats.append(self.get_passage_feat(passage_obj, max_passage_length))
+        return passage_feats, passage_examples
 
     def get_query_feat(self, query_obj: TrainExample, max_query_length: int, add_qbound: bool = False) -> QueryFeat:
         max_query_length_exclude = max_query_length - 2

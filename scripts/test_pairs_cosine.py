@@ -1,13 +1,16 @@
-from typing import List, Dict
+import random
+from typing import List, Dict, Tuple
 
 import torch
 from tqdm import tqdm
 
-from src.data_obj import TrainExample, Passage, QueryFeat, PassageFeat
+from src.data_obj import Passage, Feat, Query, Cluster, QueryResult
 from src.models.weces_retriever import WECESRetriever
 from src.override_classes.wec_text_processor import WECSimilarityProcessor
-from src.utils import io_utils, dpr_utils
-from src.utils.io_utils import load_checkpoint, replace_retriever_model
+from src.pipeline.run_haystack_pipeline import print_measurements
+from src.utils import dpr_utils, io_utils, data_utils
+from src.utils.data_utils import generate_index_batches
+from src.utils.io_utils import load_checkpoint
 from src.utils.tokenization import Tokenization
 
 SPLIT = "Dev"
@@ -15,66 +18,76 @@ max_query_len = 50
 max_pass_len = 150
 
 
-def main(experiment):
-    queries_file = "data/resources/train/" + SPLIT + "_training_queries.json"
-    # queries_file = "data/resources/train/small_training_queries.json"
-    passages_file = "data/resources/train/" + SPLIT + "_training_passages.json"
+def main():
+    random.seed(1234)
+    dev_examples_file = "data/resources/train/Dev_training_queries.json"
+    # dev_examples_file = "data/resources/train/small_training_queries.json"
+    dev_passages_file = "data/resources/train/Dev_training_passages.json"
+    gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
+    topk = 50
+    run_pipe_str = "retriever"
 
-    query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
-    passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
+    # query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
+    # passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
     add_qbound = False
 
-    ### NEED TO REMOVE THIS LINES
-    additional_pass = io_utils.read_passages_file_filtered("data/resources/WEC-ES/Dev_all_passages.json",
-                                                           ['NEG_2078064', '11165', '122480'])
-    passage_examples.extend(additional_pass)
-
-    model = load_dpr("data/checkpoints/dev_spanbert_2it", "indexes/multi_notft/dev_index")
-    tokenization = model.processor.tokenization
+    ### NEED TO REMOVE THIS LINES\
+    # for query in query_examples:
+    #     query.context = query.bm25_query.split(" ")
+    #
+    # additional_pass = io_utils.read_passages_file_filtered("data/resources/WEC-ES/Dev_all_passages.json",
+    #                                                        ['NEG_2078064', '11165', '122480'])
+    # passage_examples.extend(additional_pass)
+    #
+    # model = load_dpr("data/checkpoints/dev_spanbert_2it", "indexes/multi_notft/dev_index")
+    # tokenization = model.processor.tokenization
     # tokenization = Tokenization(query_tok_file="bert-base-cased", passage_tok_file="bert-base-cased")
     ## END OF NEEDED LINES TO REMOVE
 
-    passage_examples_dict: Dict[str, Passage] = {passage.id: passage for passage in passage_examples}
+    # passage_examples_dict: Dict[str, Passage] = {passage.id: passage for passage in passage_examples}
 
-    # model, query_tokenizer, passage_tokenizer = load_checkpoint("data/checkpoints/15032022_144056/model-1")
-    # model.eval()
-    # tokenization = Tokenization(query_tokenizer=query_tokenizer, passage_tokenizer=passage_tokenizer)
+    model, query_tokenizer, passage_tokenizer = load_checkpoint("data/checkpoints/cls_token/model-0")
+    model.eval()
+    tokenization = Tokenization(query_tokenizer=query_tokenizer, passage_tokenizer=passage_tokenizer)
 
-    # selected_query = query_examples[0]
-    positive_win = 0
-    negative_win = 0
-    total_queries = len(query_examples)
-    for index, selected_query in enumerate(query_examples):
-        selected_query = query_examples[20]
+    golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
+    golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
+    dev_queries_feats, query_examples = tokenization.generate_query_feats(dev_examples_file,
+                                                                          max_query_len,
+                                                                          add_qbound)
+    dev_passages_feats, passage_examples = tokenization.generate_passage_feats(dev_passages_file,
+                                                                               max_pass_len)
 
-        print(f"Query ID={selected_query.id}")
-        print(f"Query Mention={selected_query.mention}")
-        if experiment == "neg_pos":
-            pairwise_pos, pairwise_neg = pos_neg_eval(model, tokenization, selected_query,
-                                                      passage_examples_dict, add_qbound)
+    query_dict: Dict[str, Query] = {query.id: query for query in query_examples}
+    passage_dict: Dict[str, Passage] = {passage.id: passage for passage in passage_examples}
 
-            print(f"pos {index}={str(pairwise_pos.item())}")
-            print(f"neg {index}={str(pairwise_neg.item())}")
+    dev_queries_feats = random.sample(dev_queries_feats, k=5)
+    total_queries = len(dev_queries_feats)
 
-            if pairwise_pos > pairwise_neg:
-                positive_win += 1
-            else:
-                negative_win += 1
+    dev_passages_ids, dev_passages_batches = generate_index_batches(list(dev_passages_feats), 20)
 
-            # if index == 5:
-            #     break
-        elif experiment == "top_5":
-            top_k = run_top_pass(model, tokenization, selected_query, passage_examples, add_qbound)
-            print(f"top5_values={top_k[-5:]}")
-            for passage_id, value in top_k[-5:]:
-                print(passage_examples_dict[passage_id].mention)
-            if index == 0:
-                break
+    all_queries_pred = list()
+    for query_index, query in enumerate(dev_queries_feats):
+        # query = dev_queries_feats[10]
+        query_predictions = run_top_pass(model, query, dev_passages_ids, dev_passages_batches, topk)
+        results = list()
+        for pass_id, pred in query_predictions:
+            results.append(passage_dict[pass_id])
+        query_result = QueryResult(query=query_dict[query.feat_id], results=results)
+        all_queries_pred.append(query_result)
 
-    print(f"total={total_queries}")
-    print(f"positive_win={positive_win}")
-    print(f"negative_win={negative_win}")
+        print(f"queryId-{query_dict[query.feat_id].id}")
+        print(f"queryMention-{query_dict[query.feat_id].mention}")
+        print(f"top5_values={query_predictions[:5]}")
+        for passage_id, _ in query_predictions[:5]:
+            print(passage_dict[passage_id].mention)
+        # if query_index == 0:
+        #     break
 
+    to_print = print_measurements(all_queries_pred, golds_arranged, run_pipe_str)
+    join_result = "\n".join(to_print)
+    print(join_result)
+    print(f"Measured from-{total_queries}")
     print("Done!")
 
 
@@ -105,49 +118,36 @@ def load_dpr(model_dir, index_dir):
     return model
 
 
-def run_top_pass(model, tokenization, selected_query, passage_examples: List[Passage], add_qbound: bool):
-    query_encoded = get_query_embed(model, tokenization, selected_query, add_qbound)
-    all_pairs = list()
-    for passage in tqdm(passage_examples, desc="Running"):
-        pass_encoded = get_passage_embed(model, tokenization, passage)
-        all_pairs.append((passage.id, WECESRetriever.predict_pairwise_cosine(query_encoded, pass_encoded).item()))
+def run_top_pass(model, query: Feat, dev_passages_ids, dev_passages_batch, topk):
+    query_encoded = get_query_embed(model, query)
+    all_predictions: List[Tuple[str, float]] = list()
+    for batch_idx, batch in enumerate(tqdm(dev_passages_batch, "Evaluate")):
+        pass_batch_encoded = get_passage_embed(model, batch)
+        batch_passage_ides = dev_passages_ids[batch_idx]
+        predictions = WECESRetriever.predict_pairwise_cosine(query_encoded, pass_batch_encoded).detach().cpu()
+        for index in range(len(batch_passage_ides)):
+            if batch_passage_ides[index] != query.feat_id:
+                all_predictions.append((batch_passage_ides[index], predictions[index].item()))
 
-    return sorted(all_pairs, key=lambda x: x[1])
-
-
-def pos_neg_eval(model, tokenization, selected_query, passage_examples, add_qbound):
-    positive_pass = passage_examples[selected_query.positive_examples[0]]
-    negative_pass = passage_examples[selected_query.negative_examples[0]]
-
-    query_encoded = get_query_embed(model, tokenization, selected_query, add_qbound)
-    pos_pass_encoded = get_passage_embed(model, tokenization, positive_pass)
-    neg_pass_encoded = get_passage_embed(model, tokenization, negative_pass)
-
-    pairwise_pos = WECESRetriever.predict_pairwise_cosine(query_encoded, pos_pass_encoded)
-    pairwise_neg = WECESRetriever.predict_pairwise_cosine(query_encoded, neg_pass_encoded)
-
-    return pairwise_pos, pairwise_neg
+    final_predictions = sorted(all_predictions, key=lambda x: x[1], reverse=True)[:topk]
+    return final_predictions
 
 
-def get_query_embed(model, tokenization, selected_query, add_qbound):
-    query_feat: QueryFeat = tokenization.get_query_feat(selected_query, max_query_len, add_qbound)
+def get_query_embed(model, query):
     query_encoded, _ = model.query_encoder(
-        torch.tensor(query_feat.query_input_ids, device='cuda').view(1, -1),
-        torch.tensor(query_feat.query_segment_ids, device='cuda').view(1, -1),
-        torch.tensor(query_feat.query_input_mask, device='cuda').view(1, -1))
+        torch.tensor(query.input_ids, device='cuda').view(1, -1),
+        torch.tensor(query.segment_ids, device='cuda').view(1, -1),
+        torch.tensor(query.input_mask, device='cuda').view(1, -1))
     return query_encoded
 
 
-def get_passage_embed(model, tokenization, selected_passage):
-    pass_feat: PassageFeat = tokenization.get_passage_feat(selected_passage, max_pass_len)
-    pos_pass_encoded, _ = model.passage_encoder(
-        torch.tensor(pass_feat.passage_input_ids, device='cuda').view(1, -1),
-        torch.tensor(pass_feat.passage_segment_ids, device='cuda').view(1, -1),
-        torch.tensor(pass_feat.passage_input_mask, device='cuda').view(1, -1))
+def get_passage_embed(model, passage_batch):
+    input_ids, input_mask, segment_ids = passage_batch
+    pos_pass_encoded, _ = model.passage_encoder(input_ids.cuda(),
+                                                segment_ids.cuda(),
+                                                input_mask.cuda())
     return pos_pass_encoded
 
 
 if __name__ == "__main__":
-    # _experiment = "neg_pos"
-    _experiment = "top_5"
-    main(_experiment)
+    main()

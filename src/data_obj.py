@@ -5,25 +5,34 @@ import torch
 from transformers.file_utils import ModelOutput
 
 
-class QueryFeat(object):
+class Feat(object):
+    def __init__(self,
+                 input_ids,
+                 input_mask,
+                 segment_ids,
+                 feat_id):
+
+        self.input_ids = input_ids
+        self.input_mask = input_mask
+        self.segment_ids = segment_ids
+        self.feat_id = feat_id
+
+
+class QueryFeat(Feat):
     def __init__(self,
                  query_input_ids,
                  query_input_mask,
                  query_segment_ids,
                  query_id,
                  query_event_start,
-                 query_event_end,
-                 ):
+                 query_event_end):
 
-        self.query_input_ids = query_input_ids
-        self.query_input_mask = query_input_mask
-        self.query_segment_ids = query_segment_ids
-        self.query_id = query_id
+        super().__init__(query_input_ids, query_input_mask, query_segment_ids, query_id)
         self.query_event_start = query_event_start
         self.query_event_end = query_event_end
 
 
-class PassageFeat(object):
+class PassageFeat(Feat):
     def __init__(self,
                  passage_input_ids,
                  passage_input_mask,
@@ -32,13 +41,9 @@ class PassageFeat(object):
                  passage_event_start=None,
                  passage_event_end=None,
                  passage_end_bound=None,
-                 is_positive=None
-                 ):
+                 is_positive=None):
 
-        self.passage_input_ids = passage_input_ids
-        self.passage_input_mask = passage_input_mask
-        self.passage_segment_ids = passage_segment_ids
-        self.passage_id = passage_id
+        super().__init__(passage_input_ids, passage_input_mask, passage_segment_ids, passage_id)
         self.passage_event_start = passage_event_start
         self.passage_event_end = passage_event_end
         self.passage_end_bound = passage_end_bound
