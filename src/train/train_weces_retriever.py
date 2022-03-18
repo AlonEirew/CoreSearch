@@ -25,7 +25,7 @@ def train():
     start_time = datetime.now()
     dt_string = start_time.strftime("%d%m%Y_%H%M%S")
 
-    train_examples_file = "data/resources/train/small_training_queries.json"
+    train_examples_file = "data/resources/train/Dev_training_queries.json"
     train_passages_file = "data/resources/train/Dev_training_passages.json"
     # train_examples_file = "data/resources/train/Train_training_queries.json"
     # train_passages_file = "data/resources/train/Train_training_passages.json"
@@ -47,12 +47,9 @@ def train():
     add_qbound_tokens = False
     cpu_only = False
     epochs = 20
+    batch_size = 16
     train_negative_samples = 1
-    dev_negative_samples = 5
-    in_batch_samples = 20
-    # train_batch_size = 3 * (2 + 1) in training for 2 negatives and 1 positive samples
-    train_batch_size = in_batch_samples * (train_negative_samples + 1)
-    dev_batch_size = in_batch_samples * (dev_negative_samples + 1)
+    dev_negative_samples = 1
     lr = 1e-6
     max_query_length = 50
     max_passage_length = 150
@@ -66,7 +63,7 @@ def train():
     wandb.config = {
         "learning_rate": lr,
         "epochs": epochs,
-        "batch_size": train_batch_size,
+        "batch_size": batch_size,
         "negative_samples": train_negative_samples
     }
 
@@ -86,13 +83,19 @@ def train():
 
     train_search_feats = tokenization.generate_train_search_feats(
         train_examples_file,
-        train_passages_file, max_query_length,
-        max_passage_length, add_qbound_tokens)
+        train_passages_file,
+        max_query_length,
+        max_passage_length,
+        train_negative_samples,
+        add_qbound_tokens)
 
     dev_search_feats = tokenization.generate_train_search_feats(
         dev_examples_file,
-        dev_passages_file, max_query_length,
-        max_passage_length, add_qbound_tokens)
+        dev_passages_file,
+        max_query_length,
+        max_passage_length,
+        dev_negative_samples,
+        add_qbound_tokens)
 
     accum_loss = 0.0
     start_time = time.time()
@@ -101,8 +104,14 @@ def train():
     torch.autograd.set_detect_anomaly(False)
 
     # generation will random negative examples
-    train_batches = generate_train_batches(train_search_feats, train_negative_samples, train_batch_size)
-    dev_batches = generate_train_batches(dev_search_feats, dev_negative_samples, dev_batch_size)
+    train_batches = generate_train_batches(train_search_feats,
+                                           train_negative_samples,
+                                           batch_size,
+                                           max_passage_length)
+    dev_batches = generate_train_batches(dev_search_feats,
+                                         dev_negative_samples,
+                                         batch_size,
+                                         max_passage_length)
     for epoch in range(epochs):
         weces_retriever.train()
         random.shuffle(train_batches)
@@ -126,8 +135,8 @@ def train():
                                                 query_end=query_event_ends,
                                                 sample_size=train_negative_samples + 1)
 
-            if n_gpu > 1:
-                loss = loss.mean()
+            # if n_gpu > 1:
+            #     loss = loss.mean()
             accum_loss += loss.item()
             tot_steps += 1
 

@@ -7,12 +7,12 @@ from torch.utils.data import TensorDataset, DataLoader
 from src.data_obj import SearchFeat, QueryResult, Cluster, Feat
 
 
-def generate_train_batches(search_features: List[SearchFeat], negative_samples: int, batch_size: int):
+def generate_train_batches(search_features: List[SearchFeat], negative_samples: int, batch_size: int, max_passage_length: int):
     all_passage_input_ids, all_query_input_ids, \
     all_passage_input_mask, all_query_input_mask, \
     all_passage_segment_ids, all_query_segment_ids, \
     passage_event_starts, passage_event_ends, all_end_bounds, \
-    all_query_starts, all_query_ends = generate_train_span_feats(search_features, negative_samples)
+    all_query_starts, all_query_ends = generate_train_span_feats(search_features, negative_samples, max_passage_length)
 
     data = TensorDataset(all_passage_input_ids, all_query_input_ids,
                          all_passage_input_mask, all_query_input_mask,
@@ -55,7 +55,7 @@ def generate_index_span_feats(index_features: List[Feat]):
     return ids, all_input_ids, all_input_mask, all_segment_ids
 
 
-def generate_train_span_feats(search_features: List[SearchFeat], negative_samples: int):
+def generate_train_span_feats(search_features: List[SearchFeat], negative_samples: int, max_pass_len: int):
     passages_input_ids = list()
     query_input_ids = list()
     passage_input_mask = list()
@@ -86,33 +86,26 @@ def generate_train_span_feats(search_features: List[SearchFeat], negative_sample
         query_event_start.append(query_feat.query_event_start)
         query_event_end.append(query_feat.query_event_end)
 
-        for neg_feat in random.sample(neg_passage_feat, k=negative_samples):
+        for neg_feat in neg_passage_feat:
             passages_input_ids.append(neg_feat.input_ids)
-            query_input_ids.append(query_feat.input_ids)
             passage_input_mask.append(neg_feat.input_mask)
-            query_input_mask.append(query_feat.input_mask)
             passage_segment_ids.append(neg_feat.segment_ids)
-            query_segment_ids.append(query_feat.segment_ids)
             passage_start_position.append(neg_feat.passage_event_start)
             passage_end_position.append(neg_feat.passage_event_end)
             passage_end_bound.append(neg_feat.passage_end_bound)
-            query_event_start.append(query_feat.query_event_start)
-            query_event_end.append(query_feat.query_event_end)
 
-    all_passage_input_ids = torch.tensor([f for f in passages_input_ids], dtype=torch.long)
     all_query_input_ids = torch.tensor([f for f in query_input_ids], dtype=torch.long)
-
-    all_passage_input_mask = torch.tensor([f for f in passage_input_mask], dtype=torch.long)
     all_query_input_mask = torch.tensor([f for f in query_input_mask], dtype=torch.long)
-
-    all_passage_segment_ids = torch.tensor([f for f in passage_segment_ids], dtype=torch.long)
     all_query_segment_ids = torch.tensor([f for f in query_segment_ids], dtype=torch.long)
-
-    all_start_positions = torch.tensor([f for f in passage_start_position], dtype=torch.long)
-    all_end_positions = torch.tensor([f for f in passage_end_position], dtype=torch.long)
-    all_end_bounds = torch.tensor([f for f in passage_end_bound], dtype=torch.long)
     all_query_starts = torch.tensor([f for f in query_event_start], dtype=torch.long)
     all_query_ends = torch.tensor([f for f in query_event_end], dtype=torch.long)
+
+    all_passage_input_ids = torch.tensor([f for f in passages_input_ids], dtype=torch.long).view(-1, negative_samples+1, max_pass_len)
+    all_passage_input_mask = torch.tensor([f for f in passage_input_mask], dtype=torch.long).view(-1, negative_samples+1, max_pass_len)
+    all_passage_segment_ids = torch.tensor([f for f in passage_segment_ids], dtype=torch.long).view(-1, negative_samples+1, max_pass_len)
+    all_start_positions = torch.tensor([f for f in passage_start_position], dtype=torch.long).view(-1, negative_samples+1, 1)
+    all_end_positions = torch.tensor([f for f in passage_end_position], dtype=torch.long).view(-1, negative_samples+1, 1)
+    all_end_bounds = torch.tensor([f for f in passage_end_bound], dtype=torch.long).view(-1, negative_samples+1, 1)
 
     return all_passage_input_ids, all_query_input_ids, \
            all_passage_input_mask, all_query_input_mask, \

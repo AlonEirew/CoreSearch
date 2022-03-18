@@ -71,17 +71,14 @@ class WECQuestionEncoder(WECEncoder):
         if "query_start" in kwargs and "query_end" in kwargs:
             query_event_starts = kwargs["query_start"]
             query_event_ends = kwargs["query_end"]
-        samples_size = 1
-        if "sample_size" in kwargs:
-            samples_size = kwargs["sample_size"]
 
-        query_indices = torch.arange(start=0, end=query_input_ids.size(0), step=samples_size, device=self.device)
-        query_input_ids_slc = torch.index_select(query_input_ids, dim=0, index=query_indices)
-        query_segment_ids_slc = torch.index_select(query_segment_ids, dim=0, index=query_indices)
-        query_input_mask_slc = torch.index_select(query_segment_ids, dim=0, index=query_indices)
-        query_encode = self.segment_encode(query_input_ids_slc,
-                                           query_segment_ids_slc,
-                                           query_input_mask_slc)
+        # query_indices = torch.arange(start=0, end=query_input_ids.size(0), step=samples_size, device=self.device)
+        # query_input_ids_slc = torch.index_select(query_input_ids, dim=0, index=query_indices)
+        # query_segment_ids_slc = torch.index_select(query_segment_ids, dim=0, index=query_indices)
+        # query_input_mask_slc = torch.index_select(query_segment_ids, dim=0, index=query_indices)
+        query_encode = self.segment_encode(query_input_ids,
+                                           query_segment_ids,
+                                           query_attention_mask)
 
         if query_event_starts is not None and query_event_ends is not None:
             # Will trigger while training

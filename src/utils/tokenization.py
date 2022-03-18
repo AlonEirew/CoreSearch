@@ -35,19 +35,21 @@ class Tokenization(object):
                                     passages_file: str,
                                     max_query_length: int,
                                     max_passage_length: int,
+                                    negative_examples: int,
                                     add_qbound: bool = False) -> List[SearchFeat]:
         query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
         passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
         passages_examples_dict: Dict[str, Passage] = {passage.id: passage for passage in passages_examples}
 
         logger.info("Done loading examples file, queries-" + query_file + ", passages-" + passages_file)
-        logger.info(
-            "Total examples loaded, queries=" + str(len(query_examples)) + ", passages=" + str(len(passages_examples_dict)))
+        logger.info("Total examples loaded, queries=" + str(len(query_examples)) + ", passages=" + str(len(passages_examples_dict)))
         logger.info("Starting to generate examples...")
         query_feats = dict()
         passage_feats = dict()
         search_feats = list()
+        total_gen_queries = 0
         for query_obj in tqdm(query_examples, "Loading Queries"):
+            total_gen_queries += len(query_obj.positive_examples)
             query_feat = self.get_query_feat(query_obj, max_query_length, add_qbound)
             query_feats[query_obj.id] = query_feat
             pos_passages = list()
@@ -60,13 +62,19 @@ class Tokenization(object):
             for neg_id in query_obj.negative_examples:
                 if neg_id not in passage_feats:
                     passage_feats[neg_id] = self.get_passage_feat(passages_examples_dict[neg_id], max_passage_length)
-                passage_cpy = copy.copy(passage_feats[neg_id])
-                passage_cpy.passage_event_start = passage_cpy.passage_event_end = 0
-                neg_passages.append(passage_cpy)
+                # passage_cpy = copy.copy(passage_feats[neg_id])
+                # passage_cpy.passage_event_start = passage_cpy.passage_event_end = 0
+                neg_passages.append(passage_feats[neg_id])
 
+            index = 0
             for pos_pass in pos_passages:
-                search_feats.append(SearchFeat(query_feat, pos_pass, neg_passages))
+                if len(neg_passages) < index+negative_examples:
+                    index = 0
 
+                search_feats.append(SearchFeat(query_feat, pos_pass, neg_passages[index:index+negative_examples]))
+                index += 1
+
+        print(f"Total generated queries = {total_gen_queries}")
         return search_feats
 
     def generate_query_feats(self, query_file: str,

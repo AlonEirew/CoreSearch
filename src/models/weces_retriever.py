@@ -23,6 +23,11 @@ class WECESRetriever(nn.Module):
         if "sample_size" in kwargs:
             samples_size = kwargs["sample_size"]
 
+        # The input ids before arrive with the number of (positive + negatives) at dim=1 (batch_size, samples, max_passage_len)
+        passage_input_ids = passage_input_ids.view(passage_input_ids.shape[0] * samples_size, -1)
+        passage_segment_ids = passage_segment_ids.view(passage_segment_ids.shape[0] * samples_size, -1)
+        passage_input_mask = passage_input_mask.view(passage_input_mask.shape[0] * samples_size, -1)
+
         passage_encode, _ = self.passage_encoder(passage_input_ids,
                                                  passage_segment_ids,
                                                  passage_input_mask,
