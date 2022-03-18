@@ -40,12 +40,12 @@ class WECESRetriever(nn.Module):
     def predict(self, query_rep, passage_rep):
         positive_idxs = torch.zeros(query_rep.shape[0], dtype=torch.long)
         predicted_idxs, softmax_scores = self.predict_softmax(query_rep, passage_rep)
-        sim_loss = F.nll_loss(
+        loss = F.nll_loss(
             softmax_scores,
             positive_idxs.to(softmax_scores.device),
             reduction="mean",
         )
-        return sim_loss, predicted_idxs
+        return loss, predicted_idxs
 
     @staticmethod
     def predict_softmax(query_rep, passage_rep):

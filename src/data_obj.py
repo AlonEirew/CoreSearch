@@ -5,17 +5,60 @@ import torch
 from transformers.file_utils import ModelOutput
 
 
+class BasicMent(object):
+    def __init__(self, json_obj: Dict):
+        self.context = json_obj["context"]
+        if "dummy" in json_obj and json_obj["dummy"]:
+            self.id = None
+            self.goldChain = None
+            self.mention = None
+            self.startIndex = None
+            self.endIndex = None
+            return
+
+        self.id = json_obj["id"]
+        self.goldChain = str(json_obj["goldChain"])
+        self.mention = json_obj["mention"]
+        self.startIndex = json_obj["startIndex"]
+        self.endIndex = json_obj["endIndex"]
+        self.context = json_obj["context"]
+
+    @staticmethod
+    def list_to_map(list_to_convert) -> Dict:
+        assert list_to_convert
+        return {obj.id: obj for obj in list_to_convert}
+
+
+class Passage(BasicMent):
+    def __init__(self, json_obj: Dict):
+        super().__init__(json_obj)
+        self.score = 0.0
+        self.answer = None
+        self.offsets_in_document = None
+        if "score" in json_obj:
+            self.score = json_obj["score"]
+        if "answer" in json_obj:
+            self.answer = json_obj["answer"]
+        if "offsets_in_document" in json_obj:
+            self.offsets_in_document = json_obj["offsets_in_document"]
+
+
+class Query(BasicMent):
+    def __init__(self, json_obj: Dict):
+        super().__init__(json_obj)
+
+
 class Feat(object):
     def __init__(self,
                  input_ids,
                  input_mask,
                  segment_ids,
-                 feat_id):
+                 feat_ref: BasicMent):
 
         self.input_ids = input_ids
         self.input_mask = input_mask
         self.segment_ids = segment_ids
-        self.feat_id = feat_id
+        self.feat_ref = feat_ref
 
 
 class QueryFeat(Feat):
@@ -23,11 +66,11 @@ class QueryFeat(Feat):
                  query_input_ids,
                  query_input_mask,
                  query_segment_ids,
-                 query_id,
+                 query_ref,
                  query_event_start,
                  query_event_end):
 
-        super().__init__(query_input_ids, query_input_mask, query_segment_ids, query_id)
+        super().__init__(query_input_ids, query_input_mask, query_segment_ids, query_ref)
         self.query_event_start = query_event_start
         self.query_event_end = query_event_end
 
@@ -37,13 +80,13 @@ class PassageFeat(Feat):
                  passage_input_ids,
                  passage_input_mask,
                  passage_segment_ids,
-                 passage_id,
+                 passage_ref,
                  passage_event_start=None,
                  passage_event_end=None,
                  passage_end_bound=None,
                  is_positive=None):
 
-        super().__init__(passage_input_ids, passage_input_mask, passage_segment_ids, passage_id)
+        super().__init__(passage_input_ids, passage_input_mask, passage_segment_ids, passage_ref)
         self.passage_event_start = passage_event_start
         self.passage_event_end = passage_event_end
         self.passage_end_bound = passage_end_bound
@@ -89,49 +132,6 @@ class EvaluationObject(object):
         self.passage_bound = passage_bound
         self.query_event_start = query_event_start
         self.query_event_end = query_event_end
-
-
-class BasicMent(object):
-    def __init__(self, json_obj: Dict):
-        self.context = json_obj["context"]
-        if "dummy" in json_obj and json_obj["dummy"]:
-            self.id = None
-            self.goldChain = None
-            self.mention = None
-            self.startIndex = None
-            self.endIndex = None
-            return
-
-        self.id = json_obj["id"]
-        self.goldChain = str(json_obj["goldChain"])
-        self.mention = json_obj["mention"]
-        self.startIndex = json_obj["startIndex"]
-        self.endIndex = json_obj["endIndex"]
-        self.context = json_obj["context"]
-
-    @staticmethod
-    def list_to_map(list_to_convert) -> Dict:
-        assert list_to_convert
-        return {obj.id: obj for obj in list_to_convert}
-
-
-class Passage(BasicMent):
-    def __init__(self, json_obj: Dict):
-        super().__init__(json_obj)
-        self.score = 0.0
-        self.answer = None
-        self.offsets_in_document = None
-        if "score" in json_obj:
-            self.score = json_obj["score"]
-        if "answer" in json_obj:
-            self.answer = json_obj["answer"]
-        if "offsets_in_document" in json_obj:
-            self.offsets_in_document = json_obj["offsets_in_document"]
-
-
-class Query(BasicMent):
-    def __init__(self, json_obj: Dict):
-        super().__init__(json_obj)
 
 
 class Cluster(object):

@@ -1,15 +1,16 @@
-import wandb
-
 import logging
 import random
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 import numpy as np
 import torch
+import wandb
 from transformers import AdamW
 
+from src.data_obj import SearchFeat
 from src.models.weces_retriever import WECESRetriever
 from src.utils.data_utils import generate_train_batches
 from src.utils.evaluation import generate_sim_results, evaluate_retriever
@@ -48,7 +49,7 @@ def train():
     epochs = 20
     train_negative_samples = 1
     dev_negative_samples = 5
-    in_batch_samples = 10
+    in_batch_samples = 20
     # train_batch_size = 3 * (2 + 1) in training for 2 negatives and 1 positive samples
     train_batch_size = in_batch_samples * (train_negative_samples + 1)
     dev_batch_size = in_batch_samples * (dev_negative_samples + 1)
@@ -83,23 +84,27 @@ def train():
 
     optimizer = AdamW(weces_retriever.parameters(), lr=lr)
 
-    train_search_feats = tokenization.generate_train_search_feats(train_examples_file,
-                                                                  train_passages_file, max_query_length,
-                                                                  max_passage_length, add_qbound_tokens)
+    train_search_feats = tokenization.generate_train_search_feats(
+        train_examples_file,
+        train_passages_file, max_query_length,
+        max_passage_length, add_qbound_tokens)
 
-    dev_search_feats = tokenization.generate_train_search_feats(dev_examples_file,
-                                                                dev_passages_file, max_query_length,
-                                                                max_passage_length, add_qbound_tokens)
+    dev_search_feats = tokenization.generate_train_search_feats(
+        dev_examples_file,
+        dev_passages_file, max_query_length,
+        max_passage_length, add_qbound_tokens)
 
     accum_loss = 0.0
     start_time = time.time()
     tot_steps = 0.0
     logger.info("Start training...")
     torch.autograd.set_detect_anomaly(False)
+
+    # generation will random negative examples
+    train_batches = generate_train_batches(train_search_feats, train_negative_samples, train_batch_size)
+    dev_batches = generate_train_batches(dev_search_feats, dev_negative_samples, dev_batch_size)
     for epoch in range(epochs):
         weces_retriever.train()
-        train_batches = generate_train_batches(train_search_feats, train_negative_samples, train_batch_size)
-        dev_batches = generate_train_batches(dev_search_feats, dev_negative_samples, dev_batch_size)
         random.shuffle(train_batches)
         batch_predictions, batch_golds = list(), list()
         for step, batch in enumerate(train_batches):
@@ -111,11 +116,15 @@ def train():
             passage_segment_ids, query_segment_ids, \
             passage_start_position, passage_end_position, \
             passage_end_bound, query_event_starts, query_event_ends = batch
-            loss, predictions = weces_retriever(passage_input_ids, query_input_ids,
-                                                    passage_input_mask, query_input_mask,
-                                                    passage_segment_ids, query_segment_ids,
-                                                    query_start=query_event_starts, query_end=query_event_ends,
-                                                    sample_size=train_negative_samples + 1)
+            loss, predictions = weces_retriever(passage_input_ids,
+                                                query_input_ids,
+                                                passage_input_mask,
+                                                query_input_mask,
+                                                passage_segment_ids,
+                                                query_segment_ids,
+                                                query_start=query_event_starts,
+                                                query_end=query_event_ends,
+                                                sample_size=train_negative_samples + 1)
 
             if n_gpu > 1:
                 loss = loss.mean()
@@ -139,11 +148,44 @@ def train():
         dev_accuracy = evaluate_retriever(weces_retriever, dev_batches, dev_negative_samples + 1, n_gpu)
         wandb.log({"train-accurach": train_accuracy, "dev-accuracy": dev_accuracy, "loss": accum_loss / tot_steps})
         wandb.watch(weces_retriever)
-        save_checkpoint(checkpoints_path, epoch, weces_retriever, tokenization, optimizer)
+        # save_checkpoint(checkpoints_path, epoch, weces_retriever, tokenization, optimizer)
 
     wandb.finish()
 
 
+def show_heat_map(weces_retriever: WECESRetriever, tokenization: Tokenization, train_search_feats: List[SearchFeat],
+                  step: str):
+    samples = train_search_feats[20:21]
+    with torch.no_grad():
+        for sample in samples:
+            query_input = sample.query
+            query_ref = sample.query.feat_ref
+            pos_passage = sample.positive_passage
+            neg_passage = sample.negative_passages[1]
+            query_encode = weces_retriever.query_encoder.segment_encode(
+                torch.tensor(query_input.input_ids, device=weces_retriever.device).view(1, -1),
+                torch.tensor(query_input.segment_ids, device=weces_retriever.device).view(1, -1),
+                torch.tensor(query_input.input_mask, device=weces_retriever.device).view(1, -1))
+
+            pos_pass_encode = weces_retriever.passage_encoder.segment_encode(
+                torch.tensor(pos_passage.input_ids, device=weces_retriever.device).view(1, -1),
+                torch.tensor(pos_passage.segment_ids, device=weces_retriever.device).view(1, -1),
+                torch.tensor(pos_passage.input_mask, device=weces_retriever.device).view(1, -1))
+            query_tokenized = tokenization.query_tokenizer.convert_ids_to_tokens(query_input.input_ids)
+            query_labels = [query_tokenized[0]] + query_tokenized[query_input.query_event_start:query_input.query_event_end+1]
+            passage_tokenized = tokenization.passage_tokenizer.convert_ids_to_tokens(pos_passage.input_ids)
+            passage_labels = [passage_tokenized[0]] + passage_tokenized[pos_passage.passage_event_start:pos_passage.passage_event_end+1]
+            label = " ".join(query_ref.mention) + " .VS. " + " ".join(pos_passage.feat_ref.mention)
+            query_encode = query_encode[0].squeeze()
+            query_final_encode = torch.cat((query_encode[0].view(1, -1), query_encode[query_input.query_event_start:query_input.query_event_end+1]))
+            pos_pass_encode = pos_pass_encode[0].squeeze()
+            pos_pass_final_encode = torch.cat((pos_pass_encode[0].view(1, -1), pos_pass_encode[pos_passage.passage_event_start:pos_passage.passage_event_end+1]))
+            matrix_values = query_final_encode @ pos_pass_final_encode.T
+            # matrix_values = torch.cosine_similarity(query_final_encode, pos_pass_final_encode)
+            wandb.log({label + "-" + step: wandb.plots.HeatMap(passage_labels, query_labels, matrix_values.cpu(), show_text=False)})
+
+
 if __name__ == '__main__':
     wandb.init(project="weces", entity="eirew")
+    random.seed(1234)
     train()

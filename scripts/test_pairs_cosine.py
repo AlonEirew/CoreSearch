@@ -24,6 +24,7 @@ def main():
     # dev_examples_file = "data/resources/train/small_training_queries.json"
     dev_passages_file = "data/resources/train/Dev_training_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
+    model_file = "data/checkpoints/17032022_165106/model-0"
     topk = 50
     run_pipe_str = "retriever"
 
@@ -46,20 +47,20 @@ def main():
 
     # passage_examples_dict: Dict[str, Passage] = {passage.id: passage for passage in passage_examples}
 
-    model, query_tokenizer, passage_tokenizer = load_checkpoint("data/checkpoints/cls_token/model-0")
+    model, query_tokenizer, passage_tokenizer = load_checkpoint(model_file)
     model.eval()
     tokenization = Tokenization(query_tokenizer=query_tokenizer, passage_tokenizer=passage_tokenizer)
+    print(f"Experiment using model={model_file}, query_file={dev_examples_file}, passage_file={dev_passages_file}")
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
-    dev_queries_feats, query_examples = tokenization.generate_query_feats(dev_examples_file,
-                                                                          max_query_len,
-                                                                          add_qbound)
-    dev_passages_feats, passage_examples = tokenization.generate_passage_feats(dev_passages_file,
-                                                                               max_pass_len)
+    dev_queries_feats = tokenization.generate_query_feats(dev_examples_file,
+                                                          max_query_len,
+                                                          add_qbound)
+    dev_passages_feats = tokenization.generate_passage_feats(dev_passages_file,
+                                                             max_pass_len)
 
-    query_dict: Dict[str, Query] = {query.id: query for query in query_examples}
-    passage_dict: Dict[str, Passage] = {passage.id: passage for passage in passage_examples}
+    passage_dict: Dict[str, Passage] = {passage.feat_ref.id: passage.feat_ref for passage in dev_passages_feats}
 
     dev_queries_feats = random.sample(dev_queries_feats, k=5)
     total_queries = len(dev_queries_feats)
@@ -73,14 +74,13 @@ def main():
         results = list()
         for pass_id, pred in query_predictions:
             results.append(passage_dict[pass_id])
-        query_result = QueryResult(query=query_dict[query.feat_id], results=results)
+        query_result = QueryResult(query=query.feat_ref, results=results)
         all_queries_pred.append(query_result)
 
-        print(f"queryId-{query_dict[query.feat_id].id}")
-        print(f"queryMention-{query_dict[query.feat_id].mention}")
-        print(f"top5_values={query_predictions[:5]}")
-        for passage_id, _ in query_predictions[:5]:
-            print(passage_dict[passage_id].mention)
+        print(f"queryId-{query.feat_ref.id}")
+        print(f"queryMention-{query.feat_ref.mention}")
+        for passage_id, prediction in query_predictions[:5]:
+            print(passage_id + "(" + str(prediction) + ")-\"" + " ".join(passage_dict[passage_id].mention) + "\"")
         # if query_index == 0:
         #     break
 
@@ -126,7 +126,7 @@ def run_top_pass(model, query: Feat, dev_passages_ids, dev_passages_batch, topk)
         batch_passage_ides = dev_passages_ids[batch_idx]
         predictions = WECESRetriever.predict_pairwise_cosine(query_encoded, pass_batch_encoded).detach().cpu()
         for index in range(len(batch_passage_ides)):
-            if batch_passage_ides[index] != query.feat_id:
+            if batch_passage_ides[index] != query.feat_ref.id:
                 all_predictions.append((batch_passage_ides[index], predictions[index].item()))
 
     final_predictions = sorted(all_predictions, key=lambda x: x[1], reverse=True)[:topk]

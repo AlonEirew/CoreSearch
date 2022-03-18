@@ -22,7 +22,10 @@ class WECEncoder(LanguageModel, ABC):
             token_type_ids = torch.squeeze(token_type_ids)
             input_mask = torch.squeeze(input_mask)
 
-        encodings = self.model(input_ids=input_ids, token_type_ids=token_type_ids, attention_mask=input_mask)
+        encodings = self.model(input_ids=input_ids,
+                               token_type_ids=token_type_ids,
+                               attention_mask=input_mask,
+                               output_attentions=True)
         return encodings
 
 
@@ -42,10 +45,10 @@ class WECContextEncoder(WECEncoder):
         if len(kwargs) > 1:
             # extract the last-hidden-state CLS token embeddings
             # return self.dropout(passage_encode[0][:, 0, :]), None
-            return passage_encode[0][:, 0, :], None
+            return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
             # return passage_encode.pooler_output, None
         else:
-            return passage_encode[0][:, 0, :], None
+            return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
 
     def freeze(self, layers):
         pass
@@ -87,11 +90,11 @@ class WECQuestionEncoder(WECEncoder):
             # out_query_embed = self.extract_query_start_end_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
             # return out_query_embed, None
             # return self.dropout(query_encode[0][:, 0, :]), Noneֿ
-            return query_encode[0][:, 0, :], None
+            return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
             # return query_encode.pooler_output, None
         else:
             # Will trigger at inference
-            return query_encode[0][:, 0, :], None
+            return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
             # return query_encode.pooler_output, None
 
     def freeze(self, layers):
