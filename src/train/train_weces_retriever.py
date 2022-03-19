@@ -29,7 +29,7 @@ def train():
     train_passages_file = "data/resources/train/Dev_training_passages.json"
     # train_examples_file = "data/resources/train/Train_training_queries.json"
     # train_passages_file = "data/resources/train/Train_training_passages.json"
-    dev_examples_file = "data/resources/train/small_training_queries.json"
+    dev_examples_file = "data/resources/train/Dev_training_queries.json"
     dev_passages_file = "data/resources/train/Dev_training_passages.json"
 
     query_model = "SpanBERT/spanbert-base-cased"
@@ -46,7 +46,7 @@ def train():
 
     add_qbound_tokens = False
     cpu_only = False
-    epochs = 20
+    epochs = 3
     batch_size = 16
     train_negative_samples = 1
     dev_negative_samples = 1
@@ -103,7 +103,8 @@ def train():
     logger.info("Start training...")
     torch.autograd.set_detect_anomaly(False)
 
-    # generation will random negative examples
+    random.shuffle(train_search_feats)
+    random.shuffle(dev_search_feats)
     train_batches = generate_train_batches(train_search_feats,
                                            train_negative_samples,
                                            batch_size,
@@ -114,7 +115,6 @@ def train():
                                          max_passage_length)
     for epoch in range(epochs):
         weces_retriever.train()
-        random.shuffle(train_batches)
         batch_predictions, batch_golds = list(), list()
         for step, batch in enumerate(train_batches):
             if n_gpu == 1:
@@ -125,15 +125,15 @@ def train():
             passage_segment_ids, query_segment_ids, \
             passage_start_position, passage_end_position, \
             passage_end_bound, query_event_starts, query_event_ends = batch
-            loss, predictions = weces_retriever(passage_input_ids,
-                                                query_input_ids,
-                                                passage_input_mask,
-                                                query_input_mask,
-                                                passage_segment_ids,
-                                                query_segment_ids,
-                                                query_start=query_event_starts,
-                                                query_end=query_event_ends,
-                                                sample_size=train_negative_samples + 1)
+            loss, softmax_scores, passage_pos_indices = weces_retriever(passage_input_ids,
+                                                                     query_input_ids,
+                                                                     passage_input_mask,
+                                                                     query_input_mask,
+                                                                     passage_segment_ids,
+                                                                     query_segment_ids,
+                                                                     query_start=query_event_starts,
+                                                                     query_end=query_event_ends,
+                                                                     sample_size=train_negative_samples + 1)
 
             # if n_gpu > 1:
             #     loss = loss.mean()
@@ -146,18 +146,19 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
 
-            batch_predictions.append(predictions.detach().cpu().numpy())
-            batch_golds.append(np.zeros(len(predictions)))
+            _ ,torch_max = torch.max(softmax_scores.detach().cpu(), 1)
+            batch_predictions.append(torch_max.numpy())
+            batch_golds.append(passage_pos_indices.detach().cpu().numpy())
             logger.info('Epoch: {}, Step: {} / {}, used_time = {:.2f}s, loss = {:.6f}'.format(
                 epoch, step + 1, len(train_batches), time.time() - start_time, accum_loss / tot_steps))
 
         wandb.log({"loss": accum_loss / tot_steps, })
         train_accuracy = generate_sim_results(batch_golds, batch_predictions)
         logger.info("Train-Similarity: accuracy={}".format(train_accuracy))
-        dev_accuracy = evaluate_retriever(weces_retriever, dev_batches, dev_negative_samples + 1, n_gpu)
-        wandb.log({"train-accurach": train_accuracy, "dev-accuracy": dev_accuracy, "loss": accum_loss / tot_steps})
+        # dev_accuracy = evaluate_retriever(weces_retriever, dev_batches, dev_negative_samples + 1, n_gpu)
+        # wandb.log({"train-accurach": train_accuracy, "dev-accuracy": dev_accuracy, "loss": accum_loss / tot_steps})
         wandb.watch(weces_retriever)
-        # save_checkpoint(checkpoints_path, epoch, weces_retriever, tokenization, optimizer)
+        save_checkpoint(checkpoints_path, epoch, weces_retriever, tokenization, optimizer)
 
     wandb.finish()
 

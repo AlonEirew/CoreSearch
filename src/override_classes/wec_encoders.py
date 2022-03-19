@@ -1,16 +1,13 @@
-from abc import ABC
-
 import torch
-from haystack.modeling.model.language_model import LanguageModel
 from torch import nn
 from transformers import BertModel, BertConfig
 
 
-class WECEncoder(LanguageModel, ABC):
-    def __init__(self):
+class WECEncoder(nn.Module):
+    def __init__(self, model):
         super(WECEncoder, self).__init__()
         self.device = "cpu"
-        self.config = BertConfig.from_pretrained("SpanBERT/spanbert-base-cased")
+        self.config = BertConfig.from_pretrained(model)
 
     def set_tokenizer_size(self, token_len, device):
         self.model.resize_token_embeddings(token_len)
@@ -31,7 +28,7 @@ class WECEncoder(LanguageModel, ABC):
 
 class WECContextEncoder(WECEncoder):
     def __init__(self, model):
-        super(WECContextEncoder, self).__init__()
+        super(WECContextEncoder, self).__init__(model)
         self.model = BertModel.from_pretrained(model)
         self.dropout = nn.Dropout(0.1)
         self.name = "wec_context_encoder"
@@ -44,11 +41,13 @@ class WECContextEncoder(WECEncoder):
 
         if len(kwargs) > 1:
             # extract the last-hidden-state CLS token embeddings
-            # return self.dropout(passage_encode[0][:, 0, :]), None
+            # return self.dropout(passage_encode.pooler_output), None
             return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
             # return passage_encode.pooler_output, None
         else:
+            # return self.dropout(passage_encode.pooler_output), None
             return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
+            # return passage_encode.pooler_output, None
 
     def freeze(self, layers):
         pass
@@ -59,7 +58,7 @@ class WECContextEncoder(WECEncoder):
 
 class WECQuestionEncoder(WECEncoder):
     def __init__(self, model):
-        super(WECQuestionEncoder, self).__init__()
+        super(WECQuestionEncoder, self).__init__(model)
         self.model = BertModel.from_pretrained(model)
         self.dropout = nn.Dropout(0.1)
         self.name = "wec_quesion_encoder"
@@ -86,11 +85,12 @@ class WECQuestionEncoder(WECEncoder):
             # query_event_ends_slc = torch.index_select(query_event_ends, dim=0, index=query_indices)
             # out_query_embed = self.extract_query_start_end_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
             # return out_query_embed, None
-            # return self.dropout(query_encode[0][:, 0, :]), Noneֿ
+            # return self.dropout(query_encode.pooler_output), None
             return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
             # return query_encode.pooler_output, None
         else:
             # Will trigger at inference
+            # return self.dropout(query_encode.pooler_output), None
             return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
             # return query_encode.pooler_output, None
 

@@ -27,6 +27,7 @@ class WECESRetriever(nn.Module):
         passage_input_ids = passage_input_ids.view(passage_input_ids.shape[0] * samples_size, -1)
         passage_segment_ids = passage_segment_ids.view(passage_segment_ids.shape[0] * samples_size, -1)
         passage_input_mask = passage_input_mask.view(passage_input_mask.shape[0] * samples_size, -1)
+        passage_pos_indices = torch.arange(start=0, end=passage_input_ids.size(0), step=samples_size, device=self.device)
 
         passage_encode, _ = self.passage_encoder(passage_input_ids,
                                                  passage_segment_ids,
@@ -38,26 +39,27 @@ class WECESRetriever(nn.Module):
                                              query_segment_ids,
                                              **kwargs)
 
-        shape_dim0 = passage_encode.shape[0]
-        passage_seq_to_expls = passage_encode.view(int(shape_dim0 / samples_size), samples_size, -1)
-        return self.predict(query_encode, passage_seq_to_expls)
+        # shape_dim0 = passage_encode.shape[0]
+        # passage_seq_to_expls = passage_encode.view(int(shape_dim0 / samples_size), samples_size, -1)
+        loss, softmax_scores = self.predict(query_encode, passage_encode, passage_pos_indices)
+        return loss, softmax_scores, passage_pos_indices
 
-    def predict(self, query_rep, passage_rep):
-        positive_idxs = torch.zeros(query_rep.shape[0], dtype=torch.long)
-        predicted_idxs, softmax_scores = self.predict_softmax(query_rep, passage_rep)
+    def predict(self, query_rep, passage_rep, passage_pos_indices):
+        # positive_idxs = torch.zeros(query_rep.shape[0], dtype=torch.long)
+        softmax_scores = self.predict_softmax(query_rep, passage_rep)
         loss = F.nll_loss(
             softmax_scores,
-            positive_idxs.to(softmax_scores.device),
+            passage_pos_indices,
             reduction="mean",
         )
-        return loss, predicted_idxs
+        return loss, softmax_scores
 
     @staticmethod
     def predict_softmax(query_rep, passage_rep):
-        sim_batch = torch.matmul(query_rep.unsqueeze(1), torch.transpose(passage_rep, 1, 2))
+        # sim_batch = torch.matmul(query_rep.unsqueeze(1), torch.transpose(passage_rep, 1, 2))
+        sim_batch = torch.matmul(query_rep, torch.transpose(passage_rep, 0, 1))
         softmax_scores = F.log_softmax(sim_batch.squeeze(1), dim=1)
-        _, predicted_idxs = torch.max(softmax_scores, 1)
-        return predicted_idxs, softmax_scores
+        return softmax_scores
 
     @staticmethod
     def predict_pairwise_cosine(query_rep, passage_rep):
