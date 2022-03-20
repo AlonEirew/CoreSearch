@@ -22,6 +22,10 @@ logger = logging.getLogger("event-search")
 
 
 def train():
+    random.seed(1234)
+    np.random.seed(1234)
+    torch.manual_seed(1243)
+
     start_time = datetime.now()
     dt_string = start_time.strftime("%d%m%Y_%H%M%S")
 
@@ -46,7 +50,7 @@ def train():
 
     add_qbound_tokens = False
     cpu_only = False
-    epochs = 3
+    epochs = 10
     batch_size = 16
     train_negative_samples = 1
     dev_negative_samples = 1
@@ -56,16 +60,31 @@ def train():
     assert (max_query_length + max_passage_length + 3) <= 512
     device = torch.device("cuda" if torch.cuda.is_available() and not cpu_only else "cpu")
     n_gpu = torch.cuda.device_count()
-    random.seed(1234)
-    np.random.seed(1234)
-    torch.manual_seed(1243)
 
-    wandb.config = {
+    config = {
         "learning_rate": lr,
         "epochs": epochs,
         "batch_size": batch_size,
-        "negative_samples": train_negative_samples
+        "max_query_length": max_query_length,
+        "max_passage_length": max_passage_length,
+        "train_negative_samples": train_negative_samples,
+        "dev_negative_samples": dev_negative_samples,
+        "train_examples_file": train_examples_file,
+        "train_passages_file": train_passages_file,
+        "dev_examples_file": dev_examples_file,
+        "dev_passages_file": dev_passages_file,
+        "query_model": query_model,
+        "passage_model": passage_model,
+        "query_tokenizer_model": query_tokenizer_model,
+        "passage_tokenizer_model": passage_tokenizer_model,
+        "checkpoints_path": checkpoints_path,
+        "query_representation": "pooler_cls_dropout",
+        "passage_representation": "pooler_cls_dropout"
     }
+
+    wandb.init(project="weces_retriever",
+               notes="BM25 as query and SpanBert",
+               config=config)
 
     logger.info("Using device-" + device.type)
     logger.info("Number of available GPU's-" + str(n_gpu))
@@ -103,7 +122,6 @@ def train():
     logger.info("Start training...")
     torch.autograd.set_detect_anomaly(False)
 
-    random.shuffle(train_search_feats)
     random.shuffle(dev_search_feats)
     train_batches = generate_train_batches(train_search_feats,
                                            train_negative_samples,
@@ -116,6 +134,7 @@ def train():
     for epoch in range(epochs):
         weces_retriever.train()
         batch_predictions, batch_golds = list(), list()
+        random.shuffle(train_batches)
         for step, batch in enumerate(train_batches):
             if n_gpu == 1:
                 batch = tuple(t.to(device) for t in batch)
@@ -126,14 +145,14 @@ def train():
             passage_start_position, passage_end_position, \
             passage_end_bound, query_event_starts, query_event_ends = batch
             loss, softmax_scores, passage_pos_indices = weces_retriever(passage_input_ids,
-                                                                     query_input_ids,
-                                                                     passage_input_mask,
-                                                                     query_input_mask,
-                                                                     passage_segment_ids,
-                                                                     query_segment_ids,
-                                                                     query_start=query_event_starts,
-                                                                     query_end=query_event_ends,
-                                                                     sample_size=train_negative_samples + 1)
+                                                                        query_input_ids,
+                                                                        passage_input_mask,
+                                                                        query_input_mask,
+                                                                        passage_segment_ids,
+                                                                        query_segment_ids,
+                                                                        query_start=query_event_starts,
+                                                                        query_end=query_event_ends,
+                                                                        sample_size=train_negative_samples + 1)
 
             # if n_gpu > 1:
             #     loss = loss.mean()
@@ -146,19 +165,18 @@ def train():
             optimizer.step()
             optimizer.zero_grad()
 
-            _ ,torch_max = torch.max(softmax_scores.detach().cpu(), 1)
+            _, torch_max = torch.max(softmax_scores.detach().cpu(), 1)
             batch_predictions.append(torch_max.numpy())
             batch_golds.append(passage_pos_indices.detach().cpu().numpy())
             logger.info('Epoch: {}, Step: {} / {}, used_time = {:.2f}s, loss = {:.6f}'.format(
                 epoch, step + 1, len(train_batches), time.time() - start_time, accum_loss / tot_steps))
 
-        wandb.log({"loss": accum_loss / tot_steps, })
         train_accuracy = generate_sim_results(batch_golds, batch_predictions)
         logger.info("Train-Similarity: accuracy={}".format(train_accuracy))
-        # dev_accuracy = evaluate_retriever(weces_retriever, dev_batches, dev_negative_samples + 1, n_gpu)
-        # wandb.log({"train-accurach": train_accuracy, "dev-accuracy": dev_accuracy, "loss": accum_loss / tot_steps})
+        dev_accuracy = evaluate_retriever(weces_retriever, dev_batches, dev_negative_samples + 1, n_gpu)
+        wandb.log({"train-accurach": train_accuracy, "dev-accuracy": dev_accuracy, "loss": accum_loss / tot_steps})
         wandb.watch(weces_retriever)
-        save_checkpoint(checkpoints_path, epoch, weces_retriever, tokenization, optimizer)
+        # save_checkpoint(checkpoints_path, epoch, weces_retriever, tokenization, optimizer)
 
     wandb.finish()
 
@@ -196,6 +214,5 @@ def show_heat_map(weces_retriever: WECESRetriever, tokenization: Tokenization, t
 
 
 if __name__ == '__main__':
-    wandb.init(project="weces", entity="eirew")
     random.seed(1234)
     train()

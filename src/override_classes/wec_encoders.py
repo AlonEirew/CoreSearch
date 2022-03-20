@@ -41,12 +41,14 @@ class WECContextEncoder(WECEncoder):
 
         if len(kwargs) > 1:
             # extract the last-hidden-state CLS token embeddings
-            # return self.dropout(passage_encode.pooler_output), None
-            return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
+            return self.dropout(passage_encode.pooler_output), None
+            # return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
+            # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
             # return passage_encode.pooler_output, None
         else:
-            # return self.dropout(passage_encode.pooler_output), None
-            return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
+            return self.dropout(passage_encode.pooler_output), None
+            # return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
+            # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
             # return passage_encode.pooler_output, None
 
     def freeze(self, layers):
@@ -85,13 +87,13 @@ class WECQuestionEncoder(WECEncoder):
             # query_event_ends_slc = torch.index_select(query_event_ends, dim=0, index=query_indices)
             # out_query_embed = self.extract_query_start_end_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
             # return out_query_embed, None
-            # return self.dropout(query_encode.pooler_output), None
-            return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
+            return self.dropout(query_encode.pooler_output), None
+            # return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
             # return query_encode.pooler_output, None
         else:
             # Will trigger at inference
-            # return self.dropout(query_encode.pooler_output), None
-            return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
+            return self.dropout(query_encode.pooler_output), None
+            # return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
             # return query_encode.pooler_output, None
 
     def freeze(self, layers):

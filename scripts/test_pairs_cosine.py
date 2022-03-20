@@ -24,9 +24,10 @@ def main():
     # dev_examples_file = "data/resources/train/small_training_queries.json"
     dev_passages_file = "data/resources/train/Dev_training_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
-    model_file = "data/checkpoints/17032022_165106/model-0"
+    model_file = "data/checkpoints/dev_spanbert_bm25_2it"
     topk = 50
     run_pipe_str = "retriever"
+    batch_size = 40
 
     # query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
     # passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
@@ -39,21 +40,24 @@ def main():
     # additional_pass = io_utils.read_passages_file_filtered("data/resources/WEC-ES/Dev_all_passages.json",
     #                                                        ['NEG_2078064', '11165', '122480'])
     # passage_examples.extend(additional_pass)
-    #
-    # model = load_dpr("data/checkpoints/dev_spanbert_2it", "indexes/multi_notft/dev_index")
-    # tokenization = model.processor.tokenization
-    # tokenization = Tokenization(query_tok_file="bert-base-cased", passage_tok_file="bert-base-cased")
+
+    model = load_dpr("data/checkpoints/dev_full_spanbert_bm25_2it", "indexes/spanbert_notft/dev_index")
+    tokenization = model.processor.tokenization
+
+    # tokenization = Tokenization(query_tok_file="SpanBERT/spanbert-base-cased", passage_tok_file="SpanBERT/spanbert-base-cased")
+    # model = WECESRetriever("SpanBERT/spanbert-base-cased", "SpanBERT/spanbert-base-cased",
+    #                        len(tokenization.query_tokenizer), "cuda")
+    # model.to("cuda")
     ## END OF NEEDED LINES TO REMOVE
 
-    # passage_examples_dict: Dict[str, Passage] = {passage.id: passage for passage in passage_examples}
-
-    model, query_tokenizer, passage_tokenizer = load_checkpoint(model_file)
-    model.eval()
-    tokenization = Tokenization(query_tokenizer=query_tokenizer, passage_tokenizer=passage_tokenizer)
+    # model, query_tokenizer, passage_tokenizer = load_checkpoint(model_file)
+    # model.eval()
+    # tokenization = Tokenization(query_tokenizer=query_tokenizer, passage_tokenizer=passage_tokenizer)
     print(f"Experiment using model={model_file}, query_file={dev_examples_file}, passage_file={dev_passages_file}")
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
+
     dev_queries_feats = tokenization.generate_query_feats(dev_examples_file,
                                                           max_query_len,
                                                           add_qbound)
@@ -62,15 +66,19 @@ def main():
 
     passage_dict: Dict[str, Passage] = {passage.feat_ref.id: passage.feat_ref for passage in dev_passages_feats}
 
-    dev_queries_feats = random.sample(dev_queries_feats, k=5)
+    dev_queries_feats = random.sample(dev_queries_feats, k=20)
     total_queries = len(dev_queries_feats)
 
-    dev_passages_ids, dev_passages_batches = generate_index_batches(list(dev_passages_feats), 20)
+    dev_passages_ids, dev_passages_batches = generate_index_batches(list(dev_passages_feats), batch_size)
+    all_dev_passages_encode = list()
+    for batch_idx, batch in enumerate(tqdm(dev_passages_batches, "Encoding Passages")):
+        pass_embeds = get_passage_embed(model, batch)
+        all_dev_passages_encode.append(pass_embeds.detach().cpu())
 
     all_queries_pred = list()
     for query_index, query in enumerate(dev_queries_feats):
         # query = dev_queries_feats[10]
-        query_predictions = run_top_pass(model, query, dev_passages_ids, dev_passages_batches, topk)
+        query_predictions = run_top_pass(model, query, dev_passages_ids, all_dev_passages_encode, topk)
         results = list()
         for pass_id, pred in query_predictions:
             results.append(passage_dict[pass_id])
@@ -118,13 +126,12 @@ def load_dpr(model_dir, index_dir):
     return model
 
 
-def run_top_pass(model, query: Feat, dev_passages_ids, dev_passages_batch, topk):
+def run_top_pass(model, query: Feat, dev_passages_ids, all_dev_passages_encode, topk):
     query_encoded = get_query_embed(model, query)
     all_predictions: List[Tuple[str, float]] = list()
-    for batch_idx, batch in enumerate(tqdm(dev_passages_batch, "Evaluate")):
-        pass_batch_encoded = get_passage_embed(model, batch)
+    for batch_idx, pass_batch_encoded in enumerate(tqdm(all_dev_passages_encode, "Evaluate")):
         batch_passage_ides = dev_passages_ids[batch_idx]
-        predictions = WECESRetriever.predict_pairwise_cosine(query_encoded, pass_batch_encoded).detach().cpu()
+        predictions = WECESRetriever.predict_pairwise_cosine(query_encoded, pass_batch_encoded.to("cuda")).detach().cpu()
         for index in range(len(batch_passage_ides)):
             if batch_passage_ides[index] != query.feat_ref.id:
                 all_predictions.append((batch_passage_ides[index], predictions[index].item()))

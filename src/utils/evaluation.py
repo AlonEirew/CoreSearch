@@ -131,13 +131,14 @@ def evaluate_retriever(model, dev_batches, samples, n_gpu):
         passage_end_bound, query_event_starts, query_event_ends = batch
 
         with torch.no_grad():
-            _, predictions = model(passage_input_ids, query_input_ids,
+            _, softmax_scores, passage_pos_indices = model(passage_input_ids, query_input_ids,
                                    passage_input_mask, query_input_mask,
                                    passage_segment_ids, query_segment_ids,
                                    sample_size=samples)
 
-        all_predictions.append(predictions.detach().cpu().numpy())
-        gold_labs.append(np.zeros(len(predictions)))
+        _, predictions = torch.max(softmax_scores.detach().cpu(), 1)
+        all_predictions.append(predictions.numpy())
+        gold_labs.append(passage_pos_indices.detach().cpu().numpy())
 
     accuracy = generate_sim_results(gold_labs, all_predictions)
     logger.info("Dev-Similarity: accuracy={}".format(accuracy))

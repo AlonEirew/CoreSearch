@@ -7,16 +7,15 @@ from src.utils import io_utils, dpr_utils
 
 
 def train():
-    doc_dir = "data/resources/dpr/"
-
-    train_filename = "Test_dpr_format.json"
-    dev_filename = "Dev_dpr_format.json"
+    doc_dir = "data/resources/dpr/ment_ners/"
+    train_filename = "Train_dpr_format.json"
+    dev_filename = "data/resources/dpr/ment_ners/Dev_dpr_format.json"
 
     n_epochs = 2
     run_update_eval = False
     model_str = "spanbert_bm25"
 
-    infer_tokenizer_classes = False
+    infer_tokenizer_classes = True
     max_seq_len_query = 50
     max_seq_len_passage = 150
     batch_size = 16
@@ -29,7 +28,7 @@ def train():
     # passage_model = "facebook/dpr-ctx_encoder-multiset-base"
     load_tokenizer = False
 
-    faiss_path_prefix = "indexes/spanbert_bm25/dev_index"
+    faiss_path_prefix = "indexes/spanbert_notft/dev_index"
 
     dev_gold_clusters = "data/resources/WEC-ES/Dev_gold_clusters.json"
     dev_train_queries = "data/resources/train/Dev_training_queries.json"
@@ -61,8 +60,8 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
                                                              batch_size,
                                                              load_tokenizer)
     else:
-        sql_rul = "sqlite:///%s.db" % faiss_path_prefix
-        document_store = dpr_utils.create_default_faiss_doc_store(sql_rul, "dot_product")
+        # sql_rul = "sqlite:///%s.db" % faiss_path_prefix
+        document_store = dpr_utils.load_faiss_doc_store(faiss_index_path, faiss_config_path)
         retriever = dpr_utils.load_dpr(document_store,
                                        query_model, passage_model, infer_tokenizer_classes, max_seq_len_query,
                                        max_seq_len_passage, batch_size, load_tokenizer)
@@ -79,8 +78,7 @@ def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_
                     embed_title=False,
                     num_positives=1,
                     num_hard_negatives=1,
-                    multiprocessing_strategy='file_system'
-                    )
+                    max_processes=5)
 
     if run_update_eval:
         document_store.update_embeddings(retriever=retriever)
