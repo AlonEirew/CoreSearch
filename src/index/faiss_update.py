@@ -27,8 +27,8 @@ def main():
     _max_seq_len_passage = 150
     _batch_size = 16
 
-    _query_encode = "data/checkpoints/dev_spanbert_2it/query_encoder"
-    _passage_encode = "data/checkpoints/dev_spanbert_2it/passage_encoder"
+    _query_encode = "data/checkpoints/dev_full_spanbert_bm25_2it/query_encoder"
+    _passage_encode = "data/checkpoints/dev_full_spanbert_bm25_2it/passage_encoder"
     _load_tokenizer = False
 
     print(f"Preparing to update index: {faiss_path_prefix}, with query_model:{_query_encode}, passage_model:{_passage_encode}")

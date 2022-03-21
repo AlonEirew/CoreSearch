@@ -1,9 +1,12 @@
+from abc import ABC
+
 import torch
+from haystack.modeling.model.language_model import LanguageModel
 from torch import nn
 from transformers import BertModel, BertConfig
 
 
-class WECEncoder(nn.Module):
+class WECEncoder(LanguageModel, ABC):
     def __init__(self, model):
         super(WECEncoder, self).__init__()
         self.device = "cpu"

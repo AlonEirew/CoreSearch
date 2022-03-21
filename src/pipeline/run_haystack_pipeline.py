@@ -8,7 +8,7 @@ from src.data_obj import Cluster, TrainExample, Passage, QueryResult
 from src.index import elastic_index
 from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
 from src.utils import io_utils, measurments, data_utils, dpr_utils, measure_squad
-from src.utils.io_utils import replace_retriever_model
+from src.utils.io_utils import replace_loaded_retriever_model
 from src.utils.measurments import precision, precision_squad
 from src.utils.tokenization import Tokenization
 
@@ -25,17 +25,17 @@ def main():
     # query_method = "full_ctx"
     query_method = "bm25"
     es_index = SPLIT.lower()
-    index_folder = "spanbert_ft"
+    index_folder = "spanbert_ft_new"
     # index_folder = "spanbert_ft"
-    experiment_name = "spanbert_train_bm25_inference_bm25"
+    experiment_name = "spanbert_full_train_bm25_inference_bm25"
 
     infer_tokenizer_classes = True
-    max_seq_len_query = 50
-    max_seq_len_passage = 150
+    max_seq_len_query = 64
+    max_seq_len_passage = 180
     batch_size = 16
 
-    query_encode = "data/checkpoints/dev_spanbert_2it/query_encoder"
-    passage_encode = "data/checkpoints/dev_spanbert_2it/passage_encoder"
+    query_encode = "data/checkpoints/dev_full_spanbert_bm25_2it/query_encoder"
+    passage_encode = "data/checkpoints/dev_full_spanbert_bm25_2it/passage_encoder"
     load_model = None #use the query & passage encoders, is set to value, replace with model from value
     # load_model = "data/checkpoints/mul_start_end_spacial_tokens/model-3"
     load_tokenizer = False
@@ -50,20 +50,14 @@ def main():
     faiss_config_file = faiss_index_prefix + ".json"
 
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
-    # queries_file = "data/resources/train/" + SPLIT + "_training_queries.json"
-    queries_file = "data/resources/train/small_training_queries.json"
+    queries_file = "data/resources/train/" + SPLIT + "_training_queries.json"
     passages_file = "data/resources/train/" + SPLIT + "_training_passages.json"
 
     result_out_file = "results/" + es_index + "_" + query_method + "_" + index_type + "_" + index_folder + "_" + \
                       experiment_name + "_" + str(reader_model_file) + ".txt"
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
-    # query_examples: List[Query] = io_utils.read_query_file("resources/WEC-ES/" + SPLIT + "_queries.json")
     query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
-
-    # NEED TO REMOVE THIS LINE
-    # del query_examples[1:len(query_examples)]
-
     passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
 
     passage_dict: Dict[str, Passage] = {obj.id: obj for obj in passage_examples}
@@ -80,7 +74,7 @@ def main():
                                                              batch_size,
                                                              load_tokenizer)
         if load_model:
-            replace_retriever_model(retriever, load_model, max_seq_len_query, max_seq_len_passage)
+            replace_loaded_retriever_model(retriever, load_model, max_seq_len_query, max_seq_len_passage)
     elif index_type == "elastic_bm25":
         document_store, retriever = elastic_index.load_elastic_bm25(es_index)
     else:
@@ -126,8 +120,8 @@ def generate_query_text(passage_dict: Dict[str, Passage], query_examples: List[T
         elif query_method == "full_ctx":
             pass
 
-        for pass_id in query.positive_examples:
-            query.answers.add(" ".join(passage_dict[pass_id].mention))
+        # for pass_id in query.positive_examples:
+        #     query.answers.add(" ".join(passage_dict[pass_id].mention))
 
 
 def print_results(predictions, golds_arranged, run_pipe_str, result_out_file=None):

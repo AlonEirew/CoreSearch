@@ -14,7 +14,6 @@ from src.data_obj import SearchFeat
 from src.models.weces_retriever import WECESRetriever
 from src.utils.data_utils import generate_train_batches
 from src.utils.evaluation import generate_sim_results, evaluate_retriever
-from src.utils.io_utils import save_checkpoint
 from src.utils.log_utils import create_logger
 from src.utils.tokenization import Tokenization
 
@@ -92,7 +91,10 @@ def train():
     if n_gpu > 0:
         torch.cuda.manual_seed_all(1234)
 
-    tokenization = Tokenization(query_tok_file=query_tokenizer_model, passage_tok_file=passage_tokenizer_model)
+    tokenization = Tokenization(query_tok_file=query_tokenizer_model,
+                                passage_tok_file=passage_tokenizer_model,
+                                max_query_size=max_query_length,
+                                max_passage_size=max_passage_length)
     weces_retriever = WECESRetriever(query_model, passage_model, len(tokenization.query_tokenizer), device)
     weces_retriever.to(device)
     if n_gpu > 1:

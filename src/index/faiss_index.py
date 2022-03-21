@@ -4,7 +4,7 @@ from typing import List
 from haystack import Document
 
 from src.utils import io_utils, dpr_utils
-from src.utils.io_utils import replace_retriever_model
+from src.utils.io_utils import replace_loaded_retriever_model
 
 
 def faiss_index(passages_file,
@@ -32,7 +32,7 @@ def faiss_index(passages_file,
     document_store.delete_documents()
     print("Writing document to FAISS index (may take a while)..")
     if load_model:
-        replace_retriever_model(retriever, load_model, max_seq_len_query, max_seq_len_passage)
+        replace_loaded_retriever_model(retriever, load_model, max_seq_len_query, max_seq_len_passage)
 
     document_store.write_documents(documents=documents)
     document_store.update_embeddings(retriever=retriever)

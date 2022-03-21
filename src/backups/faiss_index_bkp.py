@@ -62,7 +62,7 @@ def faiss_mymodel_index(passages_file, sql_url, passage_model_file, max_seq_len_
     tokenizer = Tokenization(query_tokenizer=passage_tokenizer)
     passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
     passages_feats: List[PassageFeat] = [
-        tokenizer.get_passage_feat(passage, max_seq_len_passage) for passage in passages_examples
+        tokenizer.get_passage_feat(passage) for passage in passages_examples
     ]
 
     ids, batches = generate_index_batches(passages_feats, batch_size)

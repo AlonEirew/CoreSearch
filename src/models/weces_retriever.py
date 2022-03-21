@@ -72,4 +72,4 @@ class WECESRetriever(nn.Module):
         # prediction = torch.dot(query_rep, passage_rep)
         prediction = query_rep @ passage_rep.T
         # prediction = torch.round(prediction)
-        return prediction
+        return prediction.squeeze()
