@@ -8,16 +8,16 @@ from src.utils import io_utils, dpr_utils
 
 def train():
     doc_dir = "data/resources/dpr/ment_ners/"
-    train_filename = "Train_dpr_format.json"
-    dev_filename = "data/resources/dpr/ment_ners/Dev_dpr_format.json"
+    train_filename = "Dev_dpr_format.json"
+    dev_filename = "Dev_dpr_format.json"
 
     n_epochs = 2
     run_update_eval = False
     model_str = "spanbert_bm25"
 
     infer_tokenizer_classes = True
-    max_seq_len_query = 50
-    max_seq_len_passage = 150
+    max_seq_len_query = 64
+    max_seq_len_passage = 180
     batch_size = 16
 
     # query_model = "bert-base-cased"

@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 from src.data_obj import Passage, Feat, Cluster, QueryResult, TrainExample
 from src.models.weces_retriever import WECESRetriever
+from src.override_classes.override_language_model import OverrideLanguageModel
 from src.override_classes.wec_text_processor import WECSimilarityProcessor
 from src.pipeline.run_haystack_pipeline import print_measurements, generate_query_text
 from src.utils import dpr_utils, io_utils, data_utils
@@ -19,51 +20,22 @@ from src.utils.tokenization import Tokenization
 SPLIT = "Dev"
 
 
-def load_dpr(model_dir, index_dir, max_query_len, max_pass_len):
-    faiss_index_prefix = index_dir
-    faiss_index_file = faiss_index_prefix + ".faiss"
-    faiss_config_file = faiss_index_prefix + ".json"
-    model = dpr_utils.load_dpr(dpr_utils.load_faiss_doc_store(faiss_index_file, faiss_config_file),
-                               model_dir + "/query_encoder",
-                               model_dir + "/passage_encoder",
-                               True,
-                               max_query_len,
-                               max_pass_len,
-                               16,
-                               False)
-
-    model.processor = WECSimilarityProcessor(query_tokenizer=model.query_tokenizer,
-                                             passage_tokenizer=model.passage_tokenizer,
-                                             max_seq_len_passage=max_pass_len,
-                                             max_seq_len_query=max_query_len,
-                                             label_list=["hard_negative", "positive"],
-                                             metric="text_similarity_metric",
-                                             embed_title=False,
-                                             num_hard_negatives=0,
-                                             num_positives=1,
-                                             tokenization=Tokenization(query_tokenizer=model.query_tokenizer,
-                                                                       passage_tokenizer=model.passage_tokenizer,
-                                                                       max_query_size=max_query_len,
-                                                                       max_passage_size=max_pass_len))
-    return model
-
-
 def main():
     random.seed(1234)
     dev_examples_file = "data/resources/train/Dev_training_queries.json"
     # dev_examples_file = "data/resources/train/small_training_queries.json"
-    # dev_passages_file = "data/resources/WEC-ES/Dev_all_passages.json"
-    dev_passages_file = "data/resources/train/Dev_training_passages.json"
+    dev_passages_file = "data/resources/WEC-ES/Dev_all_passages.json"
+    # dev_passages_file = "data/resources/train/Dev_training_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
-    model_file = "data/checkpoints/dev_spanbert_2it"
+    model_file = "data/checkpoints/dev_spanbert_bm25_2it"
 
     max_query_len = 64
     max_pass_len = 180
     topk = 100
     run_pipe_str = "retriever"
     batch_size = 240
-    process_num = 8
+    process_num = 80
     add_qbound = False
     query_style = "bm25"
 
@@ -72,8 +44,18 @@ def main():
     # additional_pass = io_utils.read_passages_file_filtered("data/resources/WEC-ES/Dev_all_passages.json",
     #                                                        ['NEG_2078064', '11165', '122480'])
     # passage_examples.extend(additional_pass)
+    faiss_index_prefix = "indexes/spanbert_notft/dev_index"
+    faiss_index_file = faiss_index_prefix + ".faiss"
+    faiss_config_file = faiss_index_prefix + ".json"
+    _, model = dpr_utils.load_wec_faiss_dpr(faiss_index_file,
+                                            faiss_config_file,
+                                            model_file + "/query_encoder",
+                                            model_file + "/passage_encoder",
+                                            True,
+                                            max_query_len,
+                                            max_pass_len,
+                                            16)
 
-    model = load_dpr(model_file, "indexes/spanbert_notft/dev_index", max_query_len, max_pass_len)
     tokenization = model.processor.tokenization
 
     # tokenization = Tokenization(query_tok_file="SpanBERT/spanbert-base-cased", passage_tok_file="SpanBERT/spanbert-base-cased")
@@ -113,7 +95,7 @@ def main():
 
     all_queries_pred = list()
     for query_index, query in enumerate(tqdm(dev_queries_feats, "Evaluate Queries")):
-        query_predictions = run_top_pass(model, query, dev_passages_ids, all_dev_passages_encode, topk)
+        query_predictions = run_top_pass(model.query_encoder, query, dev_passages_ids, all_dev_passages_encode, topk)
         results = list()
         for pass_id, pred in query_predictions:
             res_pass = copy.deepcopy(passage_dict[pass_id])
@@ -165,7 +147,7 @@ def run_top_pass(model, query: Feat, dev_passages_ids, all_dev_passages_encode, 
 
 
 def get_query_embed(model, query):
-    query_encoded, _ = model.query_encoder(
+    query_encoded, _ = model(
         torch.tensor(query.input_ids, device='cuda').view(1, -1),
         torch.tensor(query.segment_ids, device='cuda').view(1, -1),
         torch.tensor(query.input_mask, device='cuda').view(1, -1))

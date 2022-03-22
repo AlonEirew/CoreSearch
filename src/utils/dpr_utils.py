@@ -4,6 +4,8 @@ from haystack.document_stores import FAISSDocumentStore
 from haystack.nodes import DensePassageRetriever
 from transformers import BertTokenizer
 
+from src.override_classes.wec_dense import WECDensePassageRetriever
+
 logger = logging.getLogger("dpr_utils")
 logger.setLevel(logging.DEBUG)
 
@@ -57,4 +59,16 @@ def load_faiss_dpr(faiss_file_path, faiss_config_file, query_encode, passage_enc
                          max_seq_len_passage,
                          batch_size,
                          load_tokenizer)
+    return document_store, retriever
+
+
+def load_wec_faiss_dpr(faiss_file_path, faiss_config_file, query_encode, passage_encode,
+                       infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size):
+    document_store = load_faiss_doc_store(faiss_file_path, faiss_config_file)
+    retriever = WECDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
+                                         passage_embedding_model=passage_encode,
+                                         infer_tokenizer_classes=infer_tokenizer_classes,
+                                         max_seq_len_query=max_seq_len_query, max_seq_len_passage=max_seq_len_passage,
+                                         batch_size=batch_size, use_gpu=True, embed_title=False,
+                                         use_fast_tokenizers=False)
     return document_store, retriever

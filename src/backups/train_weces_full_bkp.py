@@ -71,13 +71,11 @@ def train():
     optimizer = AdamW(auxiliary_method.parameters(), lr=lr)
 
     train_search_feats = tokenization.generate_train_search_feats(train_examples_file,
-                                                                  train_passages_file, max_query_length,
-                                                                  max_passage_length, train_negative_samples,
+                                                                  train_passages_file, train_negative_samples,
                                                                   add_qbound_tokens)
 
     dev_search_feats = tokenization.generate_train_search_feats(dev_examples_file,
-                                                                dev_passages_file, max_query_length,
-                                                                max_passage_length, dev_negative_samples,
+                                                                dev_passages_file, dev_negative_samples,
                                                                 add_qbound_tokens)
 
     train_batches = generate_train_batches(train_search_feats, train_batch_size)

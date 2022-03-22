@@ -23,6 +23,11 @@ def load_json_file(json_file: str):
         return json.load(fis)
 
 
+def write_json(out_file, obj_to_write):
+    with open(out_file, 'w+') as output:
+        json.dump(obj_to_write, output, default=lambda o: o.__dict__, indent=4, sort_keys=True, ensure_ascii=False)
+
+
 def read_train_example_file(train_exp_file: str) -> List[TrainExample]:
     examples_json = load_json_file(train_exp_file)
     train_exmpl = list()

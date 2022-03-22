@@ -10,8 +10,9 @@ import torch
 import wandb
 from transformers import AdamW
 
-from src.data_obj import SearchFeat
+from src.data_obj import SearchFeat, TrainExample, Passage
 from src.models.weces_retriever import WECESRetriever
+from src.utils import io_utils
 from src.utils.data_utils import generate_train_batches
 from src.utils.evaluation import generate_sim_results, evaluate_retriever
 from src.utils.log_utils import create_logger
@@ -102,19 +103,19 @@ def train():
 
     optimizer = AdamW(weces_retriever.parameters(), lr=lr)
 
+    train_examples: List[TrainExample] = io_utils.read_train_example_file(train_examples_file)
+    train_passages: List[Passage] = io_utils.read_passages_file(train_passages_file)
     train_search_feats = tokenization.generate_train_search_feats(
-        train_examples_file,
-        train_passages_file,
-        max_query_length,
-        max_passage_length,
+        train_examples,
+        train_passages,
         train_negative_samples,
         add_qbound_tokens)
 
+    dev_examples: List[TrainExample] = io_utils.read_train_example_file(dev_examples_file)
+    dev_passages: List[Passage] = io_utils.read_passages_file(dev_passages_file)
     dev_search_feats = tokenization.generate_train_search_feats(
-        dev_examples_file,
-        dev_passages_file,
-        max_query_length,
-        max_passage_length,
+        dev_examples,
+        dev_passages,
         dev_negative_samples,
         add_qbound_tokens)
 

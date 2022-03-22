@@ -6,12 +6,18 @@ import torch
 from haystack.document_stores import BaseDocumentStore
 from haystack.modeling.model.biadaptive_model import BiAdaptiveModel
 from haystack.modeling.model.prediction_head import TextSimilarityHead
+from haystack.modeling.model.tokenization import Tokenizer
+from haystack.modeling.utils import initialize_device_settings
 from haystack.nodes import DensePassageRetriever
 from torch.nn import DataParallel
 
+from src.override_classes.override_language_model import OverrideLanguageModel
+from src.override_classes.wec_encoders import WECQuestionEncoder, WECContextEncoder
 from src.override_classes.wec_text_processor import WECSimilarityProcessor
+from src.utils.tokenization import Tokenization
 
 logger = logging.getLogger(__name__)
+logger.setLevel(level=logging.DEBUG)
 
 
 class WECDensePassageRetriever(DensePassageRetriever):
@@ -38,27 +44,77 @@ class WECDensePassageRetriever(DensePassageRetriever):
                  similarity_function: str = "dot_product",
                  global_loss_buffer_size: int = 150000,
                  progress_bar: bool = True,
-                 devices: Optional[List[Union[int, str, torch.device]]] = None
+                 devices: Optional[List[Union[int, str, torch.device]]] = None,
+                 use_auth_token: Optional[Union[str, bool]] = None,
                  ):
 
-        super(WECDensePassageRetriever, self).__init__(
-            document_store,
-            query_embedding_model,
-            passage_embedding_model,
-            model_version,
-            max_seq_len_query,
-            max_seq_len_passage,
-            top_k,
-            use_gpu,
-            batch_size,
-            embed_title,
-            use_fast_tokenizers,
-            infer_tokenizer_classes,
-            similarity_function,
-            global_loss_buffer_size,
-            progress_bar,
-            devices
+        # save init parameters to enable export of component config as YAML
+        self.set_config(
+            document_store=document_store, query_embedding_model=query_embedding_model,
+            passage_embedding_model=passage_embedding_model,
+            model_version=model_version, max_seq_len_query=max_seq_len_query, max_seq_len_passage=max_seq_len_passage,
+            top_k=top_k, use_gpu=use_gpu, batch_size=batch_size, embed_title=embed_title,
+            use_fast_tokenizers=use_fast_tokenizers, infer_tokenizer_classes=infer_tokenizer_classes,
+            similarity_function=similarity_function, progress_bar=progress_bar, devices=devices,
+            use_auth_token=use_auth_token
         )
+
+        if devices is not None:
+            self.devices = devices
+        else:
+            self.devices, _ = initialize_device_settings(use_cuda=use_gpu, multi_gpu=True)
+
+        if batch_size < len(self.devices):
+            logger.warning("Batch size is less than the number of devices. All gpus will not be utilized.")
+
+        self.document_store = document_store
+        self.batch_size = batch_size
+        self.progress_bar = progress_bar
+        self.top_k = top_k
+
+        if document_store is None:
+            logger.warning("DensePassageRetriever initialized without a document store. "
+                           "This is fine if you are performing DPR training. "
+                           "Otherwise, please provide a document store in the constructor.")
+        elif document_store.similarity != "dot_product":
+            logger.warning(
+                f"You are using a Dense Passage Retriever model with the {document_store.similarity} function. "
+                "We recommend you use dot_product instead. "
+                "This can be set when initializing the DocumentStore")
+
+        self.infer_tokenizer_classes = infer_tokenizer_classes
+        tokenizers_default_classes = {
+            "query": "DPRQuestionEncoderTokenizer",
+            "passage": "DPRContextEncoderTokenizer"
+        }
+        if self.infer_tokenizer_classes:
+            tokenizers_default_classes["query"] = None  # type: ignore
+            tokenizers_default_classes["passage"] = None  # type: ignore
+
+        self.query_encoder = OverrideLanguageModel.load(pretrained_model_name_or_path=query_embedding_model,
+                                                        language_model_class="WECQuestionEncoder")
+
+        self.query_tokenizer = Tokenizer.load(pretrained_model_name_or_path=query_embedding_model,
+                                              revision=model_version,
+                                              do_lower_case=True,
+                                              use_fast=use_fast_tokenizers,
+                                              tokenizer_class=tokenizers_default_classes["query"],
+                                              use_auth_token=use_auth_token)
+
+        self.passage_encoder = OverrideLanguageModel.load(pretrained_model_name_or_path=passage_embedding_model,
+                                                          language_model_class="WECContextEncoder")
+
+        self.passage_tokenizer = Tokenizer.load(pretrained_model_name_or_path=passage_embedding_model,
+                                                revision=model_version,
+                                                do_lower_case=True,
+                                                use_fast=use_fast_tokenizers,
+                                                tokenizer_class=tokenizers_default_classes["passage"],
+                                                use_auth_token=use_auth_token)
+
+        tokenization = Tokenization(query_tokenizer=self.query_tokenizer,
+                                    passage_tokenizer=self.passage_tokenizer,
+                                    max_query_size=max_seq_len_query,
+                                    max_passage_size=max_seq_len_passage)
 
         self.processor = WECSimilarityProcessor(query_tokenizer=self.query_tokenizer,
                                                 passage_tokenizer=self.passage_tokenizer,
@@ -68,9 +124,11 @@ class WECDensePassageRetriever(DensePassageRetriever):
                                                 metric="text_similarity_metric",
                                                 embed_title=embed_title,
                                                 num_hard_negatives=0,
-                                                num_positives=1)
+                                                num_positives=1,
+                                                tokenization=tokenization)
 
-        prediction_head = TextSimilarityHead(similarity_function=similarity_function, global_loss_buffer_size=global_loss_buffer_size)
+        prediction_head = TextSimilarityHead(similarity_function=similarity_function,
+                                             global_loss_buffer_size=global_loss_buffer_size)
         self.model = BiAdaptiveModel(
             language_model1=self.query_encoder,
             language_model2=self.passage_encoder,

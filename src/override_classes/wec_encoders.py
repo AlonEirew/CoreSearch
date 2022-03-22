@@ -1,58 +1,54 @@
-from abc import ABC
+from pathlib import Path
 
 import torch
-from haystack.modeling.model.language_model import LanguageModel
-from torch import nn
-from transformers import BertModel, BertConfig
+import transformers
+from haystack.modeling.model.language_model import DPRContextEncoder, DPRQuestionEncoder
 
 
-class WECEncoder(LanguageModel, ABC):
-    def __init__(self, model):
-        super(WECEncoder, self).__init__()
-        self.device = "cpu"
-        self.config = BertConfig.from_pretrained(model)
-
-    def set_tokenizer_size(self, token_len, device):
-        self.model.resize_token_embeddings(token_len)
-        self.device = device
-
-    def segment_encode(self, input_ids, token_type_ids, input_mask):
-        if len(input_ids.size()) > 2:
-            input_ids = torch.squeeze(input_ids)
-            token_type_ids = torch.squeeze(token_type_ids)
-            input_mask = torch.squeeze(input_mask)
-
-        encodings = self.model(input_ids=input_ids,
-                               token_type_ids=token_type_ids,
-                               attention_mask=input_mask,
-                               output_attentions=True)
-        return encodings
-
-
-class WECContextEncoder(WECEncoder):
-    def __init__(self, model):
-        super(WECContextEncoder, self).__init__(model)
-        self.model = BertModel.from_pretrained(model)
-        self.dropout = nn.Dropout(0.1)
-        self.name = "wec_context_encoder"
+class WECContextEncoder(DPRContextEncoder):
+    def __init__(self):
+        super(WECContextEncoder, self).__init__()
+        # self.model = BertModel.from_pretrained(model)
+        # self.dropout = nn.Dropout(0.1)
+        # self.name = "wec_context_encoder"
 
     def forward(self, passage_input_ids: torch.Tensor, passage_segment_ids: torch.Tensor,
                 passage_attention_mask: torch.Tensor, **kwargs):
-        passage_encode = self.segment_encode(passage_input_ids,
-                                             passage_segment_ids,
-                                             passage_attention_mask)
+
+        if len(passage_input_ids.size()) > 2:
+            max_seq_len = passage_input_ids.shape[-1]
+            passage_input_ids = passage_input_ids.view(-1, max_seq_len)
+            passage_segment_ids = passage_segment_ids.view(-1, max_seq_len)
+            passage_attention_mask = passage_attention_mask.view(-1, max_seq_len)
+
+        passage_encode = self.model(input_ids=passage_input_ids,
+                                    token_type_ids=passage_segment_ids,
+                                    attention_mask=passage_attention_mask,
+                                    output_attentions=True)
 
         if len(kwargs) > 1:
             # extract the last-hidden-state CLS token embeddings
-            return self.dropout(passage_encode.pooler_output), None
+            # return self.dropout(passage_encode.pooler_output), None
             # return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
             # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
-            # return passage_encode.pooler_output, None
+            return passage_encode.pooler_output, None
         else:
-            return self.dropout(passage_encode.pooler_output), None
+            # return self.dropout(passage_encode.pooler_output), None
             # return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
             # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
-            # return passage_encode.pooler_output, None
+            return passage_encode.pooler_output, None
+
+    def save_config(self, save_dir):
+        save_filename = Path(save_dir) / "language_model_config.json"
+        with open(save_filename, "w") as file:
+            setattr(self.model.config, "name", self.__class__.__name__)
+            setattr(self.model.config, "language", self.language)
+            # For DPR models, transformers overwrites the model_type with the one set in DPRConfig
+            # Therefore, we copy the model_type from the model config to DPRConfig
+            if self.__class__.__name__ == "WECQuestionEncoder" or self.__class__.__name__ == "WECContextEncoder":
+                setattr(transformers.DPRConfig, "model_type", self.model.config.model_type)
+            string = self.model.config.to_json_string()
+            file.write(string)
 
     def freeze(self, layers):
         pass
@@ -61,12 +57,13 @@ class WECContextEncoder(WECEncoder):
         pass
 
 
-class WECQuestionEncoder(WECEncoder):
-    def __init__(self, model):
-        super(WECQuestionEncoder, self).__init__(model)
-        self.model = BertModel.from_pretrained(model)
-        self.dropout = nn.Dropout(0.1)
-        self.name = "wec_quesion_encoder"
+class WECQuestionEncoder(DPRQuestionEncoder):
+    def __init__(self):
+        super(WECQuestionEncoder, self).__init__()
+        # self.query_encoder.model.resize_token_embeddings(len(tokenization.query_tokenizer))
+        # self.model = BertModel.from_pretrained(model)
+        # self.dropout = nn.Dropout(0.1)
+        # self.name = "wec_quesion_encoder"
 
     def forward(self, query_input_ids: torch.Tensor, query_segment_ids: torch.Tensor,
                 query_attention_mask: torch.Tensor, **kwargs):
@@ -80,9 +77,10 @@ class WECQuestionEncoder(WECEncoder):
         # query_input_ids_slc = torch.index_select(query_input_ids, dim=0, index=query_indices)
         # query_segment_ids_slc = torch.index_select(query_segment_ids, dim=0, index=query_indices)
         # query_input_mask_slc = torch.index_select(query_segment_ids, dim=0, index=query_indices)
-        query_encode = self.segment_encode(query_input_ids,
-                                           query_segment_ids,
-                                           query_attention_mask)
+        query_encode = self.model(input_ids=query_input_ids,
+                                  token_type_ids=query_segment_ids,
+                                  attention_mask=query_attention_mask,
+                                  output_attentions=True)
 
         if query_event_starts is not None and query_event_ends is not None:
             # Will trigger while training
@@ -90,14 +88,26 @@ class WECQuestionEncoder(WECEncoder):
             # query_event_ends_slc = torch.index_select(query_event_ends, dim=0, index=query_indices)
             # out_query_embed = self.extract_query_start_end_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
             # return out_query_embed, None
-            return self.dropout(query_encode.pooler_output), None
+            # return self.dropout(query_encode.pooler_output), None
             # return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
-            # return query_encode.pooler_output, None
+            return query_encode.pooler_output, None
         else:
             # Will trigger at inference
-            return self.dropout(query_encode.pooler_output), None
+            # return self.dropout(query_encode.pooler_output), None
             # return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
-            # return query_encode.pooler_output, None
+            return query_encode.pooler_output, None
+
+    def save_config(self, save_dir):
+        save_filename = Path(save_dir) / "language_model_config.json"
+        with open(save_filename, "w") as file:
+            setattr(self.model.config, "name", self.__class__.__name__)
+            setattr(self.model.config, "language", self.language)
+            # For DPR models, transformers overwrites the model_type with the one set in DPRConfig
+            # Therefore, we copy the model_type from the model config to DPRConfig
+            if self.__class__.__name__ == "WECQuestionEncoder" or self.__class__.__name__ == "WECContextEncoder":
+                setattr(transformers.DPRConfig, "model_type", self.model.config.model_type)
+            string = self.model.config.to_json_string()
+            file.write(string)
 
     def freeze(self, layers):
         pass
