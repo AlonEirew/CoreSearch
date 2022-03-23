@@ -24,19 +24,20 @@ class WECContextEncoder(DPRContextEncoder):
         passage_encode = self.model(input_ids=passage_input_ids,
                                     token_type_ids=passage_segment_ids,
                                     attention_mask=passage_attention_mask,
-                                    output_attentions=True)
+                                    output_attentions=False,
+                                    output_hidden_states=True)
 
         if len(kwargs) > 1:
             # extract the last-hidden-state CLS token embeddings
             # return self.dropout(passage_encode.pooler_output), None
-            # return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
+            return passage_encode.hidden_states[-1][:, 0, :], None
             # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
-            return passage_encode.pooler_output, None
+            # return passage_encode.pooler_output, None
         else:
             # return self.dropout(passage_encode.pooler_output), None
-            # return passage_encode.last_hidden_state[:, 0, :], passage_encode.attentions
+            return passage_encode.hidden_states[-1][:, 0, :], None
             # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
-            return passage_encode.pooler_output, None
+            # return passage_encode.pooler_output, None
 
     def save_config(self, save_dir):
         save_filename = Path(save_dir) / "language_model_config.json"
@@ -80,7 +81,8 @@ class WECQuestionEncoder(DPRQuestionEncoder):
         query_encode = self.model(input_ids=query_input_ids,
                                   token_type_ids=query_segment_ids,
                                   attention_mask=query_attention_mask,
-                                  output_attentions=True)
+                                  output_attentions=False,
+                                  output_hidden_states=True)
 
         if query_event_starts is not None and query_event_ends is not None:
             # Will trigger while training
@@ -89,13 +91,13 @@ class WECQuestionEncoder(DPRQuestionEncoder):
             # out_query_embed = self.extract_query_start_end_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
             # return out_query_embed, None
             # return self.dropout(query_encode.pooler_output), None
-            # return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
-            return query_encode.pooler_output, None
+            return query_encode.hidden_states[-1][:, 0, :], None
+            # return query_encode.pooler_output, None
         else:
             # Will trigger at inference
             # return self.dropout(query_encode.pooler_output), None
-            # return query_encode.last_hidden_state[:, 0, :], query_encode.attentions
-            return query_encode.pooler_output, None
+            return query_encode.hidden_states[-1][:, 0, :], None
+            # return query_encode.pooler_output, None
 
     def save_config(self, save_dir):
         save_filename = Path(save_dir) / "language_model_config.json"

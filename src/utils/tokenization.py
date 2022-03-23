@@ -1,13 +1,10 @@
-import copy
 import logging
-import random
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
 from tqdm import tqdm
 from transformers import BertTokenizer
 
 from src.data_obj import QueryFeat, PassageFeat, TrainExample, Passage, SearchFeat
-from src.utils import io_utils
 
 QUERY_SPAN_START = "[QSPAN_START]"
 QUERY_SPAN_END = "[QSPAN_END]"
@@ -16,7 +13,11 @@ logger = logging.getLogger("event-search")
 
 
 class Tokenization(object):
-    def __init__(self, query_tok_file=None, passage_tok_file=None, query_tokenizer=None, passage_tokenizer=None):
+    def __init__(self, query_tok_file=None, passage_tok_file=None,
+                 query_tokenizer=None, passage_tokenizer=None,
+                 max_query_size=64, max_passage_size=180, add_spatial_tokens=False):
+        self.max_query_size = max_query_size
+        self.max_passage_size = max_passage_size
         if query_tok_file and passage_tok_file:
             self.query_tokenizer = BertTokenizer.from_pretrained(query_tok_file)
             self.passage_tokenizer = BertTokenizer.from_pretrained(passage_tok_file)
@@ -26,42 +27,37 @@ class Tokenization(object):
         else:
             raise IOError("No tokenizer initialization provided")
 
-        if QUERY_SPAN_START.lower() not in self.query_tokenizer.added_tokens_encoder:
+        if add_spatial_tokens and QUERY_SPAN_START.lower() not in self.query_tokenizer.added_tokens_encoder:
             self.query_tokenizer.add_tokens(QUERY_SPAN_START)
             self.query_tokenizer.add_tokens(QUERY_SPAN_END)
 
     def generate_train_search_feats(self,
-                                    query_file: str,
-                                    passages_file: str,
-                                    max_query_length: int,
-                                    max_passage_length: int,
+                                    query_examples: List[TrainExample],
+                                    passages_examples: List[Passage],
                                     negative_examples: int,
                                     add_qbound: bool = False) -> List[SearchFeat]:
-        query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
-        passages_examples: List[Passage] = io_utils.read_passages_file(passages_file)
         passages_examples_dict: Dict[str, Passage] = {passage.id: passage for passage in passages_examples}
-
-        logger.info("Done loading examples file, queries-" + query_file + ", passages-" + passages_file)
         logger.info("Total examples loaded, queries=" + str(len(query_examples)) + ", passages=" + str(len(passages_examples_dict)))
         logger.info("Starting to generate examples...")
-        query_feats = dict()
         passage_feats = dict()
         search_feats = list()
         total_gen_queries = 0
         for query_obj in tqdm(query_examples, "Loading Queries"):
             total_gen_queries += len(query_obj.positive_examples)
-            query_feat = self.get_query_feat(query_obj, max_query_length, add_qbound)
-            query_feats[query_obj.id] = query_feat
+            ### REMOVE THIS!!!
+            query_obj.context = query_obj.bm25_query.split(" ")
+            ### END REMOVE THIS!!!
+            query_feat = self.get_query_feat(query_obj, add_qbound)
             pos_passages = list()
             neg_passages = list()
             for pos_id in query_obj.positive_examples:
                 if pos_id not in passage_feats:
-                    passage_feats[pos_id] = self.get_passage_feat(passages_examples_dict[pos_id], max_passage_length)
+                    passage_feats[pos_id] = self.get_passage_feat(passages_examples_dict[pos_id])
                 pos_passages.append(passage_feats[pos_id])
 
             for neg_id in query_obj.negative_examples:
                 if neg_id not in passage_feats:
-                    passage_feats[neg_id] = self.get_passage_feat(passages_examples_dict[neg_id], max_passage_length)
+                    passage_feats[neg_id] = self.get_passage_feat(passages_examples_dict[neg_id])
                 # passage_cpy = copy.copy(passage_feats[neg_id])
                 # passage_cpy.passage_event_start = passage_cpy.passage_event_end = 0
                 neg_passages.append(passage_feats[neg_id])
@@ -72,30 +68,26 @@ class Tokenization(object):
                     index = 0
 
                 search_feats.append(SearchFeat(query_feat, pos_pass, neg_passages[index:index+negative_examples]))
-                index += 1
+                index += negative_examples
 
         print(f"Total generated queries = {total_gen_queries}")
         return search_feats
 
-    def generate_query_feats(self, query_file: str,
-                             max_query_length: int,
+    def generate_query_feats(self, query_examples: List[TrainExample],
                              add_qbound: bool = False) -> List[QueryFeat]:
-        query_examples: List[TrainExample] = io_utils.read_train_example_file(query_file)
         query_feats = list()
         for query_obj in tqdm(query_examples, "Loading Queries"):
-            query_feats.append(self.get_query_feat(query_obj, max_query_length, add_qbound))
+            query_feats.append(self.get_query_feat(query_obj, add_qbound))
         return query_feats
 
-    def generate_passage_feats(self, passage_file: str,
-                               max_passage_length: int) -> List[PassageFeat]:
-        passage_examples: List[Passage] = io_utils.read_passages_file(passage_file)
+    def generate_passage_feats(self, passage_examples: List[Passage]) -> List[PassageFeat]:
         passage_feats = list()
         for passage_obj in tqdm(passage_examples, "Loading Passages"):
-            passage_feats.append(self.get_passage_feat(passage_obj, max_passage_length))
+            passage_feats.append(self.get_passage_feat(passage_obj))
         return passage_feats
 
-    def get_query_feat(self, query_obj: TrainExample, max_query_length: int, add_qbound: bool = False) -> QueryFeat:
-        max_query_length_exclude = max_query_length - 2
+    def get_query_feat(self, query_obj: TrainExample, add_qbound: bool = False) -> QueryFeat:
+        max_query_length_exclude = self.max_query_size - 2
         query_event_start, query_event_end, \
             query_tokenized, query_input_mask = self.tokenize_query(query_obj, max_query_length_exclude, add_qbound)
 
@@ -109,30 +101,30 @@ class Tokenization(object):
         query_segment_ids = [1] * len(query_tokenized)
         query_input_ids = self.query_tokenizer.convert_tokens_to_ids(query_tokenized)
 
-        assert len(query_input_ids) == max_query_length
-        assert len(query_input_mask) == max_query_length
-        assert len(query_segment_ids) == max_query_length
-        if add_qbound:
-            assert query_input_ids[query_event_start] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_START]
-            assert query_input_ids[query_event_end] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_END]
-            # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
-            if query_obj.mention:
-                query_lower = "".join(query_obj.mention).lower()
-                token_query_lower = "".join(
-                    [s.strip('##') for s in query_tokenized[query_event_start+1:query_event_end]])
-                if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower})")
-        else:
-            assert query_input_ids[query_event_start] == self.query_tokenizer.convert_tokens_to_ids(
-                self.query_tokenizer.tokenize(query_obj.mention[0])[0])
-            assert query_input_ids[query_event_end] == self.query_tokenizer.convert_tokens_to_ids(
-                self.query_tokenizer.tokenize(query_obj.mention[-1])[-1])
-            # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
-            if query_obj.mention:
-                query_lower = "".join(query_obj.mention).lower()
-                token_query_lower = "".join([s.strip('##') for s in query_tokenized[query_event_start:query_event_end + 1]]).lower()
-                if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower})")
+        assert len(query_input_ids) == self.max_query_size
+        assert len(query_input_mask) == self.max_query_size
+        assert len(query_segment_ids) == self.max_query_size
+        # if add_qbound:
+        #     assert query_input_ids[query_event_start] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_START]
+        #     assert query_input_ids[query_event_end] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_END]
+        #     # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
+        #     if query_obj.mention:
+        #         query_lower = "".join(query_obj.mention).lower()
+        #         token_query_lower = "".join(
+        #             [s.strip('##') for s in query_tokenized[query_event_start+1:query_event_end]])
+        #         if query_lower != token_query_lower:
+        #             print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower})")
+        # else:
+        #     assert query_input_ids[query_event_start] == self.query_tokenizer.convert_tokens_to_ids(
+        #         self.query_tokenizer.tokenize(query_obj.mention[0])[0])
+        #     assert query_input_ids[query_event_end] == self.query_tokenizer.convert_tokens_to_ids(
+        #         self.query_tokenizer.tokenize(query_obj.mention[-1])[-1])
+        #     # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
+        #     if query_obj.mention:
+        #         query_lower = "".join(query_obj.mention).lower()
+        #         token_query_lower = "".join([s.strip('##') for s in query_tokenized[query_event_start:query_event_end + 1]]).lower()
+        #         if query_lower != token_query_lower:
+        #             print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower})")
 
         return QueryFeat(query_input_ids=query_input_ids,
                          query_input_mask=query_input_mask,
@@ -141,8 +133,8 @@ class Tokenization(object):
                          query_event_start=query_event_start,
                          query_event_end=query_event_end)
 
-    def get_passage_feat(self, passage_obj: Passage, max_passage_length: int) -> PassageFeat:
-        max_pass_length_exclude = max_passage_length - 2
+    def get_passage_feat(self, passage_obj: Passage) -> PassageFeat:
+        max_pass_length_exclude = self.max_passage_size - 2
         passage_event_start, passage_event_end, passage_end_bound, passage_tokenized, passage_input_mask = \
             self.tokenize_passage(passage_obj, max_pass_length_exclude)
         passage_tokenized.insert(0, "[CLS]")
@@ -157,9 +149,9 @@ class Tokenization(object):
 
         input_ids = self.passage_tokenizer.convert_tokens_to_ids(passage_tokenized)
 
-        assert len(input_ids) == max_passage_length
-        assert len(passage_input_mask) == max_passage_length
-        assert len(passage_segment_ids) == max_passage_length
+        assert len(input_ids) == self.max_passage_size
+        assert len(passage_input_mask) == self.max_passage_size
+        assert len(passage_segment_ids) == self.max_passage_size
 
         return PassageFeat(
             passage_input_ids=input_ids,
@@ -225,18 +217,19 @@ class Tokenization(object):
         pointer_end = query_event_end_ind
 
         if len(query_tokenized) > max_query_length_exclude:
-            trimmed_query_tok = query_tokenized[pointer_start:pointer_end + 1]
-            while len(trimmed_query_tok) < max_query_length_exclude - 1:
-                if pointer_end < len(query_tokenized) - 1:
-                    pointer_end += 1
-                    trimmed_query_tok.append(query_tokenized[pointer_end])
-                if pointer_start > 0:
-                    pointer_start -= 1
-                    trimmed_query_tok.insert(0, query_tokenized[pointer_start])
+            query_tokenized = query_tokenized[0:max_query_length_exclude]
+            # trimmed_query_tok = query_tokenized[pointer_start:pointer_end + 1]
+            # while len(trimmed_query_tok) < max_query_length_exclude - 1:
+            #     if pointer_end < len(query_tokenized) - 1:
+            #         pointer_end += 1
+            #         trimmed_query_tok.append(query_tokenized[pointer_end])
+            #     if pointer_start > 0:
+            #         pointer_start -= 1
+            #         trimmed_query_tok.insert(0, query_tokenized[pointer_start])
 
-            query_tokenized = trimmed_query_tok
-            query_event_start_ind -= pointer_start
-            query_event_end_ind -= pointer_start
+            # query_tokenized = trimmed_query_tok
+            # query_event_start_ind -= pointer_start
+            # query_event_end_ind -= pointer_start
 
         query_input_mask = [1] * len(query_tokenized)
         while len(query_tokenized) < max_query_length_exclude:

@@ -1,4 +1,4 @@
 farm-haystack==1.1.0
-scikit-learn
-tqdm
-docopt
+scikit-learn==1.0.2
+tqdm==4.63.0
+docopt====0.6.2
