@@ -68,10 +68,10 @@ class WECContextProcessor(WECSimilarityProcessor):
                     print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower})")
         else:
             assert query_feat.input_ids[query_feat.query_event_start:query_feat.query_event_end + 1] == self.query_tokenizer.convert_tokens_to_ids(
-                self.query_tokenizer.tokenize(query_obj.mention))
+                self.query_tokenizer.tokenize(" ".join(query_obj.mention)))
             # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
             if query_obj.mention:
-                query_lower = "".join(query_obj.mention.split(" ")).lower()
+                query_lower = "".join(query_obj.mention).lower()
                 token_query_lower = "".join([
                     s.strip('##') for s in query_tokenized[query_feat.query_event_start:query_feat.query_event_end + 1]
                 ]).lower()

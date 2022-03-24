@@ -179,7 +179,7 @@ class DPRExample(object):
                  dataset: str,
                  question: str,
                  query_id: Optional[str] = None,
-                 query_mention: str = None,
+                 query_mention: List[str] = None,
                  start_index: Optional[str] = None,
                  end_index: Optional[str] = None,
                  answers: List[str] = None,

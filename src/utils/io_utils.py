@@ -13,7 +13,7 @@ from transformers import AdamW, BertConfig, BertModel, BertTokenizer
 
 from src.data_obj import Query, Passage, Cluster, TrainExample
 from src.override_classes.wec_encoders import WECQuestionEncoder, WECContextEncoder
-from src.override_classes.wec_text_processor import WECSimilarityProcessor
+from src.override_classes.wec_processor import WECSimilarityProcessor
 from src.utils.tokenization import Tokenization
 
 
@@ -193,11 +193,7 @@ def replace_loaded_retriever_model(retriever, model_path, max_seq_len_query, max
                                                  metric="text_similarity_metric",
                                                  embed_title=False,
                                                  num_hard_negatives=0,
-                                                 num_positives=1,
-                                                 tokenization=Tokenization(query_tokenizer=retriever.query_tokenizer,
-                                                                           passage_tokenizer=retriever.passage_tokenizer,
-                                                                           max_query_size=max_seq_len_query,
-                                                                           max_passage_size=max_seq_len_passage))
+                                                 num_positives=1)
 
 
 def replace_retriever_model(retriever, query_encoder, passage_encoder, query_tokenizer, passage_tokenizer,
@@ -235,8 +231,7 @@ def replace_retriever_model(retriever, query_encoder, passage_encoder, query_tok
                                                  metric="text_similarity_metric",
                                                  embed_title=False,
                                                  num_hard_negatives=0,
-                                                 num_positives=1,
-                                                 tokenization=tokenization)
+                                                 num_positives=1)
 
 
 def load_model_bkp(pretrained_model_name_or_path: Union[Path, str], **kwargs):

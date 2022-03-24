@@ -1,6 +1,7 @@
 import copy
 import itertools
 import math
+import multiprocessing
 import random
 from multiprocessing import Pool
 from typing import List, Dict, Tuple
@@ -28,16 +29,17 @@ def main():
     # dev_passages_file = "data/resources/train/Dev_training_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
-    model_file = "data/checkpoints/dev_spanbert_lasthidden_full_bm25_2it"
+    model_file = "data/checkpoints/dev_spanbert_hidden_cls_full_ctx_2it"
 
     max_query_len = 64
     max_pass_len = 180
     topk = 100
     run_pipe_str = "retriever"
     batch_size = 240
-    process_num = 80
+    process_num = multiprocessing.cpu_count()
+
     add_qbound = False
-    query_style = "bm25"
+    query_style = "context"
 
     if query_style == "bm25":
         processor_type = WECBM25Processor
@@ -65,8 +67,6 @@ def main():
                                             processor_type,
                                             add_qbound)
 
-    tokenization = model.processor.tokenization
-
     # tokenization = Tokenization(query_tok_file="SpanBERT/spanbert-base-cased", passage_tok_file="SpanBERT/spanbert-base-cased")
     # model = WECESRetriever("SpanBERT/spanbert-base-cased", "SpanBERT/spanbert-base-cased",
     #                        len(tokenization.query_tokenizer), "cuda")
@@ -85,13 +85,13 @@ def main():
     passage_examples: List[Passage] = io_utils.read_passages_file(dev_passages_file)
     passage_dict: Dict[str, Passage] = {passage.id: passage for passage in passage_examples}
     generate_query_text(passage_dict, query_examples=query_examples, query_method=query_style)
-    dev_queries_feats = tokenization.generate_query_feats(query_examples, add_qbound)
+    dev_queries_feats = model.processor.generate_query_feats(query_examples)
 
     print(f"Reading passages using {process_num} cpu's")
     chunk_size = math.ceil(len(passage_examples) / process_num)
     passage_examples_chunks = [passage_examples[x:x + chunk_size] for x in range(0, len(passage_examples), chunk_size)]
     with Pool(process_num) as pool:
-        dev_passages_feats = pool.map(tokenization.generate_passage_feats, iterable=passage_examples_chunks)
+        dev_passages_feats = pool.map(model.processor.generate_passage_feats, iterable=passage_examples_chunks)
         dev_passages_feats = list(itertools.chain.from_iterable(dev_passages_feats))
 
     # dev_queries_feats = random.sample(dev_queries_feats, k=20)
