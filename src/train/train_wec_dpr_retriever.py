@@ -9,12 +9,15 @@ from src.utils.io_utils import write_json
 
 def train():
     parameters = dict()
+    parameters["note"] = "Running all the queries (taking each query with all its positive passage), " \
+                         "adding spatial tokens and using cls from last hidden layer"
+
     parameters["doc_dir"] = "data/resources/dpr/context_full_queries_permut/"
-    parameters["train_filename"] = "Train_ctx_format.json"
+    parameters["train_filename"] = "Train_ctx_format_true.json"
     parameters["dev_filename"] = "Dev_ctx_format_false.json"
-    parameters["model_str"] = "dev_spanbert_hidden_cls_full_ctx_2it"
+    parameters["model_str"] = "dev_spanbert_hidden_cls_spatial_ctx_2it"
     parameters["query_style"] = "context"
-    parameters["add_spatial_tokens"] = False
+    parameters["add_spatial_tokens"] = True
 
     parameters["n_epochs"] = 2
     parameters["max_seq_len_query"] = 64
@@ -27,8 +30,6 @@ def train():
 
     parameters["out_model_name"] = "dev_" + parameters["model_str"] + "_" + str(parameters["n_epochs"]) + "it"
 
-    parameters["note"] = "Experiment running with DPR file containing all the queries " \
-                         "(taking each query with all its positive passage), using cls from last hidden layer"
     checkpoint_dir = "data/checkpoints/" + parameters["out_model_name"]
 
     print("Run Values:\n" + str(json.dumps(parameters, default=lambda o: o.__dict__, indent=4, sort_keys=True)))

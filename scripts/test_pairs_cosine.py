@@ -29,7 +29,7 @@ def main():
     # dev_passages_file = "data/resources/train/Dev_training_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
-    model_file = "data/checkpoints/dev_spanbert_hidden_cls_full_ctx_2it"
+    model_file = "data/checkpoints/dev_spanbert_hidden_cls_spatial_ctx_2it"
 
     max_query_len = 64
     max_pass_len = 180
@@ -38,7 +38,7 @@ def main():
     batch_size = 240
     process_num = multiprocessing.cpu_count()
 
-    add_qbound = False
+    add_qbound = True
     query_style = "context"
 
     if query_style == "bm25":

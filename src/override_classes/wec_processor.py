@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import List, Optional, Any, Tuple
 
 from haystack.modeling.data_handler.processor import TextSimilarityProcessor, _download_extract_downstream_data
-from haystack.modeling.data_handler.samples import SampleBasket, Sample
 from tqdm import tqdm
 
 from src.data_obj import TrainExample, QueryFeat, Passage, PassageFeat

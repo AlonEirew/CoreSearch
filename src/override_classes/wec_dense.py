@@ -124,7 +124,7 @@ class WECDensePassageRetriever(DensePassageRetriever):
                                         add_spatial_tokens=add_spatial_tokens)
 
         if add_spatial_tokens:
-            self.query_encoder.resize_token_embeddings(len(self.query_tokenizer))
+            self.query_encoder.model.resize_token_embeddings(len(self.query_tokenizer))
 
         prediction_head = TextSimilarityHead(similarity_function=similarity_function,
                                              global_loss_buffer_size=global_loss_buffer_size)

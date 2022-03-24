@@ -57,8 +57,14 @@ class WECContextProcessor(WECSimilarityProcessor):
     def get_query_feat(self, query_obj: TrainExample) -> Tuple[QueryFeat, List[str]]:
         query_feat, query_tokenized = super().get_query_feat(query_obj)
         if self.add_spatial_tokens:
-            assert query_feat.input_ids[query_feat.query_event_start] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_START]
-            assert query_feat.input_ids[query_feat.query_event_end] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_END]
+            if QUERY_SPAN_START in self.query_tokenizer.added_tokens_encoder and QUERY_SPAN_END in self.query_tokenizer.added_tokens_encoder:
+                assert query_feat.input_ids[query_feat.query_event_start] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_START]
+                assert query_feat.input_ids[query_feat.query_event_end] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_END]
+            elif QUERY_SPAN_START.lower() in self.query_tokenizer.added_tokens_encoder and QUERY_SPAN_END.lower() in self.query_tokenizer.added_tokens_encoder:
+                assert query_feat.input_ids[query_feat.query_event_start] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_START.lower()]
+                assert query_feat.input_ids[query_feat.query_event_end] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_END.lower()]
+            else:
+                raise AssertionError("add_spatial_token=True and no spatial tokens in added_tokens_encoder list!")
             # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
             if query_obj.mention:
                 query_lower = "".join(query_obj.mention).lower()
