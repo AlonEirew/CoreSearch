@@ -178,13 +178,21 @@ class DPRExample(object):
     def __init__(self,
                  dataset: str,
                  question: str,
-                 answers: List[str],
-                 positive_ctxs: List[DPRContext],
-                 negative_ctxs: List[DPRContext],
-                 hard_negative_ctxs: List[DPRContext]):
+                 query_id: Optional[str] = None,
+                 query_mention: str = None,
+                 start_index: Optional[str] = None,
+                 end_index: Optional[str] = None,
+                 answers: List[str] = None,
+                 positive_ctxs: List[DPRContext] = None,
+                 negative_ctxs: List[DPRContext] = None,
+                 hard_negative_ctxs: List[DPRContext] = None):
 
         self.dataset = dataset
         self.question = question
+        self.query_id = query_id
+        self.query_mention = query_mention
+        self.start_index = start_index
+        self.end_index = end_index
         self.answers = answers
         self.positive_ctxs = positive_ctxs
         self.negative_ctxs = negative_ctxs

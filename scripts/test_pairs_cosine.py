@@ -10,12 +10,12 @@ from tqdm import tqdm
 
 from src.data_obj import Passage, Feat, Cluster, QueryResult, TrainExample
 from src.models.weces_retriever import WECESRetriever
-from src.override_classes.override_language_model import OverrideLanguageModel
-from src.override_classes.wec_text_processor import WECSimilarityProcessor
+
+from src.override_classes.wec_bm25_processor import WECBM25Processor
+from src.override_classes.wec_context_processor import WECContextProcessor
 from src.pipeline.run_haystack_pipeline import print_measurements, generate_query_text
 from src.utils import dpr_utils, io_utils, data_utils
 from src.utils.data_utils import generate_index_batches
-from src.utils.tokenization import Tokenization
 
 SPLIT = "Dev"
 
@@ -28,7 +28,7 @@ def main():
     # dev_passages_file = "data/resources/train/Dev_training_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
-    model_file = "data/checkpoints/dev_spanbert_bm25_2it"
+    model_file = "data/checkpoints/dev_spanbert_lasthidden_full_bm25_2it"
 
     max_query_len = 64
     max_pass_len = 180
@@ -38,6 +38,13 @@ def main():
     process_num = 80
     add_qbound = False
     query_style = "bm25"
+
+    if query_style == "bm25":
+        processor_type = WECBM25Processor
+    elif query_style == "context":
+        processor_type = WECContextProcessor
+    else:
+        raise TypeError(f"No processor that support {query_style}")
 
     ### NEED TO REMOVE THIS LINES?
     #
@@ -54,7 +61,9 @@ def main():
                                             True,
                                             max_query_len,
                                             max_pass_len,
-                                            16)
+                                            16,
+                                            processor_type,
+                                            add_qbound)
 
     tokenization = model.processor.tokenization
 

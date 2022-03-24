@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Union, Optional, List
+from typing import Union, Optional, List, Type
 
 import torch
 from haystack.document_stores import BaseDocumentStore
@@ -12,8 +12,7 @@ from haystack.nodes import DensePassageRetriever
 from torch.nn import DataParallel
 
 from src.override_classes.override_language_model import OverrideLanguageModel
-from src.override_classes.wec_encoders import WECQuestionEncoder, WECContextEncoder
-from src.override_classes.wec_text_processor import WECSimilarityProcessor
+from src.override_classes.wec_processor import WECSimilarityProcessor
 from src.utils.tokenization import Tokenization
 
 logger = logging.getLogger(__name__)
@@ -46,6 +45,8 @@ class WECDensePassageRetriever(DensePassageRetriever):
                  progress_bar: bool = True,
                  devices: Optional[List[Union[int, str, torch.device]]] = None,
                  use_auth_token: Optional[Union[str, bool]] = None,
+                 processor_type: Type[WECSimilarityProcessor] = None,
+                 add_spatial_tokens: bool = False
                  ):
 
         # save init parameters to enable export of component config as YAML
@@ -111,21 +112,19 @@ class WECDensePassageRetriever(DensePassageRetriever):
                                                 tokenizer_class=tokenizers_default_classes["passage"],
                                                 use_auth_token=use_auth_token)
 
-        tokenization = Tokenization(query_tokenizer=self.query_tokenizer,
-                                    passage_tokenizer=self.passage_tokenizer,
-                                    max_query_size=max_seq_len_query,
-                                    max_passage_size=max_seq_len_passage)
+        self.processor = processor_type(query_tokenizer=self.query_tokenizer,
+                                        passage_tokenizer=self.passage_tokenizer,
+                                        max_seq_len_passage=max_seq_len_passage,
+                                        max_seq_len_query=max_seq_len_query,
+                                        label_list=["hard_negative", "positive"],
+                                        metric="text_similarity_metric",
+                                        embed_title=embed_title,
+                                        num_hard_negatives=0,
+                                        num_positives=1,
+                                        add_spatial_tokens=add_spatial_tokens)
 
-        self.processor = WECSimilarityProcessor(query_tokenizer=self.query_tokenizer,
-                                                passage_tokenizer=self.passage_tokenizer,
-                                                max_seq_len_passage=max_seq_len_passage,
-                                                max_seq_len_query=max_seq_len_query,
-                                                label_list=["hard_negative", "positive"],
-                                                metric="text_similarity_metric",
-                                                embed_title=embed_title,
-                                                num_hard_negatives=0,
-                                                num_positives=1,
-                                                tokenization=tokenization)
+        if add_spatial_tokens:
+            self.query_encoder.resize_token_embeddings(len(self.query_tokenizer))
 
         prediction_head = TextSimilarityHead(similarity_function=similarity_function,
                                              global_loss_buffer_size=global_loss_buffer_size)
