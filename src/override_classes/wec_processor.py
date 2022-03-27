@@ -166,6 +166,23 @@ class WECSimilarityProcessor(TextSimilarityProcessor):
         assert passage_event_start_ind <= passage_event_end_ind
         return passage_event_start_ind, passage_event_end_ind, passage_end_bound, passage_tokenized, passage_input_mask
 
+    def tokenize_and_add_features(self, query_obj):
+        clear_text = {}
+        tokenized = {}
+        features = [{}]
+        query_feat, tokenized_query = self.get_query_feat(TrainExample(query_obj))
+        if len(tokenized_query) == 0:
+            logger.warning(
+                f"The query could not be tokenized, likely because it contains a character that the query tokenizer does not recognize")
+            return None
+
+        clear_text["query_text"] = " ".join(tokenized_query)
+        tokenized["query_tokens"] = tokenized_query
+        features[0]["query_input_ids"] = query_feat.input_ids
+        features[0]["query_segment_ids"] = query_feat.segment_ids
+        features[0]["query_attention_mask"] = query_feat.input_mask
+        return clear_text, tokenized, features, query_feat
+
     @staticmethod
     def add_query_bound(query_obj: TrainExample):
         query_obj.context.insert(query_obj.endIndex + 1, QUERY_SPAN_END)

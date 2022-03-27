@@ -3,6 +3,7 @@ from os import path
 
 from src.override_classes.wec_bm25_processor import WECBM25Processor
 from src.override_classes.wec_context_processor import WECContextProcessor
+from src.override_classes.wec_start_end_processor import WECStartEndProcessor
 from src.utils import dpr_utils
 from src.utils.io_utils import write_json
 
@@ -10,13 +11,18 @@ from src.utils.io_utils import write_json
 def train():
     parameters = dict()
     parameters["note"] = "Running all the queries (taking each query with all its positive passage), " \
-                         "adding spatial tokens and using cls from last hidden layer"
+                         "adding spatial tokens and using their avg (taken from the last hidden layer)"
 
     parameters["doc_dir"] = "data/resources/dpr/context_full_queries_permut/"
     parameters["train_filename"] = "Train_ctx_format_true.json"
     parameters["dev_filename"] = "Dev_ctx_format_false.json"
-    parameters["model_str"] = "dev_spanbert_hidden_cls_spatial_ctx_2it"
-    parameters["query_style"] = "context"
+    parameters["model_str"] = "spanbert_avg_spatial"
+    # query_style: bm25 - for bm25 queries, will take the query from beginning till max_query_length
+    # query_style: context - for context queries, will take the query mention span and surrounding till max_query_length
+    #                        Then this will indicate to the encoder to extract the CLS token
+    # query_style: start_end - for context queries, will take the query mention span and surrounding till max_query_length
+    #                        Then this will indicate to the encoder to extract the QUERY_START/QUERY_END tokens
+    parameters["query_style"] = "start_end"
     parameters["add_spatial_tokens"] = True
 
     parameters["n_epochs"] = 2
@@ -43,6 +49,8 @@ def run(parameters, checkpoint_dir, evaluate_every):
         processor_type = WECBM25Processor
     elif query_style == "context":
         processor_type = WECContextProcessor
+    elif query_style == "start_end":
+        processor_type = WECStartEndProcessor
     else:
         raise TypeError(f"No processor that support {query_style}")
 

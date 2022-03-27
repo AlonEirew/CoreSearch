@@ -116,7 +116,7 @@ def generate_query_text(passage_dict: Dict[str, Passage], query_examples: List[T
         elif query_method == "ment_only":
             query.context = query.mention
         elif query_method == "with_bounds":
-            Tokenization.add_query_bound(query)
+            pass
         elif query_method == "full_ctx":
             pass
 

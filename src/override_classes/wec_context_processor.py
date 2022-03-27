@@ -131,45 +131,37 @@ class WECContextProcessor(WECSimilarityProcessor):
         return query_event_start_ind, query_event_end_ind, query_tokenized, query_input_mask
 
     def _convert_queries(self, baskets: List[SampleBasket]):
-        assert "query_id" in baskets[0].raw and "start_index" in baskets[0].raw and "end_index" in baskets[0].raw, "Invalid sample"
         for basket in baskets:
-            clear_text = {}
-            tokenized = {}
-            features = [{}]  # type: ignore
             # extract query, positive context passages and titles, hard-negative passages and titles
-            if "query" in basket.raw:
-                try:
-                    query_obj = {
-                        "id": basket.raw["query_id"],
-                        "goldChain": None,
-                        "mention": basket.raw["query_mention"],
-                        "startIndex": basket.raw["start_index"],
-                        "endIndex": basket.raw["end_index"],
-                        "context": basket.raw["query"].split(" "),
-                        "positive_examples": None,
-                        "negative_examples": None,
-                        "bm25_query": None,
-                        "dummy": False,
-                    }
-                    query_feat, tokenized_query = self.get_query_feat(TrainExample(query_obj))
-                    if len(tokenized_query) == 0:
-                        logger.warning(
-                            f"The query could not be tokenized, likely because it contains a character that the query tokenizer does not recognize")
-                        return None
-
-                    clear_text["query_text"] = " ".join(tokenized_query)
-                    tokenized["query_tokens"] = tokenized_query
-                    features[0]["query_input_ids"] = query_feat.input_ids
-                    features[0]["query_segment_ids"] = query_feat.segment_ids
-                    features[0]["query_attention_mask"] = query_feat.input_mask
-                    features[0]["query_start"] = query_feat.query_event_start
-                    features[0]["query_end"] = query_feat.query_event_end
-                except Exception as e:
-                    features = None  # type: ignore
-
+            clear_text, tokenized, features, query_feat = self.get_basket_tokens_feats(basket)
             sample = Sample(id="",
                             clear_text=clear_text,
                             tokenized=tokenized,
                             features=features)  # type: ignore
             basket.samples = [sample]
         return baskets
+
+    def get_basket_tokens_feats(self, basket: SampleBasket):
+        clear_text = {}
+        tokenized = {}
+        features = [{}]  # type: ignore
+        query_feat = None
+        if "query" in basket.raw:
+            assert "query_id" in basket.raw and "start_index" in basket.raw and "end_index" in basket.raw, "Invalid sample"
+            try:
+                query_obj = {
+                    "id": basket.raw["query_id"],
+                    "goldChain": None,
+                    "mention": basket.raw["query_mention"],
+                    "startIndex": basket.raw["start_index"],
+                    "endIndex": basket.raw["end_index"],
+                    "context": basket.raw["query"].split(" "),
+                    "positive_examples": None,
+                    "negative_examples": None,
+                    "bm25_query": None,
+                    "dummy": False,
+                }
+                clear_text, tokenized, features, query_feat = self.tokenize_and_add_features(query_obj)
+            except Exception as e:
+                features = None  # type: ignore
+        return clear_text, tokenized, features, query_feat

@@ -66,19 +66,7 @@ class WECBM25Processor(WECSimilarityProcessor):
             if "query" in basket.raw:
                 try:
                     query_obj = {"context": basket.raw["query"].split(" "), "dummy": True}
-                    query_feat, tokenized_query = self.get_query_feat(TrainExample(query_obj))
-                    if len(tokenized_query) == 0:
-                        logger.warning(
-                            f"The query could not be tokenized, likely because it contains a character that the query tokenizer does not recognize")
-                        return None
-
-                    clear_text["query_text"] = " ".join(tokenized_query)
-                    tokenized["query_tokens"] = tokenized_query
-                    features[0]["query_input_ids"] = query_feat.input_ids
-                    features[0]["query_segment_ids"] = query_feat.segment_ids
-                    features[0]["query_attention_mask"] = query_feat.input_mask
-                    # features[0]["query_start"] = query_feat.query_event_start
-                    # features[0]["query_end"] = query_feat.query_event_end
+                    clear_text, tokenized, features, query_feat = self.tokenize_and_add_features(query_obj)
                 except Exception as e:
                     features = None  # type: ignore
 

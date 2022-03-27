@@ -8,9 +8,7 @@ from haystack.modeling.model.language_model import DPRContextEncoder, DPRQuestio
 class WECContextEncoder(DPRContextEncoder):
     def __init__(self):
         super(WECContextEncoder, self).__init__()
-        # self.model = BertModel.from_pretrained(model)
         # self.dropout = nn.Dropout(0.1)
-        # self.name = "wec_context_encoder"
 
     def forward(self, passage_input_ids: torch.Tensor, passage_segment_ids: torch.Tensor,
                 passage_attention_mask: torch.Tensor, **kwargs):
@@ -27,17 +25,11 @@ class WECContextEncoder(DPRContextEncoder):
                                     output_attentions=False,
                                     output_hidden_states=True)
 
-        if len(kwargs) > 1:
-            # extract the last-hidden-state CLS token embeddings
-            # return self.dropout(passage_encode.pooler_output), None
-            return passage_encode.hidden_states[-1][:, 0, :], None
-            # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
-            # return passage_encode.pooler_output, None
-        else:
-            # return self.dropout(passage_encode.pooler_output), None
-            return passage_encode.hidden_states[-1][:, 0, :], None
-            # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
-            # return passage_encode.pooler_output, None
+        # extract the last-hidden-state CLS token embeddings
+        # return self.dropout(passage_encode.pooler_output), None
+        return passage_encode.hidden_states[-1][:, 0, :], None
+        # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
+        # return passage_encode.pooler_output, None
 
     def save_config(self, save_dir):
         save_filename = Path(save_dir) / "language_model_config.json"
@@ -61,10 +53,7 @@ class WECContextEncoder(DPRContextEncoder):
 class WECQuestionEncoder(DPRQuestionEncoder):
     def __init__(self):
         super(WECQuestionEncoder, self).__init__()
-        # self.query_encoder.model.resize_token_embeddings(len(tokenization.query_tokenizer))
-        # self.model = BertModel.from_pretrained(model)
         # self.dropout = nn.Dropout(0.1)
-        # self.name = "wec_quesion_encoder"
 
     def forward(self, query_input_ids: torch.Tensor, query_segment_ids: torch.Tensor,
                 query_attention_mask: torch.Tensor, **kwargs):
@@ -84,19 +73,18 @@ class WECQuestionEncoder(DPRQuestionEncoder):
                                   output_attentions=False,
                                   output_hidden_states=True)
 
+        last_hidden = query_encode.hidden_states[-1]
         if query_event_starts is not None and query_event_ends is not None:
             # Will trigger while training
-            # query_event_starts_slc = torch.index_select(query_event_starts, dim=0, index=query_indices)
-            # query_event_ends_slc = torch.index_select(query_event_ends, dim=0, index=query_indices)
-            # out_query_embed = self.extract_query_start_end_embeddings(query_encode[0], query_event_starts_slc, query_event_ends_slc)
-            # return out_query_embed, None
-            # return self.dropout(query_encode.pooler_output), None
-            return query_encode.hidden_states[-1][:, 0, :], None
-            # return query_encode.pooler_output, None
+            # query_start_embeds = last_hidden[range(0, last_hidden.shape[0]), query_event_starts]
+            # query_end_embeds = last_hidden[range(0, last_hidden.shape[0]), query_event_ends]
+            # query_rep = (query_start_embeds + query_end_embeds) / 2
+            # return query_rep, None
+            return last_hidden[:, 0, :], None
         else:
             # Will trigger at inference
             # return self.dropout(query_encode.pooler_output), None
-            return query_encode.hidden_states[-1][:, 0, :], None
+            return last_hidden[:, 0, :], None
             # return query_encode.pooler_output, None
 
     def save_config(self, save_dir):
@@ -116,15 +104,6 @@ class WECQuestionEncoder(DPRQuestionEncoder):
 
     def unfreeze(self):
         pass
-
-    @staticmethod
-    def extract_query_start_end_embeddings(query_hidden_states,
-                                           query_event_starts,
-                                           query_event_ends):
-        query_start_embeds = query_hidden_states[range(0, query_hidden_states.shape[0]), query_event_starts]
-        query_end_embeds = query_hidden_states[range(0, query_hidden_states.shape[0]), query_event_ends]
-        query_rep = query_start_embeds * query_end_embeds
-        return query_rep
 
     # This method expects no spacial tokens (QUERY_START/QUERY_END)
     @staticmethod
