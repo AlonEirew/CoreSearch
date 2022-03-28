@@ -17,7 +17,6 @@ def faiss_index(passages_file,
                 max_seq_len_query,
                 max_seq_len_passage,
                 batch_size,
-                load_tokenizer,
                 similarity="dot_product",
                 processor_type=None,
                 add_spatial_tokens=False):
@@ -42,7 +41,6 @@ def faiss_index(passages_file,
                                                                max_seq_len_query,
                                                                max_seq_len_passage,
                                                                batch_size,
-                                                               load_tokenizer,
                                                                similarity)
     document_store.delete_documents()
     print("Writing document to FAISS index (may take a while)..")
@@ -73,14 +71,13 @@ def main():
     query_encode = "data/checkpoints/dev_spanbert_hidden_cls_spatial_ctx_2it/query_encoder"
     passage_encode = "data/checkpoints/dev_spanbert_hidden_cls_spatial_ctx_2it/passage_encoder"
 
-    load_tokenizer = False
     infer_tokenizer_classes = True
     load_model = True
 
     print(f"creating document_store at-{faiss_path_prefix}, from documents-{passages_file}")
     print(f"query_encoder-{query_encode}, passage_encoder-{passage_encode}")
     faiss_index(passages_file, load_model, faiss_file_path, sql_rul, query_encode, passage_encode,
-                infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer,
+                infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size,
                 similarity, processor_type, add_spatial_tokens)
 
 

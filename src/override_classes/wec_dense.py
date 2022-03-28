@@ -13,7 +13,6 @@ from torch.nn import DataParallel
 
 from src.override_classes.override_language_model import OverrideLanguageModel
 from src.override_classes.wec_processor import WECSimilarityProcessor
-from src.utils.tokenization import Tokenization
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.DEBUG)

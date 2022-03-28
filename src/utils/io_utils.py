@@ -6,14 +6,10 @@ from typing import Dict, List, Any, Union
 
 import torch
 from haystack import Document
-from haystack.modeling.model.biadaptive_model import BiAdaptiveModel
-from haystack.modeling.model.prediction_head import TextSimilarityHead
 from tqdm import tqdm
 from transformers import AdamW, BertConfig, BertModel, BertTokenizer
 
 from src.data_obj import Query, Passage, Cluster, TrainExample
-from src.override_classes.wec_encoders import WECQuestionEncoder, WECContextEncoder
-from src.override_classes.wec_processor import WECSimilarityProcessor
 from src.utils.tokenization import Tokenization
 
 
@@ -163,75 +159,6 @@ def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
         )
 
     return documents
-
-
-def replace_loaded_retriever_model(retriever, model_path, max_seq_len_query, max_seq_len_passage):
-    print("Replacing retriever model..")
-    model, query_tokenizer, passage_tokenizer = load_checkpoint(model_path)
-    prediction_head = TextSimilarityHead(similarity_function="dot_product",
-                                         global_loss_buffer_size=150000)
-    retriever.passage_encoder = model.passage_encoder
-    retriever.passage_tokenizer = passage_tokenizer
-    retriever.query_encoder = model.query_encoder
-    retriever.query_tokenizer = query_tokenizer
-
-    retriever.model = BiAdaptiveModel(
-        language_model1=model.query_encoder,
-        language_model2=model.passage_encoder,
-        prediction_heads=[prediction_head],
-        embeds_dropout_prob=0.1,
-        lm1_output_types=["per_sequence"],
-        lm2_output_types=["per_sequence"],
-        device=str(retriever.devices[0]),
-    )
-
-    retriever.processor = WECSimilarityProcessor(query_tokenizer=retriever.query_tokenizer,
-                                                 passage_tokenizer=retriever.passage_tokenizer,
-                                                 max_seq_len_passage=max_seq_len_passage,
-                                                 max_seq_len_query=max_seq_len_query,
-                                                 label_list=["hard_negative", "positive"],
-                                                 metric="text_similarity_metric",
-                                                 embed_title=False,
-                                                 num_hard_negatives=0,
-                                                 num_positives=1)
-
-
-def replace_retriever_model(retriever, query_encoder, passage_encoder, query_tokenizer, passage_tokenizer,
-                            max_seq_len_query, max_seq_len_passage):
-    print("Replacing retriever model..")
-    wec_query_encoder = WECQuestionEncoder(query_encoder)
-    wec_passage_encoder = WECContextEncoder(passage_encoder)
-    tokenization = Tokenization(query_tok_file=query_tokenizer,
-                                passage_tok_file=passage_tokenizer,
-                                max_query_size=max_seq_len_query,
-                                max_passage_size=max_seq_len_passage)
-
-    prediction_head = TextSimilarityHead(similarity_function="dot_product",
-                                         global_loss_buffer_size=150000)
-    retriever.passage_encoder = wec_passage_encoder
-    retriever.passage_tokenizer = tokenization.passage_tokenizer
-    retriever.query_encoder = wec_query_encoder
-    retriever.query_tokenizer = tokenization.query_tokenizer
-
-    retriever.model = BiAdaptiveModel(
-        language_model1=retriever.query_encoder,
-        language_model2=retriever.passage_encoder,
-        prediction_heads=[prediction_head],
-        embeds_dropout_prob=0.1,
-        lm1_output_types=["per_sequence"],
-        lm2_output_types=["per_sequence"],
-        device=str(retriever.devices[0]),
-    )
-
-    retriever.processor = WECSimilarityProcessor(query_tokenizer=retriever.query_tokenizer,
-                                                 passage_tokenizer=retriever.passage_tokenizer,
-                                                 max_seq_len_passage=max_seq_len_passage,
-                                                 max_seq_len_query=max_seq_len_query,
-                                                 label_list=["hard_negative", "positive"],
-                                                 metric="text_similarity_metric",
-                                                 embed_title=False,
-                                                 num_hard_negatives=0,
-                                                 num_positives=1)
 
 
 def load_model_bkp(pretrained_model_name_or_path: Union[Path, str], **kwargs):
