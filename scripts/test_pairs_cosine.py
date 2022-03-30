@@ -29,7 +29,7 @@ def main():
     # dev_passages_file = "data/resources/train/Dev_training_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
-    model_file = "data/checkpoints/dev_spanbert_hidden_cls_spatial_ctx_2it"
+    model_file = "data/checkpoints/dev_baseline_model_2it"
 
     max_query_len = 64
     max_pass_len = 180
@@ -38,8 +38,8 @@ def main():
     batch_size = 240
     process_num = multiprocessing.cpu_count()
 
-    add_qbound = True
-    query_style = "context"
+    add_qbound = False
+    query_style = "bm25"
 
     if query_style == "bm25":
         processor_type = WECBM25Processor
@@ -53,7 +53,7 @@ def main():
     # additional_pass = io_utils.read_passages_file_filtered("data/resources/WEC-ES/Dev_all_passages.json",
     #                                                        ['NEG_2078064', '11165', '122480'])
     # passage_examples.extend(additional_pass)
-    faiss_index_prefix = "indexes/spanbert_notft/dev_index"
+    faiss_index_prefix = "indexes/multi_notft/dev_index"
     faiss_index_file = faiss_index_prefix + ".faiss"
     faiss_config_file = faiss_index_prefix + ".json"
     _, model = dpr_utils.load_wec_faiss_dpr(faiss_index_file,

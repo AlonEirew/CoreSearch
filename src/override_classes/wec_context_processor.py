@@ -147,15 +147,19 @@ class WECContextProcessor(WECSimilarityProcessor):
         features = [{}]  # type: ignore
         query_feat = None
         if "query" in basket.raw:
-            assert "query_id" in basket.raw and "start_index" in basket.raw and "end_index" in basket.raw, "Invalid sample"
+            query_params = basket.raw
+            if isinstance(query_params["query"], dict):
+                query_params = query_params["query"]
+
+            assert "query_id" in query_params and "start_index" in query_params and "end_index" in query_params, "Invalid sample"
             try:
                 query_obj = {
-                    "id": basket.raw["query_id"],
+                    "id": query_params["query_id"],
                     "goldChain": None,
-                    "mention": basket.raw["query_mention"],
-                    "startIndex": basket.raw["start_index"],
-                    "endIndex": basket.raw["end_index"],
-                    "context": basket.raw["query"].split(" "),
+                    "mention": query_params["query_mention"],
+                    "startIndex": query_params["start_index"],
+                    "endIndex": query_params["end_index"],
+                    "context": query_params["query"].split(" "),
                     "positive_examples": None,
                     "negative_examples": None,
                     "bm25_query": None,

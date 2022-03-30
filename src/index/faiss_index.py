@@ -17,9 +17,10 @@ def faiss_index(passages_file,
                 max_seq_len_query,
                 max_seq_len_passage,
                 batch_size,
-                similarity="dot_product",
-                processor_type=None,
-                add_spatial_tokens=False):
+                similarity,
+                processor_type,
+                add_spatial_tokens,
+                faiss_index_factory_str):
     documents: List[Document] = io_utils.read_wec_to_haystack_doc_list(passages_file)
 
     if load_model:
@@ -32,7 +33,8 @@ def faiss_index(passages_file,
                                                                    batch_size,
                                                                    similarity,
                                                                    processor_type,
-                                                                   add_spatial_tokens)
+                                                                   add_spatial_tokens,
+                                                                   faiss_index_factory_str)
     else:
         document_store, retriever = dpr_utils.create_faiss_dpr(sql_rul,
                                                                query_encode,
@@ -41,7 +43,8 @@ def faiss_index(passages_file,
                                                                max_seq_len_query,
                                                                max_seq_len_passage,
                                                                batch_size,
-                                                               similarity)
+                                                               similarity,
+                                                               faiss_index_factory_str)
     document_store.delete_documents()
     print("Writing document to FAISS index (may take a while)..")
     document_store.write_documents(documents=documents)
@@ -64,6 +67,8 @@ def main():
     processor_type = WECContextProcessor
     add_spatial_tokens = True
     similarity = "dot_product"
+    faiss_index_factory_str = "HNSW"
+    # faiss_index_factory_str = "Flat"
 
     passages_file = "data/resources/WEC-ES/Dev_all_passages.json"
     # passages_file = "data/resources/WEC-ES/Tiny_passages.json"
@@ -78,7 +83,7 @@ def main():
     print(f"query_encoder-{query_encode}, passage_encoder-{passage_encode}")
     faiss_index(passages_file, load_model, faiss_file_path, sql_rul, query_encode, passage_encode,
                 infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size,
-                similarity, processor_type, add_spatial_tokens)
+                similarity, processor_type, add_spatial_tokens, faiss_index_factory_str)
 
 
 if __name__ == '__main__':

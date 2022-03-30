@@ -2,18 +2,17 @@ import logging
 
 from haystack.document_stores import FAISSDocumentStore
 from haystack.nodes import DensePassageRetriever
-from transformers import BertTokenizer
 
-from src.override_classes.wec_bm25_processor import WECBM25Processor
 from src.override_classes.wec_dense import WECDensePassageRetriever
 
 logger = logging.getLogger("dpr_utils")
 logger.setLevel(logging.DEBUG)
 
 
-def create_default_faiss_doc_store(sql_rul, similarity):
+def create_default_faiss_doc_store(sql_rul, similarity, faiss_index_factory_str):
     return FAISSDocumentStore(sql_url=sql_rul,
-                              similarity=similarity)
+                              similarity=similarity,
+                              faiss_index_factory_str=faiss_index_factory_str)
 
 
 def load_faiss_doc_store(faiss_file_path, faiss_config_file):
@@ -32,8 +31,8 @@ def load_dpr(document_store, query_encode, passage_encode, infer_tokenizer_class
 
 
 def create_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_classes,
-                     max_seq_len_query, max_seq_len_passage, batch_size, similarity):
-    document_store = create_default_faiss_doc_store(sql_rul, similarity)
+                     max_seq_len_query, max_seq_len_passage, batch_size, similarity, faiss_index_factory_str):
+    document_store = create_default_faiss_doc_store(sql_rul, similarity, faiss_index_factory_str)
     retriever = load_dpr(document_store, query_encode, passage_encode,
                          infer_tokenizer_classes,
                          max_seq_len_query,
@@ -44,8 +43,8 @@ def create_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_clas
 
 def create_wec_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_classes,
                          max_seq_len_query, max_seq_len_passage, batch_size, similarity, processor_type,
-                         add_spatial_tokens):
-    document_store = create_default_faiss_doc_store(sql_rul, similarity)
+                         add_spatial_tokens, faiss_index_factory_str):
+    document_store = create_default_faiss_doc_store(sql_rul, similarity, faiss_index_factory_str)
     retriever = WECDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                          passage_embedding_model=passage_encode,
                                          infer_tokenizer_classes=infer_tokenizer_classes,

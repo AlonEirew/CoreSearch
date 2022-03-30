@@ -10,29 +10,28 @@ from src.utils.io_utils import write_json
 
 def train():
     parameters = dict()
-    parameters["note"] = "Running all the queries (taking each query with all its positive passage), " \
-                         "adding spatial tokens and using their avg (taken from the last hidden layer)"
+    parameters["note"] = "Baseline model, taking into consideration all queries, cls last hidden"
 
     parameters["doc_dir"] = "data/resources/dpr/context_full_queries_permut/"
     parameters["train_filename"] = "Train_ctx_format_true.json"
     parameters["dev_filename"] = "Dev_ctx_format_false.json"
-    parameters["model_str"] = "spanbert_avg_spatial"
+    parameters["model_str"] = "baseline_model"
     # query_style: bm25 - for bm25 queries, will take the query from beginning till max_query_length
     # query_style: context - for context queries, will take the query mention span and surrounding till max_query_length
     #                        Then this will indicate to the encoder to extract the CLS token
     # query_style: start_end - for context queries, will take the query mention span and surrounding till max_query_length
     #                        Then this will indicate to the encoder to extract the QUERY_START/QUERY_END tokens
-    parameters["query_style"] = "start_end"
-    parameters["add_spatial_tokens"] = True
+    parameters["query_style"] = "bm25"
+    parameters["add_spatial_tokens"] = False
 
     parameters["n_epochs"] = 2
     parameters["max_seq_len_query"] = 64
     parameters["max_seq_len_passage"] = 180
     parameters["batch_size"] = 16
 
-    parameters["query_model"] = "SpanBERT/spanbert-base-cased"
-    parameters["passage_model"] = "SpanBERT/spanbert-base-cased"
-    parameters["faiss_path_prefix"] = "indexes/spanbert_notft/dev_index"
+    parameters["query_model"] = "facebook/dpr-question_encoder-multiset-base"
+    parameters["passage_model"] = "facebook/dpr-ctx_encoder-multiset-base"
+    parameters["faiss_path_prefix"] = "indexes/multi_notft/dev_index"
 
     parameters["out_model_name"] = "dev_" + parameters["model_str"] + "_" + str(parameters["n_epochs"]) + "it"
 
