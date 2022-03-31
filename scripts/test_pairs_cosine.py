@@ -29,7 +29,7 @@ def main():
     # dev_passages_file = "data/resources/train/Dev_training_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
-    model_file = "data/checkpoints/dev_baseline_model_2it"
+    model_file = "data/checkpoints/dev_baseline_model_pooler_2it"
 
     max_query_len = 64
     max_pass_len = 180
@@ -48,11 +48,6 @@ def main():
     else:
         raise TypeError(f"No processor that support {query_style}")
 
-    ### NEED TO REMOVE THIS LINES?
-    #
-    # additional_pass = io_utils.read_passages_file_filtered("data/resources/WEC-ES/Dev_all_passages.json",
-    #                                                        ['NEG_2078064', '11165', '122480'])
-    # passage_examples.extend(additional_pass)
     faiss_index_prefix = "indexes/multi_notft/dev_index"
     faiss_index_file = faiss_index_prefix + ".faiss"
     faiss_config_file = faiss_index_prefix + ".json"
@@ -67,15 +62,6 @@ def main():
                                             processor_type,
                                             add_qbound)
 
-    # tokenization = Tokenization(query_tok_file="SpanBERT/spanbert-base-cased", passage_tok_file="SpanBERT/spanbert-base-cased")
-    # model = WECESRetriever("SpanBERT/spanbert-base-cased", "SpanBERT/spanbert-base-cased",
-    #                        len(tokenization.query_tokenizer), "cuda")
-    # model.to("cuda")
-    ## END OF NEEDED LINES TO REMOVE?
-
-    # model, query_tokenizer, passage_tokenizer = load_checkpoint(model_file)
-    # model.eval()
-    # tokenization = Tokenization(query_tokenizer=query_tokenizer, passage_tokenizer=passage_tokenizer)
     print(f"Experiment using model={model_file}, query_file={dev_examples_file}, passage_file={dev_passages_file}")
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)

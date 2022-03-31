@@ -27,8 +27,8 @@ class WECContextEncoder(DPRContextEncoder):
 
         # extract the last-hidden-state CLS token embeddings
         # return self.dropout(passage_encode.pooler_output), None
-        return passage_encode.hidden_states[-1][:, 0, :], None
         # return self.dropout(passage_encode.last_hidden_state[:, 0, :]), passage_encode.attentions
+        return passage_encode.hidden_states[-1][:, 0, :], None
         # return passage_encode.pooler_output, None
 
     def save_config(self, save_dir):
@@ -81,6 +81,7 @@ class WECQuestionEncoder(DPRQuestionEncoder):
             # query_rep = (query_start_embeds + query_end_embeds) / 2
             # return query_rep, None
             return last_hidden[:, 0, :], None
+            # return query_encode.pooler_output, None
         else:
             # Will trigger at inference
             # return self.dropout(query_encode.pooler_output), None

@@ -20,7 +20,7 @@ def load_faiss_doc_store(faiss_file_path, faiss_config_file):
                                    config_path=faiss_config_file)
 
 
-def load_dpr(document_store, query_encode, passage_encode, infer_tokenizer_classes=True,
+def load_dpr(document_store, query_encode, passage_encode, infer_tokenizer_classes,
              max_seq_len_query=64, max_seq_len_passage=180, batch_size=16):
     retriever = DensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                       passage_embedding_model=passage_encode,
