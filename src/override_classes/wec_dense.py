@@ -1,8 +1,9 @@
 import logging
 from pathlib import Path
-from typing import Union, Optional, List, Type
+from typing import Union, Optional, List, Type, Dict
 
 import torch
+from haystack import Document
 from haystack.document_stores import BaseDocumentStore
 from haystack.modeling.model.biadaptive_model import BiAdaptiveModel
 from haystack.modeling.model.prediction_head import TextSimilarityHead
@@ -141,3 +142,14 @@ class WECDensePassageRetriever(DensePassageRetriever):
 
         if len(self.devices) > 1:
             self.model = DataParallel(self.model, device_ids=self.devices)
+
+    def retrieve(self, query: Dict, filters: dict = None, top_k: Optional[int] = None, index: str = None,
+                 headers: Optional[Dict[str, str]] = None) -> List[Document]:
+        if top_k is None:
+            top_k = self.top_k
+        if not self.document_store:
+            logger.error("Cannot perform retrieve() since DensePassageRetriever initialized with document_store=None")
+            return []
+        # query_emb = self.embed_queries(texts=[query])
+        documents = self.document_store.get_passages(query_id=query["query_id"], top_k=top_k)
+        return documents

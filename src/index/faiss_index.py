@@ -67,8 +67,8 @@ def main():
     processor_type = WECContextProcessor
     add_spatial_tokens = True
     similarity = "dot_product"
-    faiss_index_factory_str = "HNSW"
-    # faiss_index_factory_str = "Flat"
+    # faiss_index_factory_str = "HNSW"
+    faiss_index_factory_str = "Flat"
 
     passages_file = "data/resources/WEC-ES/Dev_all_passages.json"
     # passages_file = "data/resources/WEC-ES/Tiny_passages.json"

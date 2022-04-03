@@ -17,6 +17,7 @@ from src.override_classes.wec_context_processor import WECContextProcessor
 from src.pipeline.run_haystack_pipeline import print_measurements, generate_query_text
 from src.utils import dpr_utils, io_utils, data_utils
 from src.utils.data_utils import generate_index_batches
+from src.utils.io_utils import save_query_results
 
 SPLIT = "Dev"
 
@@ -29,17 +30,18 @@ def main():
     # dev_passages_file = "data/resources/train/Dev_training_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
-    model_file = "data/checkpoints/dev_baseline_model_pooler_2it"
+    model_file = "data/checkpoints/dev_spanbert_hidden_cls_spatial_ctx_2it"
+    result_file = "results/dev_with_spatial_results.json"
 
     max_query_len = 64
     max_pass_len = 180
-    topk = 100
+    topk = 150
     run_pipe_str = "retriever"
     batch_size = 240
     process_num = multiprocessing.cpu_count()
 
-    add_qbound = False
-    query_style = "bm25"
+    add_qbound = True
+    query_style = "context"
 
     if query_style == "bm25":
         processor_type = WECBM25Processor
@@ -98,6 +100,8 @@ def main():
             results.append(res_pass)
         query_result = QueryResult(query=query.feat_ref, results=results)
         all_queries_pred.append(query_result)
+
+    save_query_results(all_queries_pred, result_file)
 
     print("Generating 50 examples:")
     query_pred_sample = random.sample(all_queries_pred, k=50)

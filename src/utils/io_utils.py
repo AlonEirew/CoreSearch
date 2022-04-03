@@ -9,7 +9,7 @@ from haystack import Document
 from tqdm import tqdm
 from transformers import AdamW, BertConfig, BertModel, BertTokenizer
 
-from src.data_obj import Query, Passage, Cluster, TrainExample
+from src.data_obj import Query, Passage, Cluster, TrainExample, QueryResult
 from src.utils.tokenization import Tokenization
 
 
@@ -172,3 +172,13 @@ def load_model_bkp(pretrained_model_name_or_path: Union[Path, str], **kwargs):
         # Pytorch-transformer Style
         model = BertModel.from_pretrained(str(pretrained_model_name_or_path), **kwargs)
     return model
+
+
+def save_query_results(query_results: List[QueryResult], out_file: str):
+    results_json = dict()
+    for result in query_results:
+        result_passages = [{"pass_id": passage.id, "score": passage.score} for passage in result.results]
+        results_json[result.query.id] = result_passages
+
+    with open(out_file, "w") as result_file:
+        json.dump(results_json, result_file, indent=4, sort_keys=True)

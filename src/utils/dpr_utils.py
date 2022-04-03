@@ -1,8 +1,9 @@
 import logging
 
-from haystack.document_stores import FAISSDocumentStore
+from haystack.document_stores import FAISSDocumentStore, InMemoryDocumentStore
 from haystack.nodes import DensePassageRetriever
 
+from src.override_classes.file_doc_store import FileDocStore
 from src.override_classes.wec_dense import WECDensePassageRetriever
 
 logger = logging.getLogger("dpr_utils")
@@ -13,6 +14,10 @@ def create_default_faiss_doc_store(sql_rul, similarity, faiss_index_factory_str)
     return FAISSDocumentStore(sql_url=sql_rul,
                               similarity=similarity,
                               faiss_index_factory_str=faiss_index_factory_str)
+
+
+def create_file_doc_store(result_file, passages_file):
+    return FileDocStore(result_file=result_file, passages_file=passages_file)
 
 
 def load_faiss_doc_store(faiss_file_path, faiss_config_file):

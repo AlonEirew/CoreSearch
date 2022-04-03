@@ -15,14 +15,14 @@ def train():
     parameters["doc_dir"] = "data/resources/dpr/context_full_queries_permut/"
     parameters["train_filename"] = "Train_ctx_format_true.json"
     parameters["dev_filename"] = "Dev_ctx_format_false.json"
-    parameters["model_str"] = "baseline_model"
+    parameters["model_str"] = "test"
     # query_style: bm25 - for bm25 queries, will take the query from beginning till max_query_length
     # query_style: context - for context queries, will take the query mention span and surrounding till max_query_length
     #                        Then this will indicate to the encoder to extract the CLS token
     # query_style: start_end - for context queries, will take the query mention span and surrounding till max_query_length
     #                        Then this will indicate to the encoder to extract the QUERY_START/QUERY_END tokens
-    parameters["query_style"] = "bm25"
-    parameters["add_spatial_tokens"] = False
+    parameters["query_style"] = "context"
+    parameters["add_spatial_tokens"] = True
 
     parameters["n_epochs"] = 2
     parameters["max_seq_len_query"] = 64

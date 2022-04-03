@@ -1,4 +1,5 @@
 import json
+import logging
 from typing import Dict, List
 
 from haystack.pipelines import DocumentSearchPipeline, ExtractiveQAPipeline
@@ -6,8 +7,10 @@ from tqdm import tqdm
 
 from src.data_obj import QueryResult, Passage, BasicMent
 
+logger = logging.getLogger("run_haystack_pipeline")
 
-class BasePipeline(object):
+
+class WECPipeline(object):
     def __init__(self, document_store, retriever):
         self.document_store = document_store
         self.retriever = retriever
@@ -25,9 +28,15 @@ class BasePipeline(object):
     def run_end_to_end(self, query_examples: List[BasicMent]) -> List[QueryResult]:
         predictions = list()
         for query in tqdm(query_examples, "Running Queries"):
-            query_text = " ".join(query.context)
+            query_dict = dict()
+            query_dict["query"] = " ".join(query.context)
+            query_dict["query_mention"] = query.mention
+            query_dict["query_id"] = query.id
+            query_dict["start_index"] = query.startIndex
+            query_dict["end_index"] = query.endIndex
             try:
-                results = self.run_pipeline(query_text)
+                # results = self.run_pipeline(json.dumps(query_dict, ensure_ascii=False))
+                results = self.run_pipeline(query_text=query_dict)
                 query_result = self.extract_results(query, results)
                 predictions.append(query_result)
             except TypeError:
@@ -35,7 +44,7 @@ class BasePipeline(object):
         return predictions
 
 
-class RetrievalOnlyPipeline(BasePipeline):
+class RetrievalOnlyPipeline(WECPipeline):
     def __init__(self, document_store, retriever, ret_topk):
         super().__init__(document_store, retriever)
         self.ret_topk = ret_topk
@@ -43,7 +52,7 @@ class RetrievalOnlyPipeline(BasePipeline):
     def build_pipeline(self):
         return DocumentSearchPipeline(self.retriever)
 
-    def run_pipeline(self, query_text):
+    def run_pipeline(self, query_text: str):
         return self.pipeline.run(query=query_text, params={"Retriever": {"top_k": self.ret_topk}})
 
     def extract_results(self, query: BasicMent, results: Dict) -> QueryResult:
@@ -59,7 +68,7 @@ class RetrievalOnlyPipeline(BasePipeline):
         return QueryResult(query, converted_list)
 
 
-class QAPipeline(BasePipeline):
+class QAPipeline(WECPipeline):
     def __init__(self, document_store, retriever, reader, ret_topk, read_topk):
         self.reader = reader
         self.ret_topk = ret_topk

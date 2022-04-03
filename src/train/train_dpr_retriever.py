@@ -7,28 +7,27 @@ from src.utils import io_utils, dpr_utils
 
 
 def train():
-    doc_dir = "data/resources/dpr/ment_ners/"
-    train_filename = "Dev_dpr_format.json"
-    dev_filename = "Dev_dpr_format.json"
+    doc_dir = "data/resources/dpr/bm25_full_queries_permut/"
+    train_filename = "Train_bm25_format.json"
+    dev_filename = "Dev_bm25_small_format.json"
 
-    n_epochs = 2
     run_update_eval = False
-    model_str = "spanbert_bm25"
+    n_epochs = 2
+    model_str = "baseline_model"
 
-    infer_tokenizer_classes = True
+    infer_tokenizer_classes = False
     max_seq_len_query = 64
     max_seq_len_passage = 180
     batch_size = 16
 
     # query_model = "bert-base-cased"
     # passage_model = "bert-base-cased"
-    query_model = "SpanBERT/spanbert-base-cased"
-    passage_model = "SpanBERT/spanbert-base-cased"
-    # query_model = "facebook/dpr-question_encoder-multiset-base"
-    # passage_model = "facebook/dpr-ctx_encoder-multiset-base"
-    load_tokenizer = False
+    # query_model = "SpanBERT/spanbert-base-cased"
+    # passage_model = "SpanBERT/spanbert-base-cased"
+    query_model = "facebook/dpr-question_encoder-multiset-base"
+    passage_model = "facebook/dpr-ctx_encoder-multiset-base"
 
-    faiss_path_prefix = "indexes/spanbert_notft/dev_index"
+    faiss_path_prefix = "indexes/multi_notft/dev_index"
 
     dev_gold_clusters = "data/resources/WEC-ES/Dev_gold_clusters.json"
     dev_train_queries = "data/resources/train/Dev_training_queries.json"
@@ -40,41 +39,34 @@ def train():
     run(query_model, passage_model, doc_dir, train_filename, dev_filename,
         checkpoint_dir, faiss_path_prefix, dev_gold_clusters,
         dev_train_queries, n_epochs, result_out_file, run_update_eval, infer_tokenizer_classes,
-        max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer)
+        max_seq_len_query, max_seq_len_passage, batch_size)
 
 
 def run(query_model, passage_model, doc_dir, train_filename, dev_filename, save_dir, faiss_path_prefix,
         dev_gold_clusters, dev_train_queries, n_epochs, result_out_file, run_update_eval,
-        infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size, load_tokenizer):
+        infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size):
+    evaluate_every = 350
 
     faiss_index_path = "%s.faiss" % faiss_path_prefix
     faiss_config_path = "%s.json" % faiss_path_prefix
-    if run_update_eval:
-        document_store, retriever = dpr_utils.load_faiss_dpr(faiss_index_path,
-                                                             faiss_config_path,
-                                                             query_model,
-                                                             passage_model,
-                                                             infer_tokenizer_classes,
-                                                             max_seq_len_query,
-                                                             max_seq_len_passage,
-                                                             batch_size,
-                                                             load_tokenizer)
-    else:
-        # sql_rul = "sqlite:///%s.db" % faiss_path_prefix
-        document_store = dpr_utils.load_faiss_doc_store(faiss_index_path, faiss_config_path)
-        retriever = dpr_utils.load_dpr(document_store,
-                                       query_model, passage_model, infer_tokenizer_classes, max_seq_len_query,
-                                       max_seq_len_passage, batch_size, load_tokenizer)
+    document_store, retriever = dpr_utils.load_faiss_dpr(faiss_index_path,
+                                                         faiss_config_path,
+                                                         query_model,
+                                                         passage_model,
+                                                         infer_tokenizer_classes,
+                                                         max_seq_len_query,
+                                                         max_seq_len_passage,
+                                                         batch_size)
 
     retriever.train(data_dir=doc_dir,
                     train_filename=train_filename,
                     dev_filename=dev_filename,
                     test_filename=dev_filename,
                     n_epochs=n_epochs,
-                    batch_size=16,
+                    batch_size=batch_size,
                     grad_acc_steps=8,
                     save_dir=save_dir,
-                    evaluate_every=40,
+                    evaluate_every=evaluate_every,
                     embed_title=False,
                     num_positives=1,
                     num_hard_negatives=1,
