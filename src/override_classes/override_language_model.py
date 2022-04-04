@@ -5,10 +5,9 @@ from abc import ABC
 from pathlib import Path
 from typing import Union
 
-import transformers
 from haystack.modeling.model.language_model import LanguageModel
 
-from src.override_classes.wec_encoders import WECContextEncoder, WECQuestionEncoder
+from src.override_classes.retriever.wec_encoders import WECContextEncoder, WECQuestionEncoder
 
 logger = logging.getLogger(__name__)
 

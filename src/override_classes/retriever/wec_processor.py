@@ -37,7 +37,7 @@ class WECSimilarityProcessor(TextSimilarityProcessor):
         shuffle_negatives=True,
         shuffle_positives=False,
         label_list=None,
-        add_spatial_tokens=False
+        add_special_tokens=False
     ):
         super(WECSimilarityProcessor, self).__init__(
             query_tokenizer,
@@ -60,9 +60,9 @@ class WECSimilarityProcessor(TextSimilarityProcessor):
             label_list
         )
 
-        self.add_spatial_tokens = add_spatial_tokens
+        self.add_special_tokens = add_special_tokens
 
-        if self.add_spatial_tokens and QUERY_SPAN_START.lower() not in self.query_tokenizer.added_tokens_encoder:
+        if self.add_special_tokens and QUERY_SPAN_START.lower() not in self.query_tokenizer.added_tokens_encoder:
             self.query_tokenizer.add_tokens(QUERY_SPAN_START)
             self.query_tokenizer.add_tokens(QUERY_SPAN_END)
 

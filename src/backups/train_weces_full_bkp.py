@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from transformers import AdamW
 
-from src.models.coref_search_model import SimilarityModel, SpanPredAuxiliary
+from src.backups.coref_search_model import SpanPredAuxiliary, SimilarityModel
 from src.utils.data_utils import generate_train_batches
 from src.utils.evaluation import evaluate, generate_sim_results
 from src.utils.io_utils import save_checkpoint

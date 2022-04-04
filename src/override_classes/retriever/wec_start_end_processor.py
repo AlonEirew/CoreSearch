@@ -2,7 +2,7 @@ from typing import List
 
 from haystack.modeling.data_handler.samples import SampleBasket, Sample
 
-from src.override_classes.wec_context_processor import WECContextProcessor
+from src.override_classes.retriever.wec_context_processor import WECContextProcessor
 
 
 class WECStartEndProcessor(WECContextProcessor):
@@ -26,7 +26,7 @@ class WECStartEndProcessor(WECContextProcessor):
         shuffle_negatives=True,
         shuffle_positives=False,
         label_list=None,
-        add_spatial_tokens=None
+        add_special_tokens=None
     ):
         super(WECStartEndProcessor, self).__init__(
             query_tokenizer,
@@ -47,7 +47,7 @@ class WECStartEndProcessor(WECContextProcessor):
             shuffle_negatives,
             shuffle_positives,
             label_list,
-            add_spatial_tokens
+            add_special_tokens
         )
 
     def _convert_queries(self, baskets: List[SampleBasket]):

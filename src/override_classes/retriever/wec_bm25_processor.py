@@ -4,7 +4,7 @@ from typing import List, Tuple
 from haystack.modeling.data_handler.samples import SampleBasket, Sample
 
 from src.data_obj import TrainExample, QueryFeat
-from src.override_classes.wec_processor import WECSimilarityProcessor
+from src.override_classes.retriever.wec_processor import WECSimilarityProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class WECBM25Processor(WECSimilarityProcessor):
         shuffle_negatives=True,
         shuffle_positives=False,
         label_list=None,
-        add_spatial_tokens=None
+        add_special_tokens=None
     ):
         super(WECBM25Processor, self).__init__(
             query_tokenizer,
@@ -51,10 +51,10 @@ class WECBM25Processor(WECSimilarityProcessor):
             shuffle_negatives,
             shuffle_positives,
             label_list,
-            add_spatial_tokens
+            add_special_tokens
         )
 
-        if self.add_spatial_tokens:
+        if self.add_special_tokens:
             raise ValueError("add_spatial_tokens flag is true in a BM25 tokenizer!")
 
     def _convert_queries(self, baskets: List[SampleBasket]):

@@ -13,7 +13,7 @@ from haystack.nodes import DensePassageRetriever
 from torch.nn import DataParallel
 
 from src.override_classes.override_language_model import OverrideLanguageModel
-from src.override_classes.wec_processor import WECSimilarityProcessor
+from src.override_classes.retriever.wec_processor import WECSimilarityProcessor
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.DEBUG)
@@ -46,7 +46,7 @@ class WECDensePassageRetriever(DensePassageRetriever):
                  devices: Optional[List[Union[int, str, torch.device]]] = None,
                  use_auth_token: Optional[Union[str, bool]] = None,
                  processor_type: Type[WECSimilarityProcessor] = None,
-                 add_spatial_tokens: bool = False
+                 add_special_tokens: bool = False
                  ):
 
         # save init parameters to enable export of component config as YAML
@@ -121,9 +121,9 @@ class WECDensePassageRetriever(DensePassageRetriever):
                                         embed_title=embed_title,
                                         num_hard_negatives=0,
                                         num_positives=1,
-                                        add_spatial_tokens=add_spatial_tokens)
+                                        add_special_tokens=add_special_tokens)
 
-        if add_spatial_tokens:
+        if add_special_tokens:
             self.query_encoder.model.resize_token_embeddings(len(self.query_tokenizer))
 
         prediction_head = TextSimilarityHead(similarity_function=similarity_function,

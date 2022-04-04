@@ -4,7 +4,7 @@ from typing import List, Tuple
 from haystack.modeling.data_handler.samples import SampleBasket, Sample
 
 from src.data_obj import TrainExample, QueryFeat
-from src.override_classes.wec_processor import WECSimilarityProcessor, QUERY_SPAN_END, QUERY_SPAN_START
+from src.override_classes.retriever.wec_processor import QUERY_SPAN_END, QUERY_SPAN_START, WECSimilarityProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class WECContextProcessor(WECSimilarityProcessor):
         shuffle_negatives=True,
         shuffle_positives=False,
         label_list=None,
-        add_spatial_tokens=None
+        add_special_tokens=None
     ):
         super(WECContextProcessor, self).__init__(
             query_tokenizer,
@@ -51,12 +51,12 @@ class WECContextProcessor(WECSimilarityProcessor):
             shuffle_negatives,
             shuffle_positives,
             label_list,
-            add_spatial_tokens
+            add_special_tokens
         )
 
     def get_query_feat(self, query_obj: TrainExample) -> Tuple[QueryFeat, List[str]]:
         query_feat, query_tokenized = super().get_query_feat(query_obj)
-        if self.add_spatial_tokens:
+        if self.add_special_tokens:
             if QUERY_SPAN_START in self.query_tokenizer.added_tokens_encoder and QUERY_SPAN_END in self.query_tokenizer.added_tokens_encoder:
                 assert query_feat.input_ids[query_feat.query_event_start] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_START]
                 assert query_feat.input_ids[query_feat.query_event_end] == self.query_tokenizer.added_tokens_encoder[QUERY_SPAN_END]
@@ -90,11 +90,11 @@ class WECContextProcessor(WECSimilarityProcessor):
     def tokenize_query(self, query_obj: TrainExample, max_query_length_exclude: int):
         query_tokenized = list()
         query_event_start_ind = query_event_end_ind = 0
-        if self.add_spatial_tokens and QUERY_SPAN_END not in query_obj.context and QUERY_SPAN_START not in query_obj.context:
+        if self.add_special_tokens and QUERY_SPAN_END not in query_obj.context and QUERY_SPAN_START not in query_obj.context:
             self.add_query_bound(query_obj)
         for index, word in enumerate(query_obj.context):
             query_tokenized.extend(self.query_tokenizer.tokenize(word))
-            if self.add_spatial_tokens:
+            if self.add_special_tokens:
                 if word == QUERY_SPAN_START:
                     query_event_start_ind = len(query_tokenized) - 1
                 elif word == QUERY_SPAN_END:
