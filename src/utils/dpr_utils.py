@@ -1,10 +1,10 @@
 import logging
 
-from haystack.document_stores import FAISSDocumentStore, InMemoryDocumentStore
+from haystack.document_stores import FAISSDocumentStore
 from haystack.nodes import DensePassageRetriever
 
 from src.override_classes.file_doc_store import FileDocStore
-from src.override_classes.wec_dense import WECDensePassageRetriever
+from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
 
 logger = logging.getLogger("dpr_utils")
 logger.setLevel(logging.DEBUG)
@@ -48,7 +48,7 @@ def create_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_clas
 
 def create_wec_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_classes,
                          max_seq_len_query, max_seq_len_passage, batch_size, similarity, processor_type,
-                         add_spatial_tokens, faiss_index_factory_str):
+                         add_special_tokens, faiss_index_factory_str):
     document_store = create_default_faiss_doc_store(sql_rul, similarity, faiss_index_factory_str)
     retriever = WECDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                          passage_embedding_model=passage_encode,
@@ -56,7 +56,7 @@ def create_wec_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_
                                          max_seq_len_query=max_seq_len_query, max_seq_len_passage=max_seq_len_passage,
                                          batch_size=batch_size, use_gpu=True, embed_title=False,
                                          use_fast_tokenizers=False, processor_type=processor_type,
-                                         add_spatial_tokens=add_spatial_tokens)
+                                         add_special_tokens=add_special_tokens)
     return document_store, retriever
 
 
@@ -75,7 +75,7 @@ def load_faiss_dpr(faiss_file_path, faiss_config_file, query_encode, passage_enc
 
 def load_wec_faiss_dpr(faiss_file_path, faiss_config_file, query_encode, passage_encode,
                        infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size,
-                       processor_type, add_spatial_tokens):
+                       processor_type, add_special_tokens):
     document_store = load_faiss_doc_store(faiss_file_path, faiss_config_file)
     retriever = WECDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                          passage_embedding_model=passage_encode,
@@ -83,5 +83,5 @@ def load_wec_faiss_dpr(faiss_file_path, faiss_config_file, query_encode, passage
                                          max_seq_len_query=max_seq_len_query, max_seq_len_passage=max_seq_len_passage,
                                          batch_size=batch_size, use_gpu=True, embed_title=False,
                                          use_fast_tokenizers=False, processor_type=processor_type,
-                                         add_spatial_tokens=add_spatial_tokens)
+                                         add_special_tokens=add_special_tokens)
     return document_store, retriever

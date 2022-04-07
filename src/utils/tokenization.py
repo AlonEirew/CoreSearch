@@ -4,7 +4,7 @@ from typing import List, Dict
 from tqdm import tqdm
 from transformers import BertTokenizer
 
-from src.data_obj import QueryFeat, PassageFeat, TrainExample, Passage, SearchFeat
+from src.data_obj import TrainExample, Passage, SearchFeat
 
 QUERY_SPAN_START = "[QSPAN_START]"
 QUERY_SPAN_END = "[QSPAN_END]"

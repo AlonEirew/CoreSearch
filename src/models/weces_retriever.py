@@ -2,16 +2,16 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from src.override_classes.wec_encoders import WECQuestionEncoder, WECContextEncoder
+from src.override_classes.retriever.wec_encoders import WECQuestionEncoder, WECContextEncoder
 
 
 class WECESRetriever(nn.Module):
     def __init__(self, query_model, passage_model, token_len, device):
         super(WECESRetriever, self).__init__()
-        self.query_encoder = WECQuestionEncoder(query_model)
+        self.query_encoder = WECQuestionEncoder()
         self.query_encoder.set_tokenizer_size(token_len, device)
 
-        self.passage_encoder = WECContextEncoder(passage_model)
+        self.passage_encoder = WECContextEncoder()
         self.passage_encoder.set_tokenizer_size(token_len, device)
 
         self.device = device

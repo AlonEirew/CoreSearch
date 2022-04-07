@@ -1,9 +1,9 @@
 import json
 from os import path
 
-from src.override_classes.wec_bm25_processor import WECBM25Processor
-from src.override_classes.wec_context_processor import WECContextProcessor
-from src.override_classes.wec_start_end_processor import WECStartEndProcessor
+from src.override_classes.retriever.wec_bm25_processor import WECBM25Processor
+from src.override_classes.retriever.wec_context_processor import WECContextProcessor
+from src.override_classes.retriever.wec_start_end_processor import WECStartEndProcessor
 from src.utils import dpr_utils
 from src.utils.io_utils import write_json
 
@@ -22,7 +22,7 @@ def train():
     # query_style: start_end - for context queries, will take the query mention span and surrounding till max_query_length
     #                        Then this will indicate to the encoder to extract the QUERY_START/QUERY_END tokens
     parameters["query_style"] = "context"
-    parameters["add_spatial_tokens"] = True
+    parameters["add_special_tokens"] = True
 
     parameters["n_epochs"] = 2
     parameters["max_seq_len_query"] = 64
@@ -64,7 +64,7 @@ def run(parameters, checkpoint_dir, evaluate_every):
                                                              max_seq_len_passage=parameters["max_seq_len_passage"],
                                                              batch_size=parameters["batch_size"],
                                                              processor_type=processor_type,
-                                                             add_spatial_tokens=parameters["add_spatial_tokens"])
+                                                             add_special_tokens=parameters["add_special_tokens"])
 
     retriever.train(data_dir=parameters["doc_dir"],
                     train_filename=parameters["train_filename"],

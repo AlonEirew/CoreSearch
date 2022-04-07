@@ -70,14 +70,15 @@ def mean_reciprocal_rank(predictions: List[QueryResult], golds: Dict[str, List[s
     return sum(mrr_topk) / len(predictions)
 
 
-def recall(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):
+def recall(predictions: List[QueryResult], golds: Dict[str, List[str]], topk: int):
     relevant = 0
     true_pos = 0
-    for query_id in predictions.keys():
-        max_topk = topk if topk <= len(predictions[query_id]) else len(predictions[query_id])
+    for query_result in predictions:
+        query_id = query_result.query.id
+        max_topk = topk if topk <= len(query_result.results) else len(query_result.results)
         relevant += len(golds[query_id])
         for index in range(max_topk):
-            if predictions[query_id][index] in golds[query_id]:
+            if query_result.results[index].id in golds[query_id]:
                 true_pos += 1
 
     return true_pos / relevant

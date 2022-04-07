@@ -2,12 +2,14 @@ import json
 import logging
 from typing import List, Dict
 
+from haystack.nodes import FARMReader
+
 from src.data_obj import Cluster, TrainExample, Passage, QueryResult
 from src.index import elastic_index
-from src.override_classes.wec_bm25_processor import WECBM25Processor
-from src.override_classes.wec_context_processor import WECContextProcessor
-from src.override_classes.wec_dense import WECDensePassageRetriever
-from src.override_classes.wec_reader import WECReader
+from src.override_classes.reader.wec_reader import WECReader
+from src.override_classes.retriever.wec_bm25_processor import WECBM25Processor
+from src.override_classes.retriever.wec_context_processor import WECContextProcessor
+from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
 from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
 from src.utils import io_utils, measurments, data_utils, dpr_utils, measure_squad
 from src.utils.dpr_utils import create_file_doc_store
@@ -23,37 +25,26 @@ def main():
     # run_pipe_str = "retriever"
     run_pipe_str = "qa"
     # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
-    query_method = "with_bounds"
     es_index = SPLIT.lower()
     index_folder = "dev_with_spatial_results"
-    experiment_name = "spanbert_best_ctx_spatial_toks_small"
-    # magnitude = small/large meaning if to use all queries (all) or just single clusters query (cluster)
+    experiment_name = "squad_special"
+    # magnitude = all/cluster meaning if to use all queries (all) or just single clusters query (cluster)
     magnitude = "cluster"
-
-    if query_method == "full_ctx":
-        processor_type = WECContextProcessor
-        add_spatial_tokens = False
-    elif query_method == "with_bounds":
-        processor_type = WECContextProcessor
-        add_spatial_tokens = True
-    elif query_method == "bm25":
-        processor_type = WECBM25Processor
-        add_spatial_tokens = False
-    else:
-        raise ValueError(f"no such query method-{query_method}")
+    query_method = "bm25"
 
     infer_tokenizer_classes = True
     max_seq_len_query = 64
     max_seq_len_passage = 180
     batch_size = 16
 
-    result_file = "results/dev_with_spatial_results.json"
+    result_file = "file_indexes/dev_baseline_model_2it.json"
     checkpoint_dir = "data/checkpoints/"
-    query_encode = checkpoint_dir + "dev_spanbert_hidden_cls_spatial_ctx_2it/query_encoder"
-    passage_encode = checkpoint_dir + "dev_spanbert_hidden_cls_spatial_ctx_2it/passage_encoder"
+    query_encode = checkpoint_dir + "dev_baseline_model_2it/query_encoder"
+    passage_encode = checkpoint_dir + "dev_baseline_model_2it/passage_encoder"
     use_wec_model = True
 
-    reader_model_file = "deepset/roberta-base-squad2"
+    # reader_model_file = "deepset/roberta-base-squad2"
+    reader_model_file = "data/checkpoints/squad_roberta_bm25"
 
     faiss_index_prefix = "indexes/" + index_folder + "/" + es_index + "_index"
     faiss_index_file = faiss_index_prefix + ".faiss"
@@ -68,13 +59,25 @@ def main():
     result_out_file = "results/" + es_index + "_" + query_method + "_" + index_type + "_" + index_folder + "_" + \
                       experiment_name + ".txt"
 
+    if query_method == "full_ctx":
+        processor_type = WECContextProcessor
+        add_special_tokens = False
+    elif query_method == "with_bounds":
+        processor_type = WECContextProcessor
+        add_special_tokens = True
+    elif query_method == "bm25":
+        processor_type = WECBM25Processor
+        add_special_tokens = False
+    else:
+        raise ValueError(f"no such query method-{query_method}")
+
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
     passage_dict = None
     if index_type == "faiss_dpr":
         if use_wec_model:
             document_store = create_file_doc_store(result_file, passages_file)
-            passage_dict = document_store.passage
+            passage_dict = document_store.passages
             retriever = WECDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                                  passage_embedding_model=passage_encode,
                                                  infer_tokenizer_classes=infer_tokenizer_classes,
@@ -82,7 +85,7 @@ def main():
                                                  max_seq_len_passage=max_seq_len_passage,
                                                  batch_size=batch_size, use_gpu=True, embed_title=False,
                                                  use_fast_tokenizers=False, processor_type=processor_type,
-                                                 add_spatial_tokens=add_spatial_tokens)
+                                                 add_special_tokens=add_special_tokens)
         else:
             document_store, retriever = dpr_utils.load_faiss_dpr(faiss_index_file,
                                                                  faiss_config_file,
@@ -106,11 +109,21 @@ def main():
     logger.info("Total indexed documents to be searched=" + str(document_store.get_document_count()))
 
     if run_pipe_str == "qa":
-        pipeline = QAPipeline(document_store=document_store,
-                              retriever=retriever,
-                              reader=WECReader(model_name_or_path=reader_model_file, use_gpu=True, num_processes=8),
-                              ret_topk=150,
-                              read_topk=50)
+        if query_method == "full_ctx" or query_method == "with_bounds":
+            pipeline = QAPipeline(document_store=document_store,
+                                  retriever=retriever,
+                                  reader=WECReader(model_name_or_path=reader_model_file, use_gpu=True, num_processes=8,
+                                                   add_special_tokens=add_special_tokens),
+                                  ret_topk=150,
+                                  read_topk=50)
+        elif query_method == "bm25":
+            pipeline = QAPipeline(document_store=document_store,
+                                  retriever=retriever,
+                                  reader=FARMReader(model_name_or_path=reader_model_file, use_gpu=True, num_processes=8),
+                                  ret_topk=150,
+                                  read_topk=50)
+        else:
+            raise ValueError(f"Not supported query_method-{query_method}")
     elif run_pipe_str == "retriever":
         pipeline = RetrievalOnlyPipeline(document_store=document_store,
                                          retriever=retriever,
@@ -214,6 +227,17 @@ def print_measurements(predictions, golds_arranged, run_pipe_str):
         predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=50)))
     to_print.append("mAP@100=" + str(measurments.mean_average_precision(
         predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=100)))
+
+    to_print.append("Recall@10=" + str(measurments.recall(
+        predictions=predictions, golds=golds_arranged, topk=10)))
+    to_print.append("Recall@25=" + str(measurments.recall(
+        predictions=predictions, golds=golds_arranged, topk=25)))
+    to_print.append("Recall@50=" + str(measurments.recall(
+        predictions=predictions, golds=golds_arranged, topk=50)))
+    to_print.append("Recall@100=" + str(measurments.recall(
+        predictions=predictions, golds=golds_arranged, topk=100)))
+    to_print.append("Recall@150=" + str(measurments.recall(
+        predictions=predictions, golds=golds_arranged, topk=150)))
     return to_print
 
 

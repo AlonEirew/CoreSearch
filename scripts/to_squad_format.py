@@ -8,13 +8,18 @@ from src.utils import io_utils
 
 
 def main():
-    train_queries: Dict[str, TrainExample] = TrainExample.list_to_map(io_utils.read_train_example_file("resources/train/" + SPLIT + "_training_queries.json"))
-    clusters: List[Cluster] = io_utils.read_gold_file("resources/WEC-ES/" + SPLIT + "_gold_clusters.json")
-
-    squad_out = "resources/squad/" + SPLIT + "_squad_format.json"
+    train_queries: Dict[str, TrainExample] = TrainExample.list_to_map(io_utils.read_train_example_file(
+        "data/resources/train/" + SPLIT + "_training_queries.json"))
+    clusters: List[Cluster] = io_utils.read_gold_file("data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json")
 
     assert train_queries
     assert clusters
+    query_style = "context"
+
+    if query_style == "bm25":
+        squad_out = "data/resources/squad/bm25/" + SPLIT + "_squad_format.json"
+    else:
+        squad_out = "data/resources/squad/context/" + SPLIT + "_squad_format.json"
 
     squad_examples = dict()
     data = list()
@@ -33,7 +38,8 @@ def main():
             paragraph = dict()
             qas_list = list()
             query_ans = " ".join(train_query.mention)
-            qas_list.extend(create_qas_list(pos_query_id_list, train_queries, query_ans, context, is_impossible=False))
+            # Will generate for each cluster mention a quesion related to current context
+            qas_list.extend(create_qas_list(pos_query_id_list, train_queries, query_ans, train_query, query_style))
             # qas_list.extend(create_qas_list(imp_query_id_list, train_queries, query_ans, context, is_impossible=True))
 
             paragraph["qas"] = qas_list
@@ -47,27 +53,30 @@ def main():
         json.dump(squad_examples, train_exmpl_os, default=lambda o: o.__dict__, ensure_ascii=False, indent=4)
 
 
-def create_qas_list(query_id_list, train_queries, query_ans, context, is_impossible):
+def create_qas_list(query_id_list, train_queries, query_ans, context_ment, query_style):
     qas_list = list()
     for query_id in query_id_list:
         query = train_queries[query_id]
         qas_obj = dict()
         answers = list()
-        qas_obj["question"] = query.bm25_query
+        if query_style == "bm25":
+            qas_obj["question"] = query.bm25_query
+        else:
+            qas_obj["question"] = " ".join(query.context)
         qas_obj["id"] = query.id
         qas_obj["answers"] = answers
-        qas_obj["is_impossible"] = is_impossible
-        if not is_impossible:
-            start_idxs = [m.start() for m in re.finditer(query_ans, context)]
-            for index in start_idxs:
-                ans_obj = {"text": query_ans, "answer_start": index}
-                answers.append(ans_obj)
+        qas_obj["is_impossible"] = False
+        start_idxs = [m.start() for m in re.finditer(re.escape(query_ans), " ".join(context_ment.context))]
+        for index in start_idxs:
+            ans_obj = {"text": query_ans, "answer_start": index,
+                       "ment_start": query.startIndex, "ment_end": query.endIndex, "ment_text": query.mention}
+            answers.append(ans_obj)
 
         qas_list.append(qas_obj)
     return qas_list
 
 
 if __name__ == '__main__':
-    SPLIT = "Train"
+    SPLIT = "Dev"
     main()
     print("Done generating for " + SPLIT)
