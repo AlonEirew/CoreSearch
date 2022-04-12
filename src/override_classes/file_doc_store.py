@@ -19,17 +19,19 @@ class FileDocStore(BaseDocumentStore, ABC):
         result_passages: List[Dict] = self.results_dict[query_id]
         top_k = len(result_passages) if top_k > len(result_passages) else top_k
         documents: List[Document] = []
-        for result in result_passages[:top_k]:
-            documents.append(self.convert_to_document(result))
-        return documents
+        for result in result_passages:
+            if result["pass_id"] != query_id:
+                documents.append(self.convert_to_document(result))
+        return documents[:top_k]
 
     def get_passages_passages(self, query_id: str, top_k: int) -> List[Passage]:
         result_passages: List[Dict] = self.results_dict[query_id]
         top_k = len(result_passages) if top_k > len(result_passages) else top_k
         passages: List[Passage] = []
-        for result in result_passages[:top_k]:
-            passages.append(self.passages[result["pass_id"]])
-        return passages
+        for result in result_passages:
+            if result["pass_id"] != query_id:
+                passages.append(self.passages[result["pass_id"]])
+        return passages[:top_k]
 
     def convert_to_document(self, result: Dict) -> Document:
         passage_id = result["pass_id"]

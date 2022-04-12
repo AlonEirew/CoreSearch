@@ -17,9 +17,9 @@ def main():
                        num_processes=8, add_special_tokens=add_special_tokens)
     reader.train(
         data_dir="data/resources/squad/context",
-        train_filename="Train_squad_format.json",
-        dev_filename="Dev_squad_format.json",
-        evaluate_every=1300,
+        train_filename="Train_squad_format_allpos.json",
+        dev_filename="Dev_squad_format_allpos.json",
+        evaluate_every=2800,
         use_gpu=True,
         n_epochs=1,
         num_processes=8,
