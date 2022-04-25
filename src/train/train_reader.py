@@ -12,18 +12,18 @@ def main():
     '''
     qa_model = "deepset/roberta-base-squad2"
 
-    add_special_tokens = True
+    add_special_tokens = False
     reader = WECReader(model_name_or_path=qa_model, use_gpu=True,
                        num_processes=8, add_special_tokens=add_special_tokens)
     reader.train(
         data_dir="data/resources/squad/context",
-        train_filename="Train_squad_format_allpos.json",
-        dev_filename="Dev_squad_format_allpos.json",
+        train_filename="Train_squad_format_1pos.json",
+        dev_filename="Dev_squad_format_1pos.json",
         evaluate_every=2800,
         use_gpu=True,
         n_epochs=1,
         num_processes=8,
-        save_dir="data/checkpoints/squad_roberta_ctx_special"
+        save_dir="data/checkpoints/squad_roberta_ctx_1pos"
     )
 
     print("Done!")

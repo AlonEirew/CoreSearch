@@ -26,7 +26,7 @@ def main():
     run_pipe_str = "qa"
     # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
     es_index = SPLIT.lower()
-    experiment_name = "test"
+    experiment_name = "test_1pos"
     # magnitude = all/cluster meaning if to use all queries (all) or just single clusters query (cluster)
     magnitude = "cluster"
     query_method = "full_ctx"
@@ -38,7 +38,7 @@ def main():
     max_seq_len_passage = 180
     batch_size = 16
 
-    result_file = "file_indexes/dev_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
+    index_file = "file_indexes/dev_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
     checkpoint_dir = "data/checkpoints/"
     query_encode = checkpoint_dir + "dev_spanbert_hidden_cls_spatial_ctx_2it/query_encoder"
     passage_encode = checkpoint_dir + "dev_spanbert_hidden_cls_spatial_ctx_2it/passage_encoder"
@@ -70,7 +70,7 @@ def main():
     query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
     passage_dict = None
     if index_type == "faiss_dpr":
-        document_store = create_file_doc_store(result_file, passages_file)
+        document_store = create_file_doc_store(index_file, passages_file)
         passage_dict = document_store.passages
         retriever = WECDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                              passage_embedding_model=passage_encode,

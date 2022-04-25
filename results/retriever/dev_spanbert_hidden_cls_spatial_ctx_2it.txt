@@ -1,0 +1,412 @@
+Generating 50 examples:
+queryId-71176
+queryMention-['2015', 'Olivier', 'Award']
+queryContext-['The', 'original', 'play', 'premiered', 'at', 'the', 'Almeida', 'Theatre', ',', 'London', 'in', '2014', 'before', 'transferring', 'to', 'the', 'West', 'End', 'and', 'Broadway', ',', 'winning', 'the', '[QSPAN_START]', '2015', 'Olivier', 'Award', '[QSPAN_END]', 'for', 'Best', 'New', 'Play']
+	HIT=(True)71175 (11.906838417053223)-"2015 Laurence Olivier Awards"
+	HIT=(False)NEG_2198111 (11.371664047241211)-""
+	HIT=(True)71179 (11.110486030578613)-"2015 Laurence Olivier Awards"
+	HIT=(False)NEG_1492526 (10.927985191345215)-""
+	HIT=(False)NEG_2350190 (10.716830253601074)-""
+queryId-39490
+queryMention-['Shaanxi', 'earthquake']
+queryContext-['In', '1556', ',', 'during', 'the', 'rule', 'of', 'the', 'Jiajing', 'Emperor', ',', 'the', '[QSPAN_START]', 'Shaanxi', 'earthquake', '[QSPAN_END]', 'killed', 'about', '830,000', 'people', ',', 'the', 'deadliest', 'earthquake', 'of', 'all', 'time']
+	HIT=(True)39497 (13.58380126953125)-"Shaanxi earthquake of 1556"
+	HIT=(True)39500 (12.57565689086914)-"the deadliest earthquake on record"
+	HIT=(True)39493 (12.486709594726562)-"1556 Shaanxi earthquake"
+	HIT=(True)39507 (12.389181137084961)-"earthquake in Shaanxi province in 1556"
+	HIT=(True)39496 (11.662062644958496)-"1556 Shaanxi earthquake"
+queryId-114980
+queryMention-['Johnstown', 'Flood', 'of', '1977']
+queryContext-['Laurel', 'Run', 'Dam', ',', 'also', 'known', 'as', 'Laurel', 'Run', 'Dam', 'No.', '2', ',', 'was', 'an', 'earthen', 'embankment', 'dam', 'that', 'failed', 'during', 'the', '[QSPAN_START]', 'Johnstown', 'Flood', 'of', '1977', '[QSPAN_END]', '.', 'It', 'had', 'the', 'largest', 'reservoir', 'of', 'seven', 'dams', 'to', 'fail', 'between', 'July', '19', 'and', '20', ',', '1977', 'and', 'caused', 'the', 'most', 'fatalities', 'of', 'the', 'two', 'that', 'did', '.', 'The', 'dam', 'failed', 'in', 'the', 'early', 'morning', 'of', 'July', '20', 'after', 'period', 'of', 'heavy', 'rain', ',', 'causing', 'of', 'water', 'to', 'flood', 'downstream', 'Tanneryville', ',', 'killing', '40', 'people']
+	HIT=(True)114979 (11.271916389465332)-"1977 flood"
+	HIT=(False)NEG_92215 (11.155969619750977)-""
+	HIT=(False)NEG_2664728 (10.69225025177002)-""
+	HIT=(False)NEG_948081 (10.405149459838867)-""
+	HIT=(False)NEG_1256749 (10.31057071685791)-""
+queryId-84864
+queryMention-['2010', 'Yushu', 'earthquake']
+queryContext-['Both', 'China', 'and', 'the', 'Republic', 'of', 'Congo', 'have', 'donated', 'aid', 'projects', 'to', 'each', 'other', '.', 'The', 'Chinese', 'government', 'fully', 'funded', 'the', 'construction', 'of', 'a', 'EUR', '52', 'million', 'new', 'parliament', 'in', 'the', 'country', '.', 'The', 'government', 'of', 'the', 'Republic', 'of', 'Congo', 'funded', 'the', 'construction', 'of', 'the', 'China-Congo', 'Friendship', 'Primary', 'School', ',', 'a', 'school', 'mostly', 'for', 'Tibetan', 'orphans', 'in', 'Chindu', 'County', ',', 'Qinghai', ',', 'after', 'the', '[QSPAN_START]', '2010', 'Yushu', 'earthquake', '[QSPAN_END]', 'destroyed', 'the', 'old', 'school']
+	HIT=(True)84862 (12.845391273498535)-"Yushu earthquake"
+	HIT=(True)84856 (12.757278442382812)-"2010 Yushu earthquake"
+	HIT=(True)84851 (12.654900550842285)-"2010 Yushu earthquake"
+	HIT=(True)84861 (12.248102188110352)-"2010 Yushu earthquake"
+	HIT=(False)111781 (12.120377540588379)-"mudslide"
+queryId-120070
+queryMention-['Sanremo', 'Music', 'Festival', 'in', '2009']
+queryContext-['In', '2009', ',', 'Tricarico', 'competed', 'in', 'the', 'Big', 'Artists', 'section', 'of', 'the', '58th', 'Sanremo', 'Music', 'Festival', 'with', 'the', 'song', '"', 'Vita', 'tranquilla', '"', ',', 'which', 'received', 'the', 'Critics', "'", 'Award', '"', 'Mia', 'Martini', '"', '.', 'The', 'song', 'was', 'included', 'in', 'his', 'third', 'studio', 'album', ',', "''", 'Giglio', "''", '.', 'Tricarico', 'returned', 'competing', 'in', 'the', '[QSPAN_START]', 'Sanremo', 'Music', 'Festival', 'in', '2009', '[QSPAN_END]', ',', 'performing', 'the', 'song', '"', 'Il', 'bosco', 'delle', 'fragole', '"', ',', 'and', 'in', '2011', ',', 'singing', '"', 'Tre', 'colori', '"', ',', 'but', 'both', 'entries', 'failed', 'to', 'reach', 'the', 'final', '.', 'The', 'songs', 'were', 'included', 'in', 'the', 'albums', "''", 'Il', 'bosco', 'delle', 'fragole', "''", '(', '2009', ')', 'and', "''", "L'imbarazzo", "''", '(', '2011', ')', ',', 'respectively']
+	HIT=(True)120064 (14.744410514831543)-"Sanremo Music Festival 2009"
+	HIT=(True)120068 (14.446786880493164)-"Sanremo Music Festival 2009"
+	HIT=(True)120066 (13.735337257385254)-"59th Sanremo Music Festival"
+	HIT=(True)120069 (13.67710018157959)-"59th Sanremo Music Festival"
+	HIT=(False)111066 (13.341448783874512)-"sixtieth edition"
+queryId-122663
+queryMention-['2006', 'Dahab', 'bombings']
+queryContext-['Significant', 'security', 'threats', 'have', 'had', 'an', 'ongoing', 'effect', 'on', 'the', 'industry', 'over', 'the', 'past', 'twenty', 'years', '.', 'Fifty-eight', 'foreign', 'tourists', 'were', 'killed', 'in', 'the', '1997', 'Luxor', 'massacre', '.', 'The', 'industry', 'was', 'also', 'affected', 'by', 'the', 'September', '11', ',', '2001', ',', 'attacks', 'in', 'the', 'eastern', 'United', 'States', ',', 'the', '2004', 'Sinai', 'bombings', ',', 'April', '2005', 'Cairo', 'terrorist', 'attacks', ',', 'the', 'July', '23', ',', '2005', 'Sharm', 'el-Sheikh', 'attacks', ',', 'and', 'the', '[QSPAN_START]', '2006', 'Dahab', 'bombings', '[QSPAN_END]', '.', 'Militants', 'have', 'typically', 'been', 'motivated', 'by', 'a', 'combination', 'of', 'Qutbism', 'and', 'opposition', 'to', 'the', 'Mubarak', 'government', ',', 'therefore', 'attacking', 'foreigners', 'who', 'are', 'generally', 'non-Muslims', 'while', 'diminishing', 'tourist', 'industry', 'income', 'was', 'seen', 'as', 'serving', 'both', 'agendas']
+	HIT=(True)122659 (15.153063774108887)-"2006 Dahab"
+	HIT=(False)108163 (14.934035301208496)-"2008 attacks on Christians in Mosul"
+	HIT=(True)122657 (14.49414348602295)-"2006 Dahab bombings"
+	HIT=(True)122658 (14.474584579467773)-"Dahab bombings"
+	HIT=(False)101692 (14.271531105041504)-"Sinai bombings"
+queryId-84856
+queryMention-['2010', 'Yushu', 'earthquake']
+queryContext-['The', 'airport', 'played', 'an', 'important', 'role', 'in', 'the', 'delivery', 'of', 'rescue', 'personnel', 'and', 'relief', 'supplies', 'to', 'the', 'area', 'affected', 'by', 'the', '[QSPAN_START]', '2010', 'Yushu', 'earthquake', '[QSPAN_END]', '.', 'The', 'facility', 'was', 're-opened', 'at', 'noon', 'on', 'the', 'day', 'of', 'the', 'earthquake', '(', 'Wednesday', ',', 'April', '14', ')', ',', 'and', 'the', 'first', 'flight', 'with', 'personnel', 'and', 'supplies', 'of', 'the', 'China', 'International', 'Earthquake', 'Rescue', 'Team', 'landed', 'there', 'at', '8', 'pm', 'the', 'same', 'day']
+	HIT=(True)84864 (13.392596244812012)-"2010 Yushu earthquake"
+	HIT=(False)62503 (13.342246055603027)-"2010 8.8-magnitude earthquake"
+	HIT=(False)NEG_2284851 (13.178964614868164)-""
+	HIT=(False)39212 (13.075610160827637)-"catastrophic earthquake"
+	HIT=(False)97547 (12.987655639648438)-"Airblue crash"
+queryId-85934
+queryMention-['nine', 'thousand', 'surviving', 'Italian', 'soldiers', 'were', 'executed']
+queryContext-['Approximately', 'five', 'thousand', 'of', 'the', '[QSPAN_START]', 'nine', 'thousand', 'surviving', 'Italian', 'soldiers', 'were', 'executed', '[QSPAN_END]', 'in', 'reprisal', 'by', 'the', 'German', 'forces', '.', 'The', 'book', "''", 'Corelli', "'s", 'Mandolin', "''", ',', 'by', 'Louis', 'de', 'Bernieres', '(', 'which', 'was', 'later', 'made', 'into', 'the', 'film', "'", 'Captain', 'Corelli', "'s", 'Mandolin', "'", ')', ',', 'is', 'based', 'on', 'this', 'story', '.', 'While', 'the', 'war', 'ended', 'in', 'central', 'Europe', 'in', '1945', ',', 'Cephalonia', 'remained', 'in', 'a', 'state', 'of', 'conflict', 'due', 'to', 'the', 'Greek', 'Civil', 'War', '.', 'Peace', 'returned', 'to', 'Greece', 'and', 'the', 'island', 'in', '1949', '.', 'Cephalonia', 'lies', 'just', 'to', 'the', 'east', 'of', 'a', 'major', 'tectonic', 'fault', ',', 'where', 'the', 'European', 'plate', 'meets', 'the', 'Aegean', 'plate', 'at', 'a', 'slip', 'boundary', '.', 'This', 'is', 'similar', 'to', 'the', 'more', 'famous', 'San', 'Andreas', 'Fault', '.', 'There', 'are', 'regular', 'earthquakes', 'along', 'this', 'fault']
+	HIT=(False)126050 (11.505796432495117)-"Gibbet Rath executions"
+	HIT=(False)20893 (11.34138298034668)-"My Lai"
+	HIT=(False)NEG_843357 (11.138962745666504)-""
+	HIT=(False)86226 (11.113677024841309)-"rounded up and deported the Jews of Rome"
+	HIT=(False)85897 (11.03260612487793)-"Malmedy massacre"
+queryId-40415
+queryMention-['59th', 'Primetime', 'Emmy', 'Awards']
+queryContext-['Masi', 'Oka', ',', 'Adrian', 'Pasdar', ',', 'and', 'Sendhil', 'Ramamurthy', 'submitted', 'this', 'episode', 'for', 'consideration', 'of', 'their', 'respective', 'work', 'for', 'the', 'Outstanding', 'Supporting', 'Actor', 'in', 'a', 'Drama', 'Series', 'for', 'the', '[QSPAN_START]', '59th', 'Primetime', 'Emmy', 'Awards', '[QSPAN_END]', ',', 'with', 'Oka', 'receiving', 'a', 'nomination', '.', 'This', 'episode', 'was', 'chosen', 'for', 'submission', 'for', 'Outstanding', 'Writing', 'in', 'a', 'Drama', 'Series', '.', '"', 'Five', 'Years', 'Gone', '"', 'received', 'a', 'nomination', 'for', 'Outstanding', 'Special', 'Visual', 'Effects', ',', 'but', 'did', 'not', 'win']
+	HIT=(False)98288 (12.280117988586426)-"49th Primetime Emmy Awards"
+	HIT=(False)58786 (12.235335350036621)-"65th"
+	HIT=(False)47707 (12.235335350036621)-"66th Primetime Emmy Awards"
+	HIT=(False)47705 (12.158194541931152)-"Emmy Awards"
+	HIT=(False)NEG_80904 (12.106502532958984)-""
+queryId-69463
+queryMention-['2007', 'Eurovision', 'Song', 'Contest']
+queryContext-["D'Nash", '(', 'often', 'stylized', 'as', "D'NASH", ',', 'originally', 'Nash', ')', 'was', 'a', 'Spanish', 'vocal', 'group', ',', 'best', 'known', 'for', 'representing', 'Spain', 'in', 'the', '[QSPAN_START]', '2007', 'Eurovision', 'Song', 'Contest', '[QSPAN_END]']
+	HIT=(True)69330 (13.704237937927246)-"2007 Eurovision Song Contest"
+	HIT=(False)104004 (13.624448776245117)-"Andorra"
+	HIT=(True)69455 (13.35100269317627)-"2007 Eurovision Song Contest"
+	HIT=(True)69386 (13.348763465881348)-"Eurovision Song Contest 2007"
+	HIT=(False)104005 (13.313630104064941)-"Andorra"
+queryId-113119
+queryMention-['T', 'in', 'the', 'Park', '2012']
+queryContext-['In', 'April', ',', 'Ora', 'sang', 'a', 'live', 'acoustic', 'version', 'of', '"', 'How', 'We', 'Do', '(', 'Party', ')', '"', 'on', 'Wired', '96.5', 'radio', 'in', 'Philadelphia', '.', 'In', 'April', '2012', ',', 'Ora', 'performed', '"', 'How', 'We', 'Do', '(', 'Party', ')', '"', 'and', '"', 'R.I.P.', '"', 'live', 'while', 'supporting', 'Drake', 'on', 'his', 'Club', 'Paradise', 'Tour', 'in', 'the', 'UK', '.', 'Ora', 'performed', '"', 'R.I.P.', '"', 'live', 'in', 'studio', 'for', '4Music', "'s", 'show', ',', "''", 'The', 'Crush', "''", ',', 'with', 'a', 'live', 'band', '.', 'On', '23', 'June', '2012', ',', 'Ora', 'performed', 'at', 'Radio', '1', "'s", 'Big', 'Weekend', ',', 'where', 'she', 'sang', '"', 'Facemelt', '"', ',', '"', 'Roc', 'the', 'Life', '"', ',', '"', 'How', 'We', 'Do', '(', 'Party', ')', '"', ',', '"', 'Shine', 'Ya', 'Light', '"', 'and', '"', 'R.I.P.', '"', 'Ora', 'performed', 'at', 'various', 'British', 'music', 'festivals', 'in', '2012', ',', 'including', 'Wireless', 'Festival', ',', '[QSPAN_START]', 'T', 'in', 'the', 'Park', '2012', '[QSPAN_END]', 'and', 'V', 'Festival', '.', 'She', 'performed', '"', 'Shine', 'Ya', 'Light', '"', 'on', "''", 'The', 'X', 'Factor', "''", 'on', '4', 'November', '2012', '.', 'On', '18', 'August', '2012', ',', 'Ora', 'performed', 'at', "''", 'The', 'Jonathan', 'Ross', 'Show', "''"]
+	HIT=(True)113120 (14.44914436340332)-"T in the Park 2012"
+	HIT=(True)113117 (14.285758972167969)-"T in the Park"
+	HIT=(False)NEG_1525410 (13.668113708496094)-""
+	HIT=(False)NEG_1755035 (13.423534393310547)-""
+	HIT=(False)56093 (13.422500610351562)-"18th National Television Awards"
+queryId-122661
+queryMention-['2006', 'Dahab', 'bombings']
+queryContext-['Since', 'the', 'early', '2000s', ',', 'Sinai', 'has', 'been', 'the', 'site', 'of', 'several', 'terror', 'attacks', 'against', 'tourists', ',', 'the', 'majority', 'of', 'whom', 'are', 'Egyptian', '.', 'Investigations', 'have', 'shown', 'that', 'these', 'were', 'mainly', 'motivated', 'by', 'a', 'resentment', 'of', 'the', 'poverty', 'faced', 'by', 'many', 'Bedouin', 'in', 'the', 'area', '.', 'Attacking', 'the', 'tourist', 'industry', 'was', 'viewed', 'as', 'a', 'method', 'of', 'damaging', 'the', 'industry', 'so', 'that', 'the', 'government', 'would', 'pay', 'more', 'attention', 'to', 'their', 'situation', '.', '(', 'See', '2004', 'Sinai', 'bombings', ',', '2005', 'Sharm', 'El', 'Sheikh', 'bombings', 'and', '[QSPAN_START]', '2006', 'Dahab', 'bombings', '[QSPAN_END]', ')', '.', 'Since', 'the', '2011', 'Egyptian', 'Revolution', ',', 'unrest', 'has', 'become', 'more', 'prevalent', 'in', 'the', 'area', 'including', 'the', '2012', 'Egyptian-Israeli', 'border', 'attack', 'in', 'which', '16', 'Egyptian', 'soldiers', 'were', 'killed', 'by', 'militants', '.', '(', 'See', 'Sinai', 'insurgency', '.', ')', 'Also', 'on', 'the', 'rise', 'are', 'kidnappings', 'of', 'refugees', '.', 'According', 'to', 'Meron', 'Estifanos', ',', 'Eritrean', 'refugees', 'are', 'often', 'kidnapped', 'by', 'Bedouin', 'in', 'the', 'northern', 'Sinai', ',', 'tortured', ',', 'raped', ',', 'and', 'only', 'released', 'after', 'receiving', 'a', 'large', 'ransom']
+	HIT=(True)122659 (15.514702796936035)-"2006 Dahab"
+	HIT=(True)122658 (15.206157684326172)-"Dahab bombings"
+	HIT=(False)108163 (15.158659934997559)-"2008 attacks on Christians in Mosul"
+	HIT=(False)101692 (14.831120491027832)-"Sinai bombings"
+	HIT=(False)93873 (14.715414047241211)-"2008 Ahmedabad bombings"
+queryId-85953
+queryMention-['Massacre', 'of', 'Kalavryta']
+queryContext-['These', 'forces', ',', 'especially', 'the', 'experienced', 'mountain', 'troops', ',', 'engaged', 'in', 'large-scale', 'counter-guerrilla', 'operations', 'in', 'the', 'area', 'of', 'Epirus', '.', 'Their', 'operations', 'were', 'successful', 'in', 'that', 'they', 'reduced', 'the', 'threat', 'of', 'guerrilla', 'attacks', 'on', 'the', 'occupation', 'forces', ',', 'but', 'their', 'often', 'brutal', 'conduct', 'and', 'mass', 'reprisals', 'policy', 'resulted', 'in', 'massacres', 'of', 'civilians', 'such', 'as', 'that', 'of', 'Kommeno', 'on', 'August', '16', ',', 'the', 'Massacre', 'of', 'Distomo', ',', 'or', 'the', '"', '[QSPAN_START]', 'Massacre', 'of', 'Kalavryta', '[QSPAN_END]', '"', 'in', 'December', '.', 'In', 'anticipation', 'of', 'the', 'Italian', 'collapse', ',', 'the', 'German', 'command', 'structure', 'throughout', 'the', 'Balkans', 'was', 'reorganized', ':', 'Army', 'Group', 'E', 'under', 'Löhr', 'took', 'over', 'in', 'Greece', ',', 'overseeing', 'both', 'German', 'forces', 'and', 'the', 'Italian', '11th', 'Army']
+	HIT=(False)20888 (13.11768627166748)-"massacre"
+	HIT=(False)20893 (13.08857536315918)-"My Lai"
+	HIT=(True)85947 (12.773504257202148)-"Massacre of Kalavryta"
+	HIT=(False)27436 (12.628813743591309)-"Srebenica massacre"
+	HIT=(False)85897 (12.478309631347656)-"Malmedy massacre"
+queryId-28383
+queryMention-['2012', 'Cannes', 'Film', 'Festival']
+queryContext-['Cave', 'scored', 'the', 'film', 'with', 'Warren', 'Ellis', '.', 'Cave', 'said', "''", 'Lawless', "''", 'screened', 'In', 'Competition', 'at', 'the', '[QSPAN_START]', '2012', 'Cannes', 'Film', 'Festival', '[QSPAN_END]', 'on', 'May', '19', 'and', 'received', 'a', 'nearly', '10-minute', 'standing', 'ovation', '.', 'The', 'film', 'was', 'theatrically', 'released', 'in', 'the', 'U.S.', 'on', 'Wednesday', ',', 'August', '29', ',', '2012', ',', 'as', 'The', 'Weinstein', 'Company', 'hoped', 'that', 'good', 'word', 'of', 'mouth', 'would', 'be', 'built', 'up', 'for', 'the', 'upcoming', 'Labor', 'Day', 'weekend', '.', 'Audiences', 'polled', 'by', 'the', 'market', 'research', 'firm', 'CinemaScore', 'gave', "''", 'Lawless', "''", 'a', 'B', 'grade', 'on', 'average']
+	HIT=(True)28404 (14.715755462646484)-"2012 Cannes Film Festival"
+	HIT=(True)28492 (14.064697265625)-"Cannes Film Festival"
+	HIT=(True)28377 (13.094865798950195)-"2012 Cannes Film Festival"
+	HIT=(True)28401 (12.956707000732422)-"2012 Cannes Classics section"
+	HIT=(True)28553 (12.791772842407227)-"65th Annual Cannes Film Festival"
+queryId-41635
+queryMention-['a', 'plane', 'crash']
+queryContext-['Stefan', 'Liv', 'Memorial', 'Trophy', 'is', 'awarded', 'annually', 'to', 'the', 'Swedish', 'Hockey', 'League', '(', 'SHL', ')', 'playoffs', "'", 'most', 'valuable', 'player', '(', 'MVP', ')', ',', 'as', 'decided', 'by', 'SICO', '(', 'Sweden', "'s", 'Ice', 'hockey', 'players', 'Central', 'Organisation', ')', '.', 'It', 'was', 'installed', 'in', '2010', 'and', 'resembles', 'the', 'Conn', 'Smythe', 'Trophy', 'of', 'the', 'NHL', '.', 'The', 'trophy', 'was', 'renamed', 'in', 'honour', 'of', 'Stefan', 'Liv', 'in', '2013', '.', 'Stefan', 'Liv', ',', 'aged', '30', ',', 'was', 'killed', 'in', '[QSPAN_START]', 'a', 'plane', 'crash', '[QSPAN_END]', 'on', 'September', '7', ',', '2011', ',', 'along', 'with', 'his', 'teammates', 'and', 'team', 'staff', 'of', 'Russian', 'club', 'Lokomotiv', 'Yaroslavl', 'of', 'the', 'Kontinental', 'Hockey', 'League', '(', 'KHL', ')']
+	HIT=(True)41614 (13.215682029724121)-"plane crash"
+	HIT=(False)122087 (13.117315292358398)-"RusAir Flight 9605"
+	HIT=(False)122086 (13.006433486938477)-"RusAir Flight 9605"
+	HIT=(True)41603 (12.957816123962402)-"plane crash"
+	HIT=(True)41587 (12.914750099182129)-"2011 Lokomotiv Yaroslavl plane crash"
+queryId-83112
+queryMention-['Mudan', 'incident']
+queryContext-['And', 'Japan', 'was', 'eager', 'to', 'take', 'every', 'opportunity', '.', 'In', '1869', 'they', 'took', 'advantage', 'of', 'the', 'defeat', 'of', 'the', 'rebels', 'of', 'the', 'Republic', 'of', 'Ezo', 'to', 'incorporate', 'definitely', 'the', 'island', 'of', 'Hokkaido', 'to', 'Japan', '.', 'For', 'centuries', ',', 'Japan', 'viewed', 'the', 'Ryukyu', 'Islands', 'as', 'one', 'of', 'its', 'provinces', '.', 'In', '1871', 'the', '[QSPAN_START]', 'Mudan', 'incident', '[QSPAN_END]', 'happened', ':', 'cannibal', 'Taiwanese', 'aborigines', 'murdered', '54', 'Ryūkyūan', 'sailors', 'that', 'had', 'their', 'ship', 'shipwrecked', '.', 'At', 'that', 'time', 'the', 'Ryukyu', 'Islands', 'were', 'claimed', 'by', 'both', 'Qing', 'China', 'and', 'Japan', ',', 'and', 'the', 'Japanese', 'interpreted', 'the', 'incident', 'as', 'an', 'attack', 'on', 'their', 'citizens', '.', 'They', 'took', 'steps', 'to', 'bring', 'the', 'islands', 'in', 'their', 'jurisdiction', ':', 'in', '1872', 'the', 'Japanese', 'Ryukyu', 'Domain', 'was', 'declared', ',', 'and', 'in', '1874', 'a', 'retaliatory', 'incursion', 'to', 'Taiwan', 'was', 'sent', ',', 'which', 'was', 'a', 'success', '.', 'The', 'success', 'of', 'this', 'expedition', 'emboldened', 'the', 'Japanese', ':', 'not', 'even', 'the', 'Americans', 'could', 'defeat', 'the', 'Taiwanese', 'cannibals', 'in', 'the', 'Formosa', 'Expedition', 'of', '1867', '.', 'Very', 'few', 'gave', 'it', 'much', 'thought', 'at', 'the', 'time', ',', 'but', 'this', 'was', 'the', 'first', 'move', 'in', 'the', 'Japanese', 'expansionism', 'series', '.', 'Japan', 'occupied', 'Taiwan', 'for', 'the', 'rest', 'of', '1874', 'and', 'then', 'left', 'owing', 'to', 'Chinese', 'pressures', ',', 'but', 'in', '1879', 'it', 'finally', 'annexed', 'the', 'Ryukyu', 'Islands', '.', 'In', '1875', 'Qing', 'China', 'sent', 'a', '300-men', 'force', 'to', 'subdue', 'the', 'Taiwanese', 'cannibals', ',', 'but', 'unlike', 'the', 'Japanese', 'the', 'Chinese', 'were', 'routed', ',', 'ambushed', 'and', '250', 'of', 'their', 'men', 'were', 'killed', ';', 'the', 'failure', 'of', 'this', 'expedition', 'exposed', 'once', 'more', 'the', 'failure', 'of', 'Qing', 'China', 'to', 'exert', 'effective', 'control', 'in', 'Taiwan', ',', 'and', 'acted', 'as', 'another', 'incentive', 'for', 'the', 'Japanese', 'to', 'annex', 'Taiwan', '.', 'Eventually', ',', 'the', 'spoils', 'for', 'winning', 'the', 'First', 'Sino-Japanese', 'War', 'in', '1894', 'included', 'Taiwan']
+	HIT=(True)83116 (12.114053726196289)-"were massacred"
+	HIT=(True)83115 (10.916913986206055)-"Mudan incident"
+	HIT=(False)NEG_987194 (10.5700101852417)-""
+	HIT=(False)80005 (10.375626564025879)-"Morant Bay rebellion"
+	HIT=(False)NEG_256792 (10.24737548828125)-""
+queryId-41626
+queryMention-['plane', 'crash']
+queryContext-['Rachůnek', 'returned', 'to', 'the', 'team', 'for', '2011', '–', '12', '.', 'On', 'September', '7', ',', '2011', ',', 'he', 'was', 'killed', 'in', 'a', '[QSPAN_START]', 'plane', 'crash', '[QSPAN_END]']
+	HIT=(False)97546 (13.049193382263184)-"Airblue Flight 202"
+	HIT=(True)41633 (12.796775817871094)-"Lokomotiv Yaroslavl plane crash"
+	HIT=(False)86132 (12.776015281677246)-"National Airlines Flight 102"
+	HIT=(False)112467 (12.739168167114258)-"JetBlue flight attendant incident"
+	HIT=(False)52013 (12.705183029174805)-"Ethiopian Airlines Flight 409"
+queryId-126035
+queryMention-['2015', 'Zasyadko', 'mine', 'disaster']
+queryContext-['In', 'the', '1990s', 'and', 'the', '2000s', 'coal', 'mine', 'collapses', 'took', 'place', 'in', 'Donetsk', 'and', 'the', 'region', ',', 'taking', 'the', 'lives', 'of', 'hundreds', ';', 'those', 'included', 'the', '2008', 'Ukraine', 'coal', 'mine', 'collapse', ',', 'the', '2007', 'Zasyadko', 'mine', 'disaster', ',', 'and', 'the', '[QSPAN_START]', '2015', 'Zasyadko', 'mine', 'disaster', '[QSPAN_END]', '.', 'Ukraine', 'has', 'had', 'a', 'series', 'of', 'mining', 'accidents', 'since', 'the', 'collapse', 'of', 'the', 'Soviet', 'Union', 'in', '1991', ',', 'and', 'one', 'reason', 'being', 'given', 'is', 'the', 'linking', 'of', 'miners', "'", 'pay', 'to', 'production', ',', 'which', 'serves', 'as', 'an', 'incentive', 'to', 'ignore', 'safety', 'procedures', 'that', 'would', 'slow', 'production']
+	HIT=(True)126036 (12.935256958007812)-"2015 Zasyadko mine disaster"
+	HIT=(False)48801 (11.240890502929688)-"Kursk submarine disaster"
+	HIT=(False)NEG_1925513 (11.181865692138672)-""
+	HIT=(False)71272 (11.052093505859375)-"a series of wildfires"
+	HIT=(False)NEG_1917132 (11.022272109985352)-""
+queryId-117053
+queryMention-['West', 'Coast', 'Basketball', 'Tournament']
+queryContext-['2011', '–', '12', 'San', 'Francisco', 'Dons', 'men', "'s", 'basketball', 'team', 'represented', 'the', 'University', 'of', 'San', 'Francisco', 'in', 'the', '2011', '–', '12', 'college', 'basketball', 'season', '.', 'This', 'was', 'head', 'coach', 'Rex', 'Walters', 'fourth', 'season', 'at', 'San', 'Francisco', '.', 'The', 'Dons', 'played', 'their', 'home', 'games', 'at', 'the', 'War', 'Memorial', 'Gymnasium', 'and', 'are', 'members', 'of', 'the', 'West', 'Coast', 'Conference', '.', 'They', 'finished', 'the', 'season', '20', '–', '14', ',', '8', '–', '8', 'in', 'West', 'Coast', 'play', 'to', 'finish', 'in', 'fifth', 'place', '.', 'They', 'lost', 'in', 'the', 'semifinals', 'of', 'the', '[QSPAN_START]', 'West', 'Coast', 'Basketball', 'Tournament', '[QSPAN_END]', 'to', 'Saint', 'Mary', "'s", '.', 'They', 'were', 'invited', 'to', 'the', '2012', 'College', 'Basketball', 'Invitational', 'where', 'they', 'lost', 'in', 'the', 'first', 'round', 'to', 'Washington', 'State']
+	HIT=(True)117049 (12.759225845336914)-"West Coast Conference Tournament"
+	HIT=(True)117050 (11.880739212036133)-"West Coast Conference Tournament"
+	HIT=(True)117047 (11.779095649719238)-"West Coast Conference Tournament"
+	HIT=(False)114211 (11.64621639251709)-"2012 Big West Men 's Basketball Tournament"
+	HIT=(False)107454 (11.582671165466309)-"conference tournament"
+queryId-120606
+queryMention-['Melodifestivalen', '1995']
+queryContext-['Sweden', "'s", 'entry', 'to', 'the', 'Eurovision', 'Song', 'Contest', '1995', ',', 'held', 'in', 'Dublin', ',', 'Ireland', ',', 'was', 'decided', 'through', 'the', 'Swedish', 'pre-selection', 'Melodifestivalen', '.', '[QSPAN_START]', 'Melodifestivalen', '1995', '[QSPAN_END]', 'was', 'held', 'on', '24', 'February', ',', 'where', '10', 'songs', 'were', 'performed', '.', 'The', 'winner', ',', 'decided', 'by', '11', 'regional', 'juries', ',', 'was', 'Jan', 'Johansen', 'with', 'the', 'song', '"', 'Se', 'på', 'mej', '"', '(', 'Look', 'At', 'Me', ')', '.', 'The', 'song', 'was', 'composed', 'by', 'Bobby', 'Ljunggren', ',', 'Håkan', 'Almqvist', 'and', 'Ingela', 'Forsman']
+	HIT=(True)120604 (14.662506103515625)-"Melodifestivalen 1995"
+	HIT=(True)120602 (13.852331161499023)-"Melodifestivalen 1995"
+	HIT=(True)120605 (13.616471290588379)-"Melodifestivalen 1995"
+	HIT=(False)101337 (12.660333633422852)-"1994 : Melodifestivalen"
+	HIT=(False)101335 (12.516155242919922)-"Melodifestivalen 1994"
+queryId-85946
+queryMention-['murder', 'of', 'thousands', 'of', 'Italians']
+queryContext-['On', '25', 'July', '1943', ',', 'soldiers', 'from', 'the', 'division', 'attacked', 'the', 'village', 'of', 'Mousiotitsa', 'in', 'Greece', 'after', 'a', 'cache', 'of', 'weapons', 'was', 'found', 'nearby', ',', 'killing', '153', 'civilians', '.', 'On', '16', 'August', '1943', ',', 'the', 'village', 'of', 'Kommeno', 'was', 'attacked', 'on', 'the', 'orders', 'of', "''", 'Oberstleutnant', "''", 'Josef', 'Salminger', ',', 'the', 'commander', 'of', "''", 'GebirgsJäger', 'Regiment', '98', "''", '.', 'A', 'total', 'of', '317', 'civilians', 'were', 'killed', '.', 'Divisional', 'soldiers', 'took', 'part', 'in', 'the', '[QSPAN_START]', 'murder', 'of', 'thousands', 'of', 'Italians', '[QSPAN_END]', 'from', 'the', '33', 'Acqui', 'Infantry', 'Division', 'in', 'September', '1943', 'on', 'the', 'Greek', 'island', 'of', 'Cefalonia', 'after', 'the', 'Italian', 'surrender', '.', 'Divisional', 'soldiers', 'killed', '32', 'officers', 'and', 'an', 'estimated', '100', 'soldiers', 'from', 'the', 'Italian', '151st', 'Perugia', 'Infantry', 'Division', 'in', 'Albania', 'after', 'the', 'Italian', 'surrender']
+	HIT=(True)85936 (14.216581344604492)-"murder of thousands of Italians"
+	HIT=(False)86231 (14.16750717163086)-"Raid of the Ghetto of Rome"
+	HIT=(False)112142 (14.112499237060547)-"a major raid in southern Bačka"
+	HIT=(False)86229 (14.021468162536621)-"Raid of the Ghetto of Rome"
+	HIT=(False)111924 (13.970125198364258)-"Distomo massacre"
+queryId-113118
+queryMention-['T', 'in', 'the', 'Park', '2012']
+queryContext-['In', '2011', ',', 'James', 'started', 'presenting', 'the', 'BBC', 'Three', "'s", 'coverage', 'of', 'Glastonbury', 'and', 'in', 'August', '2012', ',', 'the', 'Reading', 'and', 'Leeds', 'Festival', '(', 'both', 'with', 'Fearne', 'Cotton', ')', '.', 'He', 'presented', 'coverage', 'of', '[QSPAN_START]', 'T', 'in', 'the', 'Park', '2012', '[QSPAN_END]', ',', 'alongside', 'Edith', 'Bowman', 'in', 'July', '.', 'In', '2013', ',', 'James', 'co-presented', 'extensive', 'coverage', 'of', 'Radio', '1', "'s", 'Big', 'Weekend', 'on', 'BBC', 'Three', 'with', 'Alice', 'Levine', '.', 'In', 'June', '2013', ',', 'James', 'once', 'again', 'hosted', 'BBC', 'Three', "'s", 'coverage', 'of', 'Glastonbury', ',', 'alongside', 'Gemma', 'Cairney']
+	HIT=(False)113726 (13.554773330688477)-"2012 AFL Rising Star"
+	HIT=(True)113120 (13.521440505981445)-"T in the Park 2012"
+	HIT=(False)NEG_1052693 (13.295085906982422)-""
+	HIT=(False)NEG_2467314 (12.790291786193848)-""
+	HIT=(False)117005 (12.786897659301758)-"T in the Park 2011"
+queryId-125094
+queryMention-['Tezno']
+queryContext-['The', 'Yugoslav', 'authorities', 'moved', 'the', 'prisoners', 'on', 'forced', 'marches', 'throughout', 'the', 'country', 'to', 'internment', 'and', 'labor', 'camps', '.', 'Mass', 'executions', 'were', 'carried', 'out', ',', 'the', 'largest', 'of', 'which', 'were', 'in', '[QSPAN_START]', 'Tezno', '[QSPAN_END]', ',', 'Kočevski', 'Rog', 'and', 'Huda', 'Jama', '.', 'The', 'aftermath', 'of', 'the', 'repatriations', 'was', 'a', 'taboo', 'topic', 'in', 'Yugoslavia', 'and', 'the', 'public', 'and', 'official', 'commemoration', 'of', 'the', 'victims', 'would', 'only', 'begin', 'several', 'decades', 'after', 'the', 'events', '.', 'The', 'number', 'of', 'casualties', 'that', 'occurred', 'at', 'the', 'time', 'of', 'the', 'repatriations', 'and', 'in', 'the', 'weeks', 'that', 'followed', 'has', 'proven', 'difficult', 'to', 'ascertain', ',', 'with', 'exact', 'numbers', 'being', 'a', 'subject', 'of', 'much', 'debate']
+	HIT=(False)14338 (12.726797103881836)-"Great Terror"
+	HIT=(False)14366 (12.644783973693848)-"violent political purges"
+	HIT=(False)14538 (12.521597862243652)-"Stalin 's deadly purges"
+	HIT=(False)NEG_68747 (12.45238208770752)-""
+	HIT=(False)14362 (12.302020072937012)-"reign of terror"
+queryId-83116
+queryMention-['were', 'massacred']
+queryContext-['In', 'December', '1871', ',', 'a', 'Ryukyuan', 'ship', 'was', 'shipwrecked', 'on', 'Taiwan', 'and', 'the', 'crew', '[QSPAN_START]', 'were', 'massacred', '[QSPAN_END]', '.', 'In', '1874', ',', 'using', 'the', 'incident', 'as', 'a', 'pretext', ',', 'Japan', 'launched', 'a', 'military', 'expedition', 'to', 'Taiwan', 'to', 'assert', 'their', 'claims', 'to', 'the', 'Ryukyu', 'Islands', '.', 'The', 'expedition', 'featured', 'the', 'first', 'instance', 'of', 'the', 'Japanese', 'military', 'ignoring', 'the', 'orders', 'of', 'the', 'civilian', 'government', ',', 'as', 'the', 'expedition', 'set', 'sail', 'after', 'being', 'ordered', 'to', 'postpone']
+	HIT=(True)83112 (13.463290214538574)-"Mudan incident"
+	HIT=(False)NEG_2407690 (11.270503997802734)-""
+	HIT=(False)NEG_116872 (11.072099685668945)-""
+	HIT=(False)NEG_2553806 (10.881795883178711)-""
+	HIT=(False)NEG_987194 (10.847895622253418)-""
+queryId-106439
+queryMention-['Kidnapping', 'of', 'Elizabeth', 'Smart']
+queryContext-['I', 'Am', 'Elizabeth', 'Smart', 'is', 'a', '2017', 'American', 'crime', 'television', 'film', 'that', 'aired', 'on', 'Lifetime', 'that', 'detailed', 'the', '[QSPAN_START]', 'Kidnapping', 'of', 'Elizabeth', 'Smart', '[QSPAN_END]', '.', 'The', 'film', 'features', 'Elizabeth', 'Smart', 'as', 'the', 'on-screen', 'narrator', 'and', 'stars', 'Alana', 'Boden', ',', 'Skeet', 'Ulrich', ',', 'and', 'Deirdre', 'Lovejoy', '.', 'Smart', "'s", 'wraparound', 'narration', 'in', 'the', 'film', 'was', 'used', 'to', 'interrupt', 'the', 'events', 'she', 'endured', ',', 'preventing', 'the', 'viewers', 'from', 'distancing', 'themselves', 'from', 'the', 'action']
+	HIT=(True)106438 (15.854859352111816)-"Kidnapping of Elizabeth Smart"
+	HIT=(False)NEG_1842150 (14.725934982299805)-""
+	HIT=(False)NEG_2673755 (14.294898986816406)-""
+	HIT=(True)106441 (14.003655433654785)-"2002 kidnapping"
+	HIT=(True)106434 (13.89253044128418)-"2002 kidnapping of Utah teenager"
+queryId-20460
+queryMention-['76th', 'ceremony']
+queryContext-['84th', 'Academy', 'Awards', 'ceremony', ',', 'presented', 'by', 'the', 'Academy', 'of', 'Motion', 'Picture', 'Arts', 'and', 'Sciences', '(', 'AMPAS', ')', ',', 'honored', 'the', 'best', 'films', 'of', '2011', 'in', 'the', 'United', 'States', 'and', 'took', 'place', 'on', 'February', '26', ',', '2012', ',', 'at', 'the', 'Hollywood', 'and', 'Highland', 'Center', 'Theatre', 'in', 'Hollywood', ',', 'Los', 'Angeles', 'beginning', 'at', '5:30', 'p.m.', 'PST', '/', '8:30', 'p.m.', 'EST', '.', 'During', 'the', 'ceremony', ',', 'the', 'Academy', 'of', 'Motion', 'Picture', 'Arts', 'and', 'Sciences', 'presented', 'Academy', 'Awards', '(', 'commonly', 'referred', 'to', 'as', 'Oscars', ')', 'in', '24', 'categories', '.', 'The', 'ceremony', 'was', 'televised', 'in', 'the', 'United', 'States', 'by', 'ABC', ',', 'and', 'produced', 'by', 'Brian', 'Grazer', 'and', 'Don', 'Mischer', ',', 'with', 'Mischer', 'also', 'serving', 'as', 'director', '.', 'Actor', 'Billy', 'Crystal', 'hosted', 'the', 'show', 'for', 'the', 'ninth', 'time', '.', 'He', 'first', 'presided', 'over', 'the', '62nd', 'ceremony', 'held', 'in', '1990', 'and', 'had', 'last', 'hosted', 'the', '[QSPAN_START]', '76th', 'ceremony', '[QSPAN_END]', 'held', 'in', '2004']
+	HIT=(False)64722 (10.645608901977539)-"2019 Awards"
+	HIT=(False)68880 (10.572752952575684)-"77th"
+	HIT=(False)68816 (10.43356990814209)-"preceding year 's ceremony"
+	HIT=(False)41488 (10.089459419250488)-"90th edition"
+	HIT=(False)83487 (10.068670272827148)-"Academy Award"
+queryId-22839
+queryMention-['2013', 'BET', 'Awards']
+queryContext-['J.', 'Cole', 'performed', 'the', 'song', ',', 'along', 'with', 'his', 'other', 'single', '"', 'Power', 'Trip', '"', 'from', 'his', 'second', 'album', ',', 'at', 'the', '[QSPAN_START]', '2013', 'BET', 'Awards', '[QSPAN_END]', 'on', 'June', '30', ',', '2013', '.', 'On', 'August', '13', ',', '2013', ',', 'he', 'performed', 'the', 'song', 'on', "''", 'Conan', "''"]
+	HIT=(True)22834 (14.829573631286621)-"2013 BET Awards"
+	HIT=(True)22822 (14.517080307006836)-"2013 's BET Awards"
+	HIT=(True)22824 (14.317469596862793)-"BET Awards 2013"
+	HIT=(True)22827 (14.28154182434082)-"2013 BET Awards"
+	HIT=(True)22836 (13.979711532592773)-"BET Awards"
+queryId-126036
+queryMention-['2015', 'Zasyadko', 'mine', 'disaster']
+queryContext-['The', 'Zasyadko', 'Mine', 'stands', 'as', 'an', 'example', 'of', 'Donbass', 'mine', 'safety', '.', 'It', 'was', 'opened', 'in', '1958', 'and', 'privatized', 'in', '1992', ',', 'since', 'which', 'time', 'it', 'has', 'had', 'seven', 'major', 'accidents', ',', 'including', 'the', '2007', 'Zasyadko', 'mine', 'disaster', '(', '101', 'workers', 'killed', ')', 'and', 'the', '[QSPAN_START]', '2015', 'Zasyadko', 'mine', 'disaster', '[QSPAN_END]', '(', '17', 'killed', ')']
+	HIT=(True)126035 (12.845375061035156)-"2015 Zasyadko mine disaster"
+	HIT=(False)48801 (12.116342544555664)-"Kursk submarine disaster"
+	HIT=(False)71272 (11.689874649047852)-"a series of wildfires"
+	HIT=(False)124408 (11.447608947753906)-"S7 Airlines Flight 778"
+	HIT=(False)71257 (11.308334350585938)-"local turf fires"
+queryId-20473
+queryMention-['76th', 'Academy', 'Awards']
+queryContext-['The', 'song', 'won', 'the', 'Oscar', 'for', 'Best', 'Original', 'Song', 'at', 'the', '[QSPAN_START]', '76th', 'Academy', 'Awards', '[QSPAN_END]', ',', 'one', 'of', "''", 'Return', 'of', 'the', 'King', "''", "'s", 'eleven', 'wins', '.', 'Lennox', 'also', 'performed', 'the', 'song', 'live', 'at', 'the', 'ceremony', ';', 'coincidentally', ',', 'Lennox', "'s", 'performance', 'was', 'one', 'of', 'several', 'introduced', 'by', 'Liv', 'Tyler', ',', 'who', 'appeared', 'as', 'Arwen', 'in', 'the', 'film']
+	HIT=(True)20451 (13.985989570617676)-"previous year 's ceremony"
+	HIT=(False)36265 (12.950908660888672)-"Cannes Film Festival"
+	HIT=(False)53133 (12.950908660888672)-"Berlin International Film Festival"
+	HIT=(False)NEG_1596838 (12.226409912109375)-""
+	HIT=(False)46436 (11.95644760131836)-"1975 Oscars"
+queryId-41596
+queryMention-['Lokomotiv', 'Yaroslavl', 'plane', 'crash']
+queryContext-['On', '7', 'September', '2011', ',', 'Shuvalov', 'was', 'killed', 'in', 'the', '[QSPAN_START]', 'Lokomotiv', 'Yaroslavl', 'plane', 'crash', '[QSPAN_END]', ',', 'when', 'a', 'Yakovlev', 'Yak-42', 'passenger', 'aircraft', ',', 'carrying', 'nearly', 'his', 'entire', 'Lokomotiv', 'team', ',', 'crashed', 'just', 'outside', 'Yaroslavl', ',', 'Russia', '.', 'The', 'team', 'was', 'traveling', 'to', 'Minsk', 'to', 'play', 'their', 'opening', 'game', 'of', 'the', 'season', ',', 'with', 'its', 'coaching', 'staff', 'and', 'prospects', '.', 'Lokomotiv', 'officials', 'said', '"', "'", 'everyone', 'from', 'the', 'main', 'roster', 'was', 'on', 'the', 'plane', 'plus', 'four', 'players', 'from', 'the', 'youth', 'team', '.', "'", '"', 'Aged', 'only', '18', ',', 'he', 'was', 'the', 'youngest', 'member', 'to', 'die', 'in', 'the', 'plane', 'crash']
+	HIT=(True)41608 (14.982637405395508)-"Lokomotiv Yaroslavl plane crash"
+	HIT=(True)41600 (13.88369083404541)-"an airplane crash"
+	HIT=(False)122086 (13.79447078704834)-"RusAir Flight 9605"
+	HIT=(True)41607 (13.562416076660156)-"Lokomotiv Yaroslavl plane tragedy"
+	HIT=(True)41587 (13.348711967468262)-"2011 Lokomotiv Yaroslavl plane crash"
+queryId-84862
+queryMention-['Yushu', 'earthquake']
+queryContext-['A', 'ROKPA', 'International', 'project', 'based', 'at', 'Samye', 'Ling', 'to', 'raise', 'funds', 'for', 'the', 'girls', 'school', 'at', 'Kandze', 'Monastery', 'was', 'successful', 'in', 'reaching', 'its', 'target', 'of', '£', '9,449', '.', 'As', 'at', '2010', 'the', 'trust', 'was', 'actively', 'involved', 'in', 'relief', 'efforts', 'following', 'the', '[QSPAN_START]', 'Yushu', 'earthquake', '[QSPAN_END]']
+	HIT=(True)84864 (12.867612838745117)-"2010 Yushu earthquake"
+	HIT=(True)84856 (12.442913055419922)-"2010 Yushu earthquake"
+	HIT=(False)48404 (12.32614803314209)-"floods in 2010 in Pakistan"
+	HIT=(False)97547 (12.26077651977539)-"Airblue crash"
+	HIT=(False)48448 (12.26077651977539)-"2010 floods"
+queryId-80976
+queryMention-['Big', 'East', 'Tournament']
+queryContext-['2014', '–', '15', 'Marquette', 'Golden', 'Eagles', 'men', "'s", 'basketball', 'team', 'represented', 'Marquette', 'University', 'in', 'the', '2014', '–', '15', 'NCAA', 'Division', 'I', 'men', "'s", 'basketball', 'season', '.', 'Their', 'coach', 'was', 'Steve', 'Wojciechowski', ',', 'serving', 'in', 'his', 'first', 'year', 'as', 'head', 'coach', '.', 'Marquette', 'played', 'its', 'home', 'games', 'at', 'the', 'BMO', 'Harris', 'Bradley', 'Center', 'in', 'Milwaukee', ',', 'Wisconsin', '.', 'Marquette', 'was', 'a', 'member', 'of', 'the', 'Big', 'East', 'Conference', '.', 'They', 'finished', 'the', 'season', '13', '–', '19', ',', '4', '–', '14', 'in', 'Big', 'East', 'play', 'to', 'finish', 'in', 'a', 'tie', 'for', 'ninth', 'place', '.', 'They', 'advanced', 'to', 'the', 'quarterfinals', 'of', 'the', '[QSPAN_START]', 'Big', 'East', 'Tournament', '[QSPAN_END]', 'where', 'they', 'lost', 'to', 'Villanova']
+	HIT=(False)123261 (13.61984634399414)-"Big East Tournament"
+	HIT=(False)116155 (12.848939895629883)-"Big East Tournament"
+	HIT=(False)107454 (12.808089256286621)-"conference tournament"
+	HIT=(False)62709 (12.596506118774414)-"Big East Tournament"
+	HIT=(False)118274 (12.474396705627441)-"Big East Tournament"
+queryId-120068
+queryMention-['Sanremo', 'Music', 'Festival', '2009']
+queryContext-['Arisa', 'rose', 'to', 'fame', 'after', 'her', 'participation', 'in', 'the', '[QSPAN_START]', 'Sanremo', 'Music', 'Festival', '2009', '[QSPAN_END]', '.', 'She', 'placed', 'first', 'in', 'the', 'newcomers', "'", 'section', 'and', 'won', 'the', 'Mia', 'Martini', 'Critics', 'Award', 'with', 'her', 'entry', ',', '"', 'Sincerità', '"', '.', 'In', 'early', '2009', ',', 'she', 'released', 'her', 'first', 'album', ',', 'also', 'titled', "''", 'Sincerità', "''", '.', 'In', 'January', '2010', 'she', 'released', 'her', 'second', 'album', ',', "''", 'Malamorenò', "''", '.', 'In', 'late', '2011', 'she', 'starred', 'as', 'judge', 'in', 'the', 'fifth', 'season', 'of', 'the', 'Italian', 'version', 'of', "''", 'The', 'X', 'Factor', "''", ',', 'broadcast', 'on', 'Sky', 'Uno']
+	HIT=(True)120064 (14.72343635559082)-"Sanremo Music Festival 2009"
+	HIT=(True)120066 (13.727900505065918)-"59th Sanremo Music Festival"
+	HIT=(False)111066 (13.505845069885254)-"sixtieth edition"
+	HIT=(True)120069 (13.168394088745117)-"59th Sanremo Music Festival"
+	HIT=(True)120070 (12.8629789352417)-"Sanremo Music Festival in 2009"
+queryId-107286
+queryMention-['Miss', 'Russia', '2017']
+queryContext-['Polina', 'Alexeyevna', 'Popova', '(', ',', 'born', '1', 'June', '1995', ')', 'is', 'a', 'Russian', 'model', 'and', 'beauty', 'pageant', 'titleholder', 'who', 'was', 'crowned', '[QSPAN_START]', 'Miss', 'Russia', '2017', '[QSPAN_END]', '.', 'She', 'represented', 'Russia', 'at', 'the', 'Miss', 'World', '2017', 'competition', ',', 'where', 'she', 'placed', 'in', 'the', 'Top', '10']
+	HIT=(True)107285 (13.377498626708984)-"Miss Russia 2017"
+	HIT=(True)107284 (12.1483154296875)-"Miss Russia 2017"
+	HIT=(False)118259 (11.59320068359375)-"Miss France 2017"
+	HIT=(False)118260 (11.59320068359375)-"Miss France 2017"
+	HIT=(False)68651 (11.535758018493652)-"65th Miss Universe"
+queryId-102961
+queryMention-['Second', 'Atlanta', 'International', 'Pop', 'Festival']
+queryContext-['Duane', 'Allman', 'created', 'the', 'idea', 'of', 'having', 'two', 'lead', 'guitarists', ',', 'which', 'was', 'inspired', 'by', 'Curtis', 'Mayfield', ';', '"', 'he', 'wanted', 'the', 'bass', ',', 'keyboards', ',', 'and', 'second', 'guitar', 'to', 'form', 'patterns', 'behind', 'the', 'solo', 'rather', 'than', 'just', 'comping', ',', '"', 'said', 'Allman', '.', 'Their', 'style', 'and', 'incorporation', 'of', 'guitar', 'harmonies', 'was', 'very', 'influential', 'on', 'later', 'musicians', '.', '"', 'The', 'pair', 'also', 'had', 'a', 'wide', 'range', 'of', 'complementary', 'techniques', ',', 'often', 'forming', 'intricate', ',', 'interlocking', 'patterns', 'with', 'each', 'other', 'and', 'with', 'the', 'bassist', ',', 'Berry', 'Oakley', ',', 'setting', 'the', 'stage', 'for', 'dramatic', 'flights', 'of', 'improvised', 'melodies', '.', '"', 'Dickey', 'Betts', "'", 'playing', 'was', 'very', 'melody-based', ';', '"', 'My', 'style', 'is', 'just', 'a', 'little', 'too', 'smooth', 'and', 'round', 'to', 'play', 'the', 'blues', 'stuff', 'straight', ',', 'because', 'I', "'m", 'such', 'a', 'melody', 'guy', 'that', 'even', 'when', 'I', "'m", 'playing', 'the', 'blues', ',', 'I', 'go', 'for', 'melody', 'first', ',', '"', 'he', 'said', '.', 'His', 'listening', 'of', 'country', 'and', 'string', 'bluegrass', 'growing', 'up', 'influenced', 'this', 'considerably', ':', '"', 'I', 'played', 'mandolin', ',', 'ukulele', ',', 'and', 'fiddle', 'before', 'I', 'ever', 'touched', 'a', 'guitar', ',', 'which', 'may', 'be', 'where', 'a', 'lot', 'of', 'the', 'major', 'keys', 'I', 'play', 'come', 'from', '.', '"', 'He', 'later', 'characterized', 'their', 'style', 'as', '"', 'question', 'and', 'answer', ',', 'anticipation', 'and', 'conclusion', ',', '"', 'which', 'involved', 'allowing', 'each', 'musician', "'s", 'downbeat', 'to', 'arrive', 'in', 'a', 'different', 'spot', ',', 'while', 'also', 'keeping', 'consideration', 'of', 'the', 'bass', 'guitar', 'lines', '.', 'The', 'group', 'also', 'held', 'an', 'improvisational', 'approach', 'to', 'live', 'performances', ',', 'which', 'connected', 'the', 'band', 'with', 'jam', 'band', 'culture', '.', '"', 'Jazz', 'and', 'blues', 'musicians', 'have', 'been', 'doing', 'this', 'for', 'decades', ',', 'but', 'I', 'think', 'they', 'really', 'brought', 'that', 'sense', 'that', 'anyone', 'onstage', 'can', 'inspire', 'anyone', 'else', 'at', 'any', 'given', 'time', 'to', 'rock', 'music', ',', '"', 'said', 'Haynes', '.', '"', 'We', 'sure', 'did', "n't", 'set', 'out', 'to', 'be', 'a', '"', 'jam', 'band', '"', 'but', 'those', 'long', 'jams', 'just', 'emanated', 'from', 'within', 'the', 'band', ',', 'because', 'we', 'did', "n't", 'want', 'to', 'just', 'play', 'three', 'minutes', 'and', 'be', 'over', ',', '"', 'said', 'Allman', '.', "''", 'Rolling', 'Stone', "''", 'referred', 'to', 'the', 'group', 'as', '"', 'without', 'question', 'the', 'first', 'great', 'jam', 'band', ',', 'and', 'they', 'took', 'the', 'jam', 'to', 'heights', 'that', 'it', 'had', 'not', 'previously', 'reached', '.', '"', 'The', 'Allman', 'Brothers', 'Band', 'were', 'considerably', 'influential', 'within', 'the', 'Southern', 'United', 'States', '.', 'Their', 'arrival', 'on', 'the', 'musical', 'scene', 'paved', 'the', 'way', 'for', 'several', 'other', 'notable', 'Southern', 'rock', 'bands', '—', 'among', 'those', 'Lynyrd', 'Skynyrd', ',', 'the', 'Marshall', 'Tucker', 'Band', 'and', 'Wet', 'Willie', '—', 'to', 'achieve', 'commercial', 'success', ',', 'and', 'also', '"', 'almost', 'single-handedly', '"', 'made', 'Capricorn', 'Records', 'into', '"', 'a', 'major', 'independent', 'label', '.', '"', 'Billy', 'Gibbons', 'of', 'ZZ', 'Top', ',', 'writing', 'for', "''", 'Rolling', 'Stone', "''", ',', 'wrote', 'that', 'the', 'group', '"', 'defined', 'the', 'best', 'of', 'every', 'music', 'from', 'the', 'American', 'South', 'in', 'that', 'time', '.', 'They', 'were', 'the', 'best', 'of', 'all', 'of', 'us', '.', '"', 'He', 'went', 'on', 'to', 'call', 'the', 'band', '"', 'a', 'true', 'brotherhood', 'of', 'players', '—', 'one', 'that', 'went', 'beyond', 'race', 'and', 'ego', '.', 'It', 'was', 'a', 'thing', 'of', 'beauty', '.', '"', 'The', 'band', "'s", 'extended', 'popularity', 'through', 'heavy', 'touring', 'in', 'the', 'early', '1990s', 'created', 'a', 'new', 'generation', 'of', 'fans', ',', 'one', 'that', 'viewed', 'the', 'Allmans', 'as', 'pioneers', 'of', '"', 'latter-day', 'collegiate', 'jam', 'rock', '.', '"', 'AllMusic', 'praised', 'the', 'band', "'s", 'history', ':', '"', 'they', 'went', 'from', 'being', 'America', "'s", 'single', 'most', 'influential', 'band', 'to', 'a', 'shell', 'of', 'their', 'former', 'self', 'trading', 'on', 'past', 'glories', ',', 'to', 'reach', 'the', '21st', 'century', 'resurrected', 'as', 'one', 'of', 'the', 'most', 'respected', 'rock', 'acts', 'of', 'their', 'era', '.', '"', 'In', '2012', ',', 'an', 'official', 'historic', 'marker', 'was', 'erected', 'on', 'the', 'site', 'of', 'the', 'July', '1970', '[QSPAN_START]', 'Second', 'Atlanta', 'International', 'Pop', 'Festival', '[QSPAN_END]', 'near', 'Byron', ',', 'Georgia', '.', 'The', 'Allman', 'Brothers', 'Band', 'had', 'played', 'two', 'sets', 'at', 'the', 'festival', ',', 'which', 'was', 'a', 'significant', 'event', 'in', 'their', 'career', '.', 'The', 'marker', 'text', 'reads', ',', 'in', 'part', ':', '"', 'Over', 'thirty', 'musical', 'acts', 'performed', ',', 'including', '...', 'Macon', "'s", 'Allman', 'Brothers', 'Band', 'on', 'their', 'launching', 'pad', 'to', 'national', 'fame', '.', '"', 'Official', 'sponsors', 'of', 'the', 'marker', 'included', 'the', 'Georgia', 'Allman', 'Brothers', 'Band', 'Association', ',', 'The', 'Allman', 'Brothers', 'Band', 'Museum', 'at', 'the', 'Big', 'House', ',', 'and', "''", 'Hittin', "'", 'the', 'Note', "''", '.', 'In', '2003', ',', 'the', 'band', 'released', 'a', 'recording', 'of', 'their', 'festival', 'opening', 'and', 'closing', 'performances', ',', "''", 'Live', 'at', 'the', 'Atlanta', 'International', 'Pop', 'Festival', ':', 'July', '3', '&', '5', ',', '1970', "''"]
+	HIT=(True)102943 (14.043594360351562)-"1970 Atlanta Pop Festival"
+	HIT=(True)102951 (13.922107696533203)-"Second Atlanta International Pop Festival"
+	HIT=(True)102955 (13.731282234191895)-"Atlanta International Pop Festival"
+	HIT=(False)NEG_422083 (13.696243286132812)-""
+	HIT=(True)102952 (13.55524730682373)-"1970 Atlanta International Pop Festival"
+queryId-106750
+queryMention-['35th', 'Primetime', 'Emmy', 'Awards']
+queryContext-['At', 'the', '[QSPAN_START]', '35th', 'Primetime', 'Emmy', 'Awards', '[QSPAN_END]', 'in', '1983', ',', "''", 'Here', 'Comes', 'Garfield', "''", 'was', 'nominated', 'for', 'the', 'Primetime', 'Emmy', 'Award', 'for', 'Outstanding', 'Animated', 'Program', 'and', 'Phil', 'Roman', 'was', 'nominated', 'for', 'the', 'Outstanding', 'Individual', 'Achievement', 'in', 'Animated', 'Programming', '.', 'In', '2004', ',', 'DVD', 'Talk', 'critic', 'Randy', 'Miller', 'judged', 'the', "''", 'Garfield', 'as', 'Himself', "''", 'specials', 'to', 'be', '"', 'quite', 'enjoyable', ',', '"', 'highlighting', '"', 'a', 'daring', 'dog', 'pound', 'rescue', '"', '.', 'The', 'DVD', 'debuted', '35th', 'in', 'sales']
+	HIT=(True)106748 (12.53014850616455)-"1983 Primetime Emmy Awards"
+	HIT=(True)106747 (12.517786979675293)-"Primetime Emmy Awards"
+	HIT=(False)80620 (12.452095031738281)-"Emmy nominations in 1984"
+	HIT=(False)80619 (12.307207107543945)-"36th Primetime Emmy Awards"
+	HIT=(True)106752 (12.13491153717041)-"Primetime Emmy Awards"
+queryId-20455
+queryMention-['76th', 'Academy', 'Awards']
+queryContext-["''", 'Biola', 'Tak', 'Berdawai', "''", '(', ')', 'is', 'an', 'Indonesian', 'film', 'directed', 'by', 'Sekar', 'Ayu', 'Asmara', '.', 'It', 'was', 'released', 'by', 'Kalyana', 'Shira', 'Film', 'on', '22', 'March', '2003', ',', 'with', 'wider', 'release', 'on', '4', 'April', '.', 'Telling', 'the', 'story', 'of', 'a', 'rape', 'victim', 'who', 'attempts', 'to', 'use', 'music', 'to', 'heal', 'an', 'autistic', 'boy', ',', 'it', 'was', 'shown', 'at', 'the', 'Cairo', 'International', 'Film', 'Festival', ',', 'where', 'it', 'secured', 'a', 'Best', 'New', 'Director', 'award', 'for', 'Asmara', '.', 'It', 'was', 'also', 'Indonesia', "'s", 'submission', 'to', '[QSPAN_START]', '76th', 'Academy', 'Awards', '[QSPAN_END]', 'for', 'Best', 'Foreign', 'Language', 'Film']
+	HIT=(False)36265 (13.823356628417969)-"Cannes Film Festival"
+	HIT=(False)53133 (13.823356628417969)-"Berlin International Film Festival"
+	HIT=(True)20451 (13.43267822265625)-"previous year 's ceremony"
+	HIT=(False)43446 (12.599211692810059)-"2015 Oscars ceremony"
+	HIT=(False)60853 (12.589217185974121)-"AMAA"
+queryId-28377
+queryMention-['2012', 'Cannes', 'Film', 'Festival']
+queryContext-['In', '2012', ',', 'he', 'was', 'named', 'as', 'a', 'member', 'of', 'the', 'Jury', 'for', 'the', 'Main', 'Competition', 'at', 'the', '[QSPAN_START]', '2012', 'Cannes', 'Film', 'Festival', '[QSPAN_END]', '.', 'This', 'was', 'the', 'first', 'time', 'a', 'fashion', 'designer', 'was', 'called', 'to', 'sit', 'on', 'a', 'jury', 'at', 'the', 'festival', '.', 'He', 'designed', 'the', 'dress', 'that', 'Anggun', 'wore', 'as', 'she', 'represented', 'France', 'during', 'the', 'grand-finals', 'of', 'the', 'Eurovision', 'Song', 'Contest', '2012', 'held', 'in', 'Baku', ',', 'Azerbaijan', '.', 'That', 'year', ',', 'he', 'also', 'participated', 'in', 'the', 'Cali', 'ExpoShow', 'in', 'Cali', '(', 'Colombia', ')', ',', 'showing', 'his', 'extensive', 'collection', 'of', 'perfumes', 'and', 'all', 'classic', 'clothes']
+	HIT=(True)28404 (14.654861450195312)-"2012 Cannes Film Festival"
+	HIT=(True)28383 (14.530381202697754)-"2012 Cannes Film Festival"
+	HIT=(True)28492 (14.235658645629883)-"Cannes Film Festival"
+	HIT=(True)28401 (13.30584716796875)-"2012 Cannes Classics section"
+	HIT=(True)28545 (12.828269958496094)-"Cannes Film Festival"
+queryId-64470
+queryMention-['42nd', 'Annual', 'American', 'Music', 'Awards']
+queryContext-['On', 'November', '23', ',', '2014', ',', 'Kazantsev', 'appeared', 'as', 'a', 'presenter', 'at', 'the', '[QSPAN_START]', '42nd', 'Annual', 'American', 'Music', 'Awards', '[QSPAN_END]', 'in', 'Nokia', 'Theatre', 'L.A.', 'Live', ',', 'in', 'Los', 'Angeles', ',', 'California', '.', 'On', 'December', '15', ',', '2014', ',', 'she', 'appeared', 'as', 'a', 'presenter', 'at', 'the', 'American', 'Country', 'Countdown', 'Awards', 'in', 'Nashville', ',', 'Tennessee', '.', 'She', 'also', 'presented', 'at', 'the', 'Academy', 'of', 'Country', 'Music', 'Awards', 'on', 'April', '19', ',', '2015', ',', 'at', 'the', 'AT&T', 'Stadium', 'in', 'Arlington', ',', 'Texas', '.', 'On', 'May', '17', ',', '2015', ',', 'she', 'appeared', 'as', 'a', 'presenter', 'with', 'Pete', 'Wentz', 'at', 'the', '2015', 'Billboard', 'Music', 'Awards', 'in', 'the', 'T-Mobile', 'Arena', 'in', 'Las', 'Vegas', ',', 'Nevada']
+	HIT=(True)64485 (13.219925880432129)-"American Music Awards of 2014"
+	HIT=(True)64454 (12.963205337524414)-"American Music Awards of 2014"
+	HIT=(True)64453 (12.81984806060791)-"42nd American Music Awards"
+	HIT=(False)NEG_1812099 (12.462282180786133)-""
+	HIT=(True)64472 (12.418442726135254)-"2014 American Music Awards"
+queryId-112841
+queryMention-['1969', 'Portugal', 'earthquake']
+queryContext-['1383', '–', '1385', 'Crisis', '·', '1755', 'Lisbon', 'earthquake', '·', '[QSPAN_START]', '1969', 'Portugal', 'earthquake', '[QSPAN_END]', 'A', 'Portuguesa', '·', 'Afonso', 'I', 'of', 'Portugal', '·', 'Afonso', 'II', 'of', 'Portugal', '·', 'Afonso', 'III', 'of', 'Portugal', '·', 'Afonso', 'IV', 'of', 'Portugal', '·', 'Afonso', 'V', 'of', 'Portugal', '·', 'Afonso', 'VI', 'of', 'Portugal', '·', 'Alexandre', 'Herculano', 'de', 'Carvalho', 'e', 'Araujo', '·', 'Alves', 'Reis', '·', 'Anglo-Portuguese', 'Alliance', '·', 'Angola', '·', 'Anthony', 'of', 'Portugal', '·', 'António', 'de', 'Oliveira', 'Salazar', '·', 'António', 'de', 'Spínola', '·', 'Assembly', 'of', 'the', 'Republic', '(', 'Portugal', ')', '·', 'Autonomous', 'Regions', 'of', 'Portugal', '·', 'Avante', '!', '·', 'Azores', '·', 'Azulejo', 'Bank', 'of', 'Portugal', '·', 'Battle', 'of', 'Albuera', '·', 'Battle', 'of', 'Alcazarquivir', '·', 'Battle', 'of', 'Alfarrobeira', '·', 'Battle', 'of', 'Aljubarrota', '·', 'Battle', 'of', 'Atoleiros', '·', 'Battle', 'of', 'Ceuta', '·', 'Battle', 'of', 'Covadonga', '·', 'Battle', 'of', 'Guararapes', '(', '2nd', ')', '·', 'Battle', 'of', 'Ourique', '·', 'Battle', 'of', 'São', 'Mamede', '·', 'Bracari', '·', 'Brazil', 'Carlos', 'I', 'of', 'Portugal', '·', 'Carnation', 'Revolution', '·', 'Cape', 'Verde', '·', 'Castro', '(', 'village', ')', '·', 'Catholic', 'Church', 'in', 'Portugal', '·', 'Cavaquinho', '·', 'Celtiberians', '·', 'Celtici', '·', 'Chaul', '·', 'Coat', 'of', 'arms', 'of', 'Portugal', '·', 'Coelerni', '·', 'Colonial', 'Heads', 'of', 'Bissau', '·', 'Colonial', 'Heads', 'of', 'Cacheu', '·', 'Colonial', 'Heads', 'of', 'Portuguese', 'Guinea', '·', 'Communications', 'in', 'Portugal', '·', 'Conferência', 'das', 'Organizações', 'Nacionalistas', 'das', 'Colónias', 'Portuguesas', '·', 'Conservation', 'areas', 'of', 'Portugal', '·', 'Converso', '·', 'Conii', '·', 'CPLP', '·', 'County', 'of', 'Portugal', '·', 'Culture', 'of', 'Portugal', 'Dadra', 'and', 'Nagar', 'Haveli', '·', 'Daman', 'and', 'Diu', '·', 'Demographics', 'of', 'Portugal', '·', 'Denis', 'of', 'Portugal', '·', 'Drug', 'policy', 'of', 'Portugal', 'East', 'Timor', '·', 'Economy', 'of', 'Portugal', '·', 'Economic', 'history', 'of', 'Portugal', '·', 'Education', 'in', 'Portugal', '·', 'Edward', 'of', 'Portugal', '·', 'Elections', 'in', 'Portugal', '·', 'Elmina', '·', 'Elmina', 'Castle', '·', 'Equaesi', '·', 'Estado', 'Novo', '(', 'Portugal', ')', 'Fado', '·', 'Fernando', 'I', 'of', 'Portugal', '·', 'Flag', 'of', 'Portugal', '·', 'Foreign', 'relations', 'of', 'Portugal', '·', 'Fort', 'of', 'São', 'João', 'Baptista', 'de', 'Ajudá', '·', 'Funchal', 'Gallaecia', '·', 'Garcia', 'II', 'of', 'Galicia', '·', 'Geography', 'of', 'Portugal', '·', 'Ginjinha', '·', 'Goa', '·', 'Greater', 'Lisbon', '·', 'Greater', 'Porto', '·', 'Grovii', '·', 'Guinea-Bissau', '·', 'Henry', 'of', 'Portugal', '(', 'disambiguation', ')', '·', 'Hispania', '·', 'History', 'of', 'Portugal', '·', 'House', 'of', 'Capet', 'Iberian', 'peninsula', '·', 'Iberian', 'Union', '·', 'Interamici', '·', 'ISCTE', 'John', 'I', 'of', 'Portugal', '·', 'John', 'II', 'of', 'Portugal', '·', 'John', 'III', 'of', 'Portugal', '·', 'John', 'IV', 'of', 'Portugal', '·', 'John', 'V', 'of', 'Portugal', '·', 'John', 'VI', 'of', 'Portugal', '·', 'Joseph', 'I', 'of', 'Portugal', '·', 'Judiciary', 'of', 'Portugal', 'Kingdom', 'of', 'Galicia', '·', 'Kingdom', 'of', 'Portugal', '·', 'Kionga', 'Triangle', 'Law', 'enforcement', 'in', 'Portugal', '·', 'Leonor', 'of', 'Viseu', '·', 'Leuni', '·', 'Liberalism', 'in', 'Portugal', '·', 'Liberal', 'Wars', '·', 'Limici', '·', 'Limpieza', 'de', 'sangre', '·', 'Lines', 'of', 'Torres', 'Vedras', '·', 'Lisbon', '·', 'Lisbon', 'metropolitan', 'area', '·', 'Lisbon', 'Metro', '·', 'List', 'of', 'Cities', 'in', 'Portugal', '·', 'List', 'of', 'museums', 'in', 'Portugal', '·', 'List', 'of', 'political', 'parties', 'in', 'Portugal', '·', 'List', 'of', 'Portuguese', 'artists', '-', 'List', 'of', 'Portuguese', 'birds', '·', 'List', 'of', 'Portuguese', 'companies', '·', 'List', 'of', 'Portuguese', 'flags', '·', 'List', 'of', 'Portuguese', 'islands', '·', 'List', 'of', 'Portuguese', 'monarchs', '·', 'List', 'of', 'Portuguese', 'people', '·', 'List', 'of', 'Presidents', 'of', 'Portugal', '·', 'List', 'of', 'Prime', 'Ministers', 'of', 'Portugal', '·', 'List', 'of', 'rivers', 'of', 'Portugal', '·', 'List', 'of', 'schools', 'in', 'Portugal', '.', 'List', 'of', 'universities', 'in', 'Portugal', '·', 'Luanqui', '·', 'Luis', 'I', 'of', 'Portugal', '·', 'Lusitania', '·', 'Lusitanian', 'language', '·', 'Lusitanian', 'mythology', '·', 'Lusitanians', '·', 'Lusitanic', '·', 'Lusophone', '·', 'Lusophony', 'Games', 'Macau', '·', 'Malacca', '·', 'Madeira', 'Island', '·', 'Madeira', 'wine', '·', 'Manuel', 'I', 'of', 'Portugal', '·', 'Manuel', 'II', 'of', 'Portugal', '·', 'Marcomanni', '·', 'Marcelo', 'Caetano', '·', 'Maria', 'I', 'of', 'Portugal', '·', 'Maria', 'II', 'of', 'Portugal', '·', 'Miguel', 'of', 'Portugal', '·', 'Military', 'of', 'Portugal', '·', 'Miranda', 'do', 'Douro', '·', 'Mirandese', 'language', '·', 'Monuments', 'of', 'Portugal', '·', 'Moors', '·', 'Mozambique', '·', 'Multibanco', '·', 'Municipalities', 'of', 'Portugal', '·', 'Munuza', '·', 'Music', 'of', 'Portugal', '·', 'Muslim', 'Conquest', 'of', 'Spain', 'Narbasi', '·', 'Nemetati', 'Oestriminis', '·', 'Olivenza', '·', 'Ophiussa', '·', 'Order', 'of', 'Aviz', '·', 'Order', 'of', 'Christ', '·', 'Our', 'Lady', 'of', 'Fatima', 'Paesuri', '·', 'Pastel', 'de', 'nata', '·', 'Patriarch', 'of', 'Lisbon', '·', 'Pedro', 'I', 'of', 'Brazil', '·', 'Peter', 'I', 'of', 'Portugal', '·', 'Peter', 'II', 'of', 'Portugal', '·', 'Peter', 'III', 'of', 'Portugal', '·', 'Pedro', 'V', 'of', 'Portugal', '·', 'Pedro', 'Santana', 'Lopes', '·', 'Peneda-Gerês', 'National', 'Park', '·', 'Peninsular', 'War', '·', 'Philip', 'II', 'of', 'Spain', '·', 'Philip', 'III', 'of', 'Spain', '·', 'Philip', 'IV', 'of', 'Spain', '·', 'Pimba', '·', 'Pink', 'Map', '·', 'Political', 'divisions', 'of', 'Portugal', '·', 'Politics', 'of', 'Portugal', '·', 'Porto', '·', 'Porto', 'Metro', '·', 'Porto', 'Santo', 'Island', '·', 'Portugal', '·', 'Portugal', 'Day', '·', 'Portugal', 'in', 'the', 'Great', 'War', '·', 'Portugal', 'in', 'the', 'period', 'of', 'discoveries', '·', 'Portuguese', 'Angola', '·', 'Portuguese', 'Cape', 'Verde', '·', 'Portuguese', 'Ceylon', '·', 'Portuguese', 'Colonial', 'War', '·', 'Portuguese', 'Communist', 'Party', '·', 'Portuguese', 'Constitution', '·', 'Portuguese', 'Council', 'of', 'State', '·', 'Portuguese', 'Creole', '·', 'Portuguese', 'cuisine', '·', 'Portuguese', 'Empire', '·', 'Portuguese', 'euro', 'coins', '·', 'Portuguese', 'guitar', '·', 'Portuguese', 'hip', 'hop', '·', 'Portuguese', 'India', '·', 'Portuguese', 'Inquisition', '·', 'Portuguese', 'inventions', '·', 'Portuguese', 'Guinea', '·', 'Portuguese', '(', 'Guyana', ')', '·', 'Portuguese', 'language', '·', 'Portuguese', 'literature', '·', 'Portuguese', 'military', 'history', '·', 'Portuguese', 'Mozambique', '·', 'Portuguese', 'pavement', '·', 'Portuguese', 'people', '·', 'Portuguese', 'São', 'Tomé', 'and', 'Príncipe', '·', 'Portuguese', 'Timor', '·', 'Port', 'wine', '·', 'Public', 'holidays', 'in', 'Portugal', 'Quadi', '·', 'Quaquerni', 'Raul', 'Pires', 'Ferreira', 'Chaves', '·', 'Reconquista', '·', 'Religion', 'in', 'Portugal', '·', 'Roman', 'Geography', 'of', 'Portugal', '·', 'Royal', 'Patriarchal', 'Music', 'Seminary', 'of', 'Lisbon', 'Sancho', 'I', 'of', 'Portugal', '·', 'Sancho', 'II', 'of', 'Portugal', '·', 'São', 'Tomé', 'and', 'Príncipe', '·', 'Savage', 'Islands', '·', 'Scouting', 'in', 'Portugal', '·', 'Sebastian', 'of', 'Portugal', '·', 'Serra', 'da', 'Estrela', '·', 'Serra', "d'El-Rei", '·', 'Seurbi', '·', 'Siege', 'of', 'Lisbon', '·', 'Social', 'Democratic', 'Party', '(', 'Portugal', ')', '·', 'Socialist', 'Party', '(', 'Portugal', ')', '·', 'Suevi', 'Tamagani', '·', 'Tapoli', '·', 'The', 'Consolidation', 'of', 'the', 'Monarchy', 'in', 'Portugal', '·', 'The', 'establishment', 'of', 'the', 'monarchy', 'in', 'Portugal', '·', 'The', 'Portugal', 'News', '·', 'Timeline', 'of', 'Portuguese', 'history', '·', 'Transportation', 'in', 'Portugal', '·', 'Treaty', 'of', 'Madrid', '(', '13', 'January', '1750', ')', '·', 'Treaty', 'of', 'Tordesillas', '·', 'Treaty', 'of', 'Windsor', '1386', '·', 'Turduli', '·', 'Turduli', 'Veteres', '·', 'Turdulorum', 'Oppida', '·', 'Turodi', 'Urraca', 'of', 'Portugal', 'Vandals', '·', 'Via', 'Verde', '·', 'Verde', 'wine', '·', 'Vímara', 'Peres', '·', 'Viriathus', '·', 'Visa', 'requirements', 'for', 'Portuguese', 'citizens', '·', 'Visigoths', 'Water', 'supply', 'and', 'sanitation', 'in', 'Portugal', '·', 'Wines', 'of', 'Portugal', 'Zambezia', 'Province', '·', 'Zoelae']
+	HIT=(False)37980 (12.273408889770508)-"earthquake"
+	HIT=(True)112838 (11.9771146774292)-"earthquake in 1969"
+	HIT=(False)38142 (11.934967994689941)-"earthquake with a magnitude of 9.2"
+	HIT=(False)37928 (11.912266731262207)-"magnitude 9.5 quake"
+	HIT=(False)12904 (11.846030235290527)-"Great earthquake"
+queryId-102956
+queryMention-['Atlanta', 'International', 'Pop', 'Festival']
+queryContext-['Earlier', 'that', 'year', ',', 'the', 'second', 'annual', '[QSPAN_START]', 'Atlanta', 'International', 'Pop', 'Festival', '[QSPAN_END]', 'was', 'held', 'in', 'the', 'same', 'venue', 'as', 'this', 'racing', 'event', '.', 'Jimi', 'Hendrix', 'and', 'the', 'Allman', 'Brothers', 'Band', 'performed', 'in', 'front', 'of', '300,000', 'concertgoers', ';', 'the', 'town', 'had', 'a', 'population', 'of', 'about', '2,000']
+	HIT=(False)56069 (12.030051231384277)-"Miami Pop Festival"
+	HIT=(True)102948 (11.191378593444824)-"Second Annual Atlanta International Pop Festival"
+	HIT=(False)51947 (10.776789665222168)-"2009 ARIA Music Awards"
+	HIT=(True)102955 (10.708391189575195)-"Atlanta International Pop Festival"
+	HIT=(True)102962 (10.274545669555664)-"Atlanta International Pop Festival II"
+queryId-28454
+queryMention-['Cannes', 'Film', 'Festival']
+queryContext-['Giovanni', '"', 'Nanni', '"', 'Moretti', '(', ';', 'born', '19', 'August', '1953', ')', 'is', 'an', 'Italian', 'film', 'director', ',', 'producer', ',', 'screenwriter', 'and', 'actor', '.', 'The', 'Palme', "d'Or", 'winner', 'in', '2001', ',', 'in', '2012', 'he', 'was', 'the', 'President', 'of', 'the', 'Jury', 'at', 'the', '[QSPAN_START]', 'Cannes', 'Film', 'Festival', '[QSPAN_END]']
+	HIT=(True)28404 (13.133100509643555)-"2012 Cannes Film Festival"
+	HIT=(False)NEG_2281523 (12.332742691040039)-""
+	HIT=(False)61007 (12.226468086242676)-"2016 Metro Manila Film Festival"
+	HIT=(False)102553 (12.137397766113281)-"Cannes Film Festival"
+	HIT=(False)NEG_657775 (11.883622169494629)-""
+queryId-69231
+queryMention-['2007', 'contest']
+queryContext-['Because', 'Sweden', 'placed', '19th', 'at', 'the', '2005', 'contest', ',', 'Carola', 'was', 'forced', 'to', 'compete', 'in', 'the', 'Eurovision', 'semi-final', 'she', 'performed', '20th', ',', 'following', 'Portugal', 'and', 'preceding', 'the', 'Estonia', 'she', 'finished', 'in', '4th', 'place', 'with', '214', 'points', ',', 'this', 'qualifying', 'for', 'the', 'Final', '.', 'At', 'the', 'final', ',', 'Carola', 'performed', 'in', '22nd', 'spot', 'and', 'at', 'the', 'end', 'of', 'voting', 'received', '170', 'points', 'and', 'finished', 'in', '5th', 'place', '.', 'It', 'is', 'notable', 'that', 'this', 'is', 'Carola', "'s", 'third', 'top', '5', 'finish', 'in', 'the', 'Eurovision', 'Song', 'Contest', '(', '3rd', 'in', '1983', ',', '1st', 'in', '1991', 'and', '5th', 'in', '2006', ')', '.', 'Also', ',', 'Carola', 'achieved', 'her', '5th', 'place', 'without', 'receiving', 'any', '12', 'points', ',', 'unlike', 'most', 'other', 'of', 'the', 'top', '10', 'countries', 'that', 'year', '.', 'Meaning', 'that', 'Sweden', 'automatically', 'qualified', 'for', 'the', 'final', 'in', 'the', '[QSPAN_START]', '2007', 'contest', '[QSPAN_END]']
+	HIT=(False)104004 (14.968841552734375)-"Andorra"
+	HIT=(False)104005 (14.519074440002441)-"Andorra"
+	HIT=(True)69277 (14.447235107421875)-"2007 edition of the Contest"
+	HIT=(True)69386 (14.324932098388672)-"Eurovision Song Contest 2007"
+	HIT=(True)69330 (14.299165725708008)-"2007 Eurovision Song Contest"
+queryId-111785
+queryMention-['North', 'American', '/', 'Australian', 'Summer', 'Tour']
+queryContext-['In', '2013', ',', 'Pitbull', 'released', 'a', 'diss', 'track', 'towards', 'Lil', 'Wayne', 'called', '"', 'Welcome', '2', 'Dade', 'County', '"', 'shortly', 'after', 'Lil', 'Wayne', "'s", 'rant', 'on', 'the', 'Miami', 'Heat', '.', 'Pitbull', 'made', 'his', 'film', 'debut', 'Epic', 'with', 'a', 'voice', 'role', 'of', 'the', 'character', '"', 'Bufo', '"', '.', 'He', 'embarked', 'on', 'the', '[QSPAN_START]', 'North', 'American', '/', 'Australian', 'Summer', 'Tour', '[QSPAN_END]', 'with', 'Kesha', 'to', 'promote', 'both', 'their', 'albums', ',', 'which', 'extends', 'from', 'May', 'to', 'November', '.', 'He', 'released', 'his', 'song', '"', 'Feel', 'This', 'Moment', '"', 'featuring', 'Christina', 'Aguilera', 'in', 'January', '18', ',', '2013', 'and', 'they', 'performed', 'it', 'live', 'at', 'the', '2013', 'Billboard', 'Music', 'Awards', ',', 'as', 'well', 'as', 'on', 'the', 'fourth', 'season', 'of', 'America', "'s", "''", 'The', 'Voice', "''", '.', 'The', 'song', 'was', 'a', 'commercial', 'success', ',', 'peaking', 'at', '8', 'on', 'the', "''", 'Billboard', "''", 'Hot', '100', '.', 'Later', 'he', 'released', 'final', 'single', 'from', 'his', 'Global', 'Warming', 'album', ',', 'Outta', 'Nowhere', 'featuring', 'Danny', 'Mercer', 'in', 'late', 'May', '.', 'At', 'the', 'Latin', 'Grammy', 'Awards', 'of', '2013', ',', 'Pitbull', 'won', 'the', 'award', 'for', 'Best', 'Urban', 'Performance', 'for', 'his', 'song', '"', 'Echa', 'Pa', "'", 'lla', '(', 'Manos', 'Pa', "'", 'rriba', ')', '"']
+	HIT=(False)111479 (12.489412307739258)-"2011 Kids ' Choice Awards"
+	HIT=(False)NEG_1450895 (12.254545211791992)-""
+	HIT=(False)120000 (12.172346115112305)-"Who I Am Tour"
+	HIT=(False)NEG_2072724 (12.093517303466797)-""
+	HIT=(False)125772 (12.066162109375)-"spring tour"
+queryId-22827
+queryMention-['2013', 'BET', 'Awards']
+queryContext-['On', 'June', '30', ',', '2013', ',', 'Fields', 'performed', 'the', 'song', "''", 'Opposites', 'Attract', "''", 'at', 'the', '[QSPAN_START]', '2013', 'BET', 'Awards', '[QSPAN_END]', '.', 'His', 'performance', 'included', 'him', 'strumming', 'a', 'guitar', 'on', 'an', 'iPhone', 'and', 'was', 'called', 'one', 'of', 'the', "''", '9', 'Most', 'Memorable', 'Moments', "''", 'of', 'the', 'awards', 'by', 'Yahoo!', 'Music']
+	HIT=(True)22822 (16.747873306274414)-"2013 's BET Awards"
+	HIT=(True)22824 (16.208030700683594)-"BET Awards 2013"
+	HIT=(True)22834 (16.188764572143555)-"2013 BET Awards"
+	HIT=(True)22839 (15.738544464111328)-"2013 BET Awards"
+	HIT=(True)22843 (15.727740287780762)-"BET Awards"
+queryId-28553
+queryMention-['65th', 'Annual', 'Cannes', 'Film', 'Festival']
+queryContext-['Sebbens', 'secured', 'a', 'role', 'in', "''", 'The', 'Sapphires', "''", '(', '2012', ')', ',', 'a', 'film', 'based', 'on', 'the', 'stage', 'show', 'of', 'the', 'same', 'name', '.', 'It', 'was', 'directed', 'by', 'Wayne', 'Blair', 'and', 'also', 'starred', 'Deborah', 'Mailman', ',', 'Jessica', 'Mauboy', ',', 'and', 'Miranda', 'Tapsell', '.', 'Sebbens', 'played', 'the', 'role', 'of', 'Kay', 'McCrae', ',', 'one', 'of', 'four', 'Indigenous', 'Australian', 'singers', '"', 'who', 'travel', 'from', 'a', 'mission', 'in', 'Victoria', 'to', 'Vietnam', 'to', 'sing', 'for', 'American', 'troops', '"', '.', 'The', 'cast', 'attended', 'the', 'film', "'s", 'premiere', 'at', 'the', '[QSPAN_START]', '65th', 'Annual', 'Cannes', 'Film', 'Festival', '[QSPAN_END]', 'in', 'Cannes', ',', 'France', 'on', '20', 'May', '2012']
+	HIT=(True)28404 (14.519662857055664)-"2012 Cannes Film Festival"
+	HIT=(True)28372 (14.355167388916016)-"65th Annual Cannes Film Festival"
+	HIT=(False)NEG_1438497 (14.172453880310059)-""
+	HIT=(True)28492 (14.11219310760498)-"Cannes Film Festival"
+	HIT=(True)28383 (14.058526992797852)-"2012 Cannes Film Festival"
+queryId-113120
+queryMention-['T', 'in', 'the', 'Park', '2012']
+queryContext-['The', 'band', 'formed', 'while', 'studying', 'music', 'at', 'Dundee', 'College', 'in', '2009', 'and', 'quickly', 'made', 'a', 'name', 'for', 'themselves', 'in', 'support', 'slots', 'with', 'The', 'View', '.', 'They', 'recorded', 'their', 'first', 'album', "''", 'The', 'Last', 'Great', 'Melodrama', "''", 'in', '2011', 'and', 'the', 'EP', "''", 'The', 'Visible', 'Hand', "''", 'followed', 'in', '2012', '.', 'During', 'this', 'period', 'they', 'recorded', 'a', 'live', 'session', 'for', 'the', 'BBC', 'with', 'Vic', 'Galloway', '.', 'They', 'also', 'played', 'the', 'T', 'Break', 'Stage', 'at', '[QSPAN_START]', 'T', 'in', 'the', 'Park', '2012', '[QSPAN_END]', '.', 'Former', 'Dundee', 'FC', 'footballer', 'and', 'promoter', 'Lee', 'Wilkie', 'spotted', 'the', 'band', "'s", 'talent', 'and', 'introduced', 'them', 'to', 'Dave', 'Mclean', 'of', 'Riverman', 'Management', '.', 'The', 'two', 'began', 'to', 'co-manage', 'the', 'band', 'through', 'Riverman', 'Management', 'who', 'also', 'represent', 'Placebo', '.', 'Wilkie', 'and', 'Mclean', 'brought', 'the', 'Mirror', 'Trap', 'to', 'the', 'attention', 'of', 'Placebo', 'and', 'the', 'band', 'supported', 'them', 'at', 'the', 'HMV', 'Picture', 'House', ',', 'Edinburgh', 'on', '25', 'April', '2012', '.', 'In', '2013', 'Brian', 'Molko', 'attended', 'one', 'of', 'their', 'small', 'gigs', 'at', 'Non-Zero', "'s", 'on', 'Dundee', "'s", 'Castle', 'Street', '.', 'Placebo', 'were', 'impressed', 'with', 'the', 'band', "'s", 'performance', 'and', 'invited', 'them', 'to', 'join', 'them', 'as', 'support', 'at', 'a', 'charity', 'performance', 'in', 'Leeds', 'on', '8', 'November', '2013', '.', 'By', 'the', 'time', 'the', 'band', 'recorded', 'and', 'released', 'their', 'second', 'album', ',', "''", 'Stay', 'Young', "''", 'they', 'were', 'offered', 'the', 'chance', 'to', 'support', 'Placebo', 'on', 'a', 'tour', 'of', 'Russia', 'in', 'the', 'summer', 'of', '2014', '.', 'The', 'tour', 'covered', '8', 'venues', 'in', '13', 'days', 'and', 'the', 'band', 'invited', 'Scott', 'Duffy', 'to', 'join', 'them', ',', 'providing', 'additional', 'percussion', 'and', 'vocals', '.', 'The', 'tour', 'included', 'a', 'performance', 'for', '3000', 'fans', 'at', 'Krasnodar', "'s", 'Ice', 'Palace', '.', 'The', 'band', 'became', 'an', 'overnight', 'success', 'in', 'Russia', ',', 'provoking', 'an', 'outpouring', 'of', 'excitement', 'and', 'fan', 'art', 'on', 'social', 'media', '.', 'In', 'September', '2014', 'Placebo', 'announced', 'that', 'The', 'Mirror', 'Trap', 'would', 'be', 'joining', 'them', 'at', 'the', '2014', 'iTunes', 'Festival', ',', 'performing', 'at', 'London', "'s", 'Roundhouse', 'in', 'Camden', 'Town', '.', 'The', 'release', 'of', 'their', '2016', 'album', "''", 'Simulations', "''", 'saw', 'the', 'band', 'take', 'up', 'slots', 'at', 'the', 'Summer', 'Sonic', 'Festival', 'in', 'Japan', 'and', 'the', 'Y', 'Not', 'Festival', 'in', 'England']
+	HIT=(False)113726 (13.380300521850586)-"2012 AFL Rising Star"
+	HIT=(False)117005 (13.18946647644043)-"T in the Park 2011"
+	HIT=(True)113117 (12.89202880859375)-"T in the Park"
+	HIT=(False)NEG_1824569 (12.834451675415039)-""
+	HIT=(True)113121 (12.50090217590332)-"T in the Park"
+queryId-125097
+queryMention-['Tezno', 'massacre']
+queryContext-['In', 'addition', ',', 'in', 'the', 'immediate', 'postwar', 'period', ',', 'a', 'number', 'of', 'Partisan', 'units', 'engaged', 'in', 'mass', 'murder', 'against', 'prisoners', 'of', 'war', 'and', 'others', 'perceived', 'Axis', 'sympathizers', 'and', 'collaborators', 'with', 'their', 'relatives', ',', 'children', 'including', '.', 'The', 'infamous', 'carnages', 'include', 'the', 'Bleiburg', 'repatriations', ',', 'the', 'Foibe', 'massacres', ',', '[QSPAN_START]', 'Tezno', 'massacre', '[QSPAN_END]', ',', 'Macelj', 'massacre', ',', 'Kočevski', 'Rog', 'massacre', 'and', 'Barbara', 'Pit', 'massacre', '.', 'The', 'most', 'likely', 'number', 'of', 'Croats', 'killed', 'by', 'the', 'Partisans', 'in', 'the', 'post-war', 'period', 'is', 'around', '60,000']
+	HIT=(False)27458 (13.138402938842773)-"massacre"
+	HIT=(True)125094 (13.082418441772461)-"Tezno"
+	HIT=(False)93978 (12.738518714904785)-"Voćin massacre"
+	HIT=(False)93862 (12.498504638671875)-"nearly 10,000 Armenians were massacred"
+	HIT=(False)85953 (12.471930503845215)-"Massacre of Kalavryta"
+queryId-20485
+queryMention-['2004', 'Academy', 'Awards']
+queryContext-['Despite', 'being', 'a', 'commercial', 'failure', 'on', 'release', '(', 'grossing', 'only', '80,000', ')', ',', 'the', 'film', 'went', 'on', 'to', 'win', 'critical', 'praise', 'and', 'a', 'cult', 'following', 'plus', 'won', 'over', 'new', 'viewers', 'following', 'Jackson', "'s", 'success', 'with', "''", 'The', 'Lord', 'of', 'the', 'Rings', "''", 'trilogy', '.', 'During', 'his', 'acceptance', 'speech', 'at', 'the', '[QSPAN_START]', '2004', 'Academy', 'Awards', '[QSPAN_END]', ',', 'Jackson', 'mentioned', "''", 'Meet', 'the', 'Feebles', "''", '(', 'along', 'with', "''", 'Bad', 'Taste', "''", ')', ',', 'joking', 'that', 'it', 'had', 'been', '"', 'wisely', 'overlooked', 'by', 'the', 'Academy', '.', '"', 'The', 'eponymous', 'theatre', 'troupe', 'is', 'rehearsing', 'the', 'title', 'song', 'with', 'hopes', 'of', 'finding', 'success', 'through', 'being', 'picked', 'up', 'for', 'a', 'syndicated', 'television', 'show', '.', 'Heidi', '(', 'a', 'hippopotamus', ')', ',', 'the', 'star', 'of', 'the', 'show', ',', 'is', 'insulted', 'by', 'pornographic', 'director', 'Trevor', '(', 'a', 'rat', ')', 'and', 'complains', 'to', 'her', 'boss', 'and', 'lover', ',', 'Bletch', '(', 'a', 'walrus', ')', ',', 'who', 'is', 'actually', 'in', 'an', 'adulterous', 'relationship', 'with', 'Samantha', '(', 'a', 'cat', ')', '.', 'Meanwhile', ',', 'Robert', '(', 'a', 'hedgehog', ')', ',', 'the', 'newest', 'member', 'of', 'the', 'team', ',', 'arrives', 'at', 'the', 'theatre', 'and', 'immediately', 'falls', 'in', 'love', 'with', 'another', 'newcomer', ',', 'Lucille', '(', 'a', 'poodle', ')', '.', 'Samantha', 'confronts', 'Heidi', ',', 'insults', 'her', ',', 'and', 'reveals', 'her', 'relationship', 'with', 'Bletch', '.', 'Robert', 'confesses', 'his', 'love', 'to', 'Lucille', ',', 'and', 'the', 'two', 'become', 'engaged', '.', 'Sid', '(', 'an', 'elephant', ')', 'receives', 'a', 'visit', 'from', 'his', 'ex-girlfriend', 'Sandy', '(', 'a', 'chicken', ')', 'with', 'his', 'alleged', 'son', 'Seymour', '(', 'an', 'improbable-looking', 'elephant/chicken', 'hybrid', ')', '.', 'Sandy', 'informs', 'him', 'she', 'will', 'be', 'preparing', 'a', 'paternity', 'case', 'against', 'him']
+	HIT=(True)20470 (14.500142097473145)-"2004 Academy Awards"
+	HIT=(False)68872 (14.413586616516113)-"2005 Academy Awards"
+	HIT=(False)NEG_681855 (14.12307357788086)-""
+	HIT=(False)NEG_2039225 (13.972729682922363)-""
+	HIT=(False)44521 (13.893815040588379)-"Hollywood Film Festival Award"
+queryId-114979
+queryMention-['1977', 'flood']
+queryContext-['Extensive', 'damage', 'from', 'the', '[QSPAN_START]', '1977', 'flood', '[QSPAN_END]', 'was', 'heavy', 'and', 'there', 'was', 'talk', 'of', 'the', 'company', 'pulling', 'out', '.', 'Again', ',', 'the', 'city', 'won', 'a', 'reprieve', 'from', 'the', 'company', "'s", 'top', 'management', ',', 'which', 'had', 'always', 'regarded', 'the', 'Johnstown', 'works', 'with', 'special', 'affection', 'because', 'of', 'its', 'history', 'and', 'reputation', '.', 'As', 'the', 'increasing', 'amount', 'of', 'federal', 'environmental', 'regulations', 'became', 'more', 'difficult', 'to', 'comply', 'with', 'and', 'the', 'issues', 'with', 'the', 'aging', 'manufacturing', 'facilities', 'grew', 'more', 'significant', ',', 'and', 'as', 'steel', 'companies', 'began', 'closing', 'down', 'plants', 'all', 'over', 'the', 'country', ',', 'by', '1982', 'it', 'looked', 'as', 'if', 'Johnstown', 'had', 'exhausted', 'its', 'appeals', '.', 'By', 'the', 'early', '1990s', ',', 'Johnstown', 'abandoned', 'most', 'of', 'its', 'steel', 'production', ',', 'although', 'some', 'limited', 'fabrication', 'work', 'continues']
+	HIT=(False)NEG_92215 (11.872269630432129)-""
+	HIT=(False)NEG_2664728 (11.55533218383789)-""
+	HIT=(True)114978 (11.204217910766602)-"massive flood"
+	HIT=(False)NEG_948081 (11.051448822021484)-""
+	HIT=(True)114980 (10.732641220092773)-"Johnstown Flood of 1977"
+---------- Evaluation of Retriever Model ------------
+MRR@10=0.7872678396871945
+mAP@10=0.4042890575132627
+mAP@25=0.4577674598799998
+mAP@50=0.4743902962553224
+mAP@100=0.48243865267660246
+Measured from total of 341 queries and 923717 passages
+Using model-data/checkpoints/dev_spanbert_hidden_cls_spatial_ctx_2it
+File: dev_queries=data/resources/train/Dev_training_queries.json, dev_passages=data/resources/WEC-ES/Dev_all_passages.json, golds=data/resources/WEC-ES/Dev_gold_clusters.json
+Parameters: max_query_len=64, max_pass_len=180, topk=100, add_qbound=True, query_style=context
+Done!

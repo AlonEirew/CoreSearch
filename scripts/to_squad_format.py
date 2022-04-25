@@ -25,7 +25,7 @@ def main():
     if query_style == "bm25":
         squad_out = "data/resources/squad/bm25/" + SPLIT + "_squad_format.json"
     elif query_style == "context":
-        squad_out = "data/resources/squad/context/" + SPLIT + "_squad_format_allpos.json"
+        squad_out = "data/resources/squad/context/" + SPLIT + "_squad_format_1pos.json"
     else:
         raise ValueError(f"Not a supported query_style-{query_style}")
 
@@ -45,11 +45,13 @@ def main():
                 else:
                     neg_exampl_id_list.append(res["pass_id"])
 
-            neg_exampl_id_list = neg_exampl_id_list[0:24]
+            pos_exampl_id_list = pos_exampl_id_list[:1]
+            neg_exampl_id_list = neg_exampl_id_list[:24]
             for ctx_id in pos_exampl_id_list:
                 if ctx_id not in all_contexts:
                     all_contexts[ctx_id] = list()
                 all_contexts[ctx_id].append(create_qas_obj(query_example, False, query_style, passage_dict[ctx_id]))
+
             for ctx_id in neg_exampl_id_list:
                 if ctx_id not in all_contexts:
                     all_contexts[ctx_id] = list()
@@ -108,6 +110,6 @@ def create_qas_list(query_id_list, train_queries, query_style):
 
 
 if __name__ == '__main__':
-    SPLIT = "Train"
+    SPLIT = "Dev"
     main()
     print("Done generating for " + SPLIT)

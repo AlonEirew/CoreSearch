@@ -1,0 +1,411 @@
+Generating 50 examples:
+queryId-71176
+queryMention-['2015', 'Olivier', 'Award']
+queryContext-['2015', 'Olivier', 'Award', '.', 'the', 'West', 'End', 'the', 'Almeida', 'Theatre', 'London', 'Olivier', 'Award', '2015', '2014', 'Broadway']
+	HIT=(False)NEG_2350190 (11.726682662963867)-""
+	HIT=(True)71175 (10.738343238830566)-"2015 Laurence Olivier Awards"
+	HIT=(False)43446 (10.665079116821289)-"2015 Oscars ceremony"
+	HIT=(False)NEG_1881190 (10.485153198242188)-""
+	HIT=(False)NEG_1928471 (10.44796371459961)-""
+queryId-39490
+queryMention-['Shaanxi', 'earthquake']
+queryContext-['Shaanxi', 'earthquake', '.', 'the', 'Jiajing', 'Emperor', 'Shaanxi', '830,000', '1556']
+	HIT=(True)39497 (12.407938003540039)-"Shaanxi earthquake of 1556"
+	HIT=(True)39493 (12.398091316223145)-"1556 Shaanxi earthquake"
+	HIT=(True)39501 (12.343599319458008)-"Shaanxi earthquake"
+	HIT=(True)39507 (11.96019458770752)-"earthquake in Shaanxi province in 1556"
+	HIT=(False)NEG_143679 (11.75132942199707)-""
+queryId-114980
+queryMention-['Johnstown', 'Flood', 'of', '1977']
+queryContext-['Johnstown', 'Flood', 'of', '1977', '.', 'between', 'July', '19', 'and', '20', ',', '1977', '40', '1977', 'Tanneryville', 'the', 'Johnstown', 'Flood', 'seven', 'the', 'early', 'morning', 'of', 'July', '20', 'Laurel', 'Run', 'Dam', 'two', 'Laurel', 'Run', 'Dam', 'No.', '2']
+	HIT=(True)114979 (11.09799575805664)-"1977 flood"
+	HIT=(False)NEG_92215 (10.653701782226562)-""
+	HIT=(False)NEG_2664728 (10.528003692626953)-""
+	HIT=(False)NEG_1256749 (9.980704307556152)-""
+	HIT=(False)NEG_948081 (9.882758140563965)-""
+queryId-84864
+queryMention-['2010', 'Yushu', 'earthquake']
+queryContext-['2010', 'Yushu', 'earthquake', '.', 'the', 'Republic', 'of', 'Congo', 'chinese', 'tibetan', '2010', 'Yushu', 'Chindu', 'County', ',', 'Qinghai', 'eur', '52', 'million', 'China', 'the', 'China-Congo', 'Friendship', 'Primary', 'School']
+	HIT=(False)NEG_1342514 (11.97628116607666)-""
+	HIT=(True)84867 (11.927407264709473)-"earthquake"
+	HIT=(True)84862 (11.814480781555176)-"Yushu earthquake"
+	HIT=(False)72597 (11.746438980102539)-"Sumatra earthquake and other natural disasters"
+	HIT=(True)84851 (11.712026596069336)-"2010 Yushu earthquake"
+queryId-120070
+queryMention-['Sanremo', 'Music', 'Festival', 'in', '2009']
+queryContext-['Sanremo', 'Music', 'Festival', 'in', '2009', '.', 'the', 'Critics', "'", 'Award', '"', 'Mia', 'Martini', '"', "''", 'Il', 'bosco', 'delle', 'fragole', "''", 'Giglio', "''", '"', 'Tre', 'colori', '"', 'third', "''", "L'imbarazzo", "''", 'Tricarico', '"', 'Il', 'bosco', 'delle', 'fragole', '"', '2009', '"', 'Vita', 'tranquilla', '"', '2011', '58th', 'Sanremo', 'Music', 'Festival', 'the', 'Sanremo', 'Music', 'Festival']
+	HIT=(True)120064 (11.92453384399414)-"Sanremo Music Festival 2009"
+	HIT=(True)120068 (11.640668869018555)-"Sanremo Music Festival 2009"
+	HIT=(True)120069 (11.593626022338867)-"59th Sanremo Music Festival"
+	HIT=(False)111062 (11.365693092346191)-"60th edition"
+	HIT=(True)120066 (11.275155067443848)-"59th Sanremo Music Festival"
+queryId-122663
+queryMention-['2006', 'Dahab', 'bombings']
+queryContext-['2006', 'Dahab', 'bombings', '.', '2004', 'April', '2005', 'non', 'Sharm', 'el-Sheikh', 'Dahab', '2006', 'Luxor', 'the', 'past', 'twenty', 'year', 'September', '11', ',', '2001', ',', 'fifty-eight', 'United', 'States', 'Sinai', 'July', '23', ',', '2005', 'Cairo', 'Mubarak', '1997']
+	HIT=(True)122659 (15.690181732177734)-"2006 Dahab"
+	HIT=(True)122658 (15.13809585571289)-"Dahab bombings"
+	HIT=(True)122657 (14.96915340423584)-"2006 Dahab bombings"
+	HIT=(False)NEG_517914 (14.942342758178711)-""
+	HIT=(True)122660 (14.659786224365234)-"three bombings"
+queryId-84856
+queryMention-['2010', 'Yushu', 'earthquake']
+queryContext-['2010', 'Yushu', 'earthquake', '.', '2010', '8', 'pm', 'the', 'day', 'of', 'the', 'earthquake', 'noon', 'the', 'China', 'International', 'Earthquake', 'Rescue', 'Team', 'Yushu', 'first', 'the', 'same', 'day', 'Wednesday', ',', 'April', '14']
+	HIT=(True)84862 (12.275161743164062)-"Yushu earthquake"
+	HIT=(True)84861 (12.274633407592773)-"2010 Yushu earthquake"
+	HIT=(True)84864 (12.148460388183594)-"2010 Yushu earthquake"
+	HIT=(False)NEG_1342514 (12.06865406036377)-""
+	HIT=(False)62503 (11.85310173034668)-"2010 8.8-magnitude earthquake"
+queryId-85934
+queryMention-['nine', 'thousand', 'surviving', 'Italian', 'soldiers', 'were', 'executed']
+queryContext-['nine', 'thousand', 'surviving', 'Italian', 'soldiers', 'were', 'executed', '.', 'San', 'Andreas', 'Fault', 'italian', 'approximately', 'five', 'thousand', '1945', '1949', "'", 'Captain', 'Corelli', "'s", 'Mandolin', 'the', 'greek', 'Civil', 'War', "''", 'Corelli', "'s", 'Mandolin', 'european', 'nine', 'thousand', 'Europe', 'Greece', 'german', 'aegean', 'Cephalonia', 'Louis', 'de', 'Bernieres']
+	HIT=(False)NEG_1056137 (12.056020736694336)-""
+	HIT=(False)15667 (11.980525016784668)-"bacteriological research units"
+	HIT=(False)NEG_1516661 (11.758777618408203)-""
+	HIT=(False)47378 (11.757478713989258)-"Night of the Gliders"
+	HIT=(True)85928 (11.703300476074219)-"massacre of Italian troops by the Germans"
+queryId-40415
+queryMention-['59th', 'Primetime', 'Emmy', 'Awards']
+queryContext-['59th', 'Primetime', 'Emmy', 'Awards', '.', 'Outstanding', 'Special', 'Visual', 'Effects', 'Primetime', 'Emmy', 'Awards', '59th', 'the', 'Outstanding', 'Supporting', 'Actor', 'in', 'a', 'Drama', 'Series', 'Sendhil', 'Ramamurthy', 'Masi', 'Oka', 'Oka', '"', 'five', 'Years', 'go', '"', 'Outstanding', 'Writing', 'in', 'a', 'Drama', 'Series', 'Adrian', 'Pasdar']
+	HIT=(True)40448 (11.952757835388184)-"59th Primetime Emmy Awards"
+	HIT=(False)58786 (11.7054443359375)-"65th"
+	HIT=(False)47707 (11.7054443359375)-"66th Primetime Emmy Awards"
+	HIT=(True)40508 (11.64814567565918)-"59th Primetime Emmy Awards"
+	HIT=(False)58767 (11.5385103225708)-"Primetime Emmy Awards"
+queryId-69463
+queryMention-['2007', 'Eurovision', 'Song', 'Contest']
+queryContext-['2007', 'Eurovision', 'Song', 'Contest', '.', 'Nash', 'Spain', "D'NASH", 'Eurovision', 'Song', 'Contest', '2007', "D'Nash", 'spanish']
+	HIT=(True)69330 (13.655363082885742)-"2007 Eurovision Song Contest"
+	HIT=(True)69455 (13.38539981842041)-"2007 Eurovision Song Contest"
+	HIT=(False)76173 (13.264938354492188)-"Eurovision Song Contest victory"
+	HIT=(False)104004 (13.264233589172363)-"Andorra"
+	HIT=(False)104005 (12.849832534790039)-"Andorra"
+queryId-113119
+queryMention-['T', 'in', 'the', 'Park', '2012']
+queryContext-['T', 'in', 'the', 'Park', '2012', '.', '"', 'Shine', 'Ya', 'Light', '18', 'August', '2012', '4Music', '23', 'June', '2012', 'R.I.P.', 'Radio', '1', "'s", 'Wireless', 'Festival', 'Ora', "''", 'the', 'Crush', "''", 'April', 'Wired', '96.5', 'radio', 'V', 'Festival', 'british', '"', 'How', 'we', 'do', '(', 'Party', ')', '"', 'Philadelphia', 'UK', 'Club', 'Paradise', 'Tour', 'Drake', 'April', '2012', 'Facemelt', "''", 'the', 'X', 'Factor', "''", "''", 'the', 'Jonathan', 'Ross', 'Show', "''", 'shine', 'Ya', 'light', 'T', 'in', 'the', 'Park', '4', 'November', '2012', 'roc', 'the', 'life', '"', 'how', 'we', 'do', '(', 'Party', ')', '"', '2012', 'Big', 'Weekend']
+	HIT=(True)113120 (11.34531021118164)-"T in the Park 2012"
+	HIT=(False)117005 (11.143322944641113)-"T in the Park 2011"
+	HIT=(False)113828 (10.686567306518555)-"Young Artist Awards 2012"
+	HIT=(True)113117 (10.626655578613281)-"T in the Park"
+	HIT=(False)NEG_1539806 (10.413162231445312)-""
+queryId-122661
+queryMention-['2006', 'Dahab', 'bombings']
+queryContext-['2006', 'Dahab', 'bombings', '.', '2004', 'Egyptian', 'Sharm', 'El', 'Sheikh', '2006', '16', 'the', 'early', '2000', 'egyptian', 'Sinai', '2011', '2005', 'eritrean', '2012', 'Bedouin', 'Meron', 'Estifanos', 'Dahab']
+	HIT=(True)122659 (15.453837394714355)-"2006 Dahab"
+	HIT=(False)NEG_517914 (14.755812644958496)-""
+	HIT=(True)122657 (14.691173553466797)-"2006 Dahab bombings"
+	HIT=(True)122658 (14.668899536132812)-"Dahab bombings"
+	HIT=(True)122660 (14.617347717285156)-"three bombings"
+queryId-85953
+queryMention-['Massacre', 'of', 'Kalavryta']
+queryContext-['Massacre', 'of', 'Kalavryta', '.', 'August', '16', 'italian', 'Epirus', 'Kommeno', 'german', 'Army', 'Group', 'E', 'the', 'italian', '11th', 'Army', 'the', 'Massacre', 'of', 'Distomo', 'December', 'Löhr', 'the', '"', 'Massacre', 'of', 'Kalavryta', '"', 'Balkans', 'Greece']
+	HIT=(False)NEG_328592 (12.01994514465332)-""
+	HIT=(False)85897 (11.560388565063477)-"Malmedy massacre"
+	HIT=(False)20888 (11.515899658203125)-"massacre"
+	HIT=(False)NEG_571473 (11.482941627502441)-""
+	HIT=(True)85947 (11.259360313415527)-"Massacre of Kalavryta"
+queryId-28383
+queryMention-['2012', 'Cannes', 'Film', 'Festival']
+queryContext-['2012', 'Cannes', 'Film', 'Festival', '.', 'CinemaScore', "''", 'Lawless', 'Warren', 'Ellis', 'the', 'Weinstein', 'Company', 'the', 'upcoming', 'Labor', 'Day', 'weekend', 'May', '19', 'Cannes', 'Film', 'Festival', 'nearly', '10-minute', 'Wednesday', ',', 'August', '29', ',', '2012', '2012', 'U.S.', 'Cave', 'Lawless']
+	HIT=(True)28495 (12.609847068786621)-"2012 Cannes Film Festival"
+	HIT=(True)28404 (12.580645561218262)-"2012 Cannes Film Festival"
+	HIT=(False)NEG_1639215 (11.556825637817383)-""
+	HIT=(True)28553 (11.553194999694824)-"65th Annual Cannes Film Festival"
+	HIT=(False)NEG_943002 (11.371598243713379)-""
+queryId-41635
+queryMention-['a', 'plane', 'crash']
+queryContext-['a', 'plane', 'crash', '.', '2010', 'Stefan', 'Liv', 'Memorial', 'Trophy', '2013', 'September', '7', ',', '2011', 'russian', 'Sweden', 'the', 'Conn', 'Smythe', 'Trophy', 'KHL', 'Lokomotiv', 'Yaroslavl', 'Central', 'Organisation', 'SHL', 'NHL', '30', 'the', 'Kontinental', 'Hockey', 'League', 'SICO', 'Swedish', 'Hockey', 'League', 'Stefan', 'Liv']
+	HIT=(True)41603 (13.550567626953125)-"plane crash"
+	HIT=(True)41614 (13.511187553405762)-"plane crash"
+	HIT=(True)41633 (13.270086288452148)-"Lokomotiv Yaroslavl plane crash"
+	HIT=(False)92054 (13.082011222839355)-"Germanwings plane crash"
+	HIT=(True)41632 (13.043240547180176)-"plane crash"
+queryId-83112
+queryMention-['Mudan', 'incident']
+queryContext-['Mudan', 'incident', '.', '54', 'Americans', '1894', 'Chinese', 'the', 'Mudan', 'incident', '1874', '1871', 'ryūkyūan', 'Taiwan', '300', 'China', 'the', 'Ryukyu', 'Islands', 'taiwanese', '1872', 'the', 'Formosa', 'Expedition', 'chinese', '1879', 'Japanese', 'Ryukyu', 'Domain', 'the', 'Republic', 'of', 'Ezo', '1875', '250', 'japanese', 'Japan', '1869', '1867', 'Qing', 'China', 'the', 'First', 'sino-japanese', 'War', 'Qing']
+	HIT=(False)NEG_634023 (10.137703895568848)-""
+	HIT=(True)83115 (10.028244018554688)-"Mudan incident"
+	HIT=(False)NEG_2407690 (9.954353332519531)-""
+	HIT=(True)83116 (9.917802810668945)-"were massacred"
+	HIT=(False)NEG_2110979 (9.863755226135254)-""
+queryId-41626
+queryMention-['plane', 'crash']
+queryContext-['plane', 'crash', '.', '2011', '–', '12', 'Rachůnek', 'September', '7', ',', '2011']
+	HIT=(True)41633 (13.389358520507812)-"Lokomotiv Yaroslavl plane crash"
+	HIT=(False)NEG_1088550 (13.374591827392578)-""
+	HIT=(True)41640 (12.972387313842773)-"tragic plane crash"
+	HIT=(False)NEG_1632993 (12.848539352416992)-""
+	HIT=(True)41635 (12.708808898925781)-"a plane crash"
+queryId-126035
+queryMention-['2015', 'Zasyadko', 'mine', 'disaster']
+queryContext-['2015', 'Zasyadko', 'mine', 'disaster', '.', '2008', 'the', 'Soviet', 'Union', '2000', '2007', '1991', '1990', '2015', 'Ukraine', 'one', 'hundred', 'Donetsk', 'Zasyadko']
+	HIT=(False)71272 (11.471662521362305)-"a series of wildfires"
+	HIT=(False)68949 (11.342573165893555)-"was hit"
+	HIT=(False)48801 (11.199578285217285)-"Kursk submarine disaster"
+	HIT=(False)48815 (11.045610427856445)-"Kursk incident"
+	HIT=(False)90422 (11.028075218200684)-"deported Chechen nation"
+queryId-117053
+queryMention-['West', 'Coast', 'Basketball', 'Tournament']
+queryContext-['West', 'Coast', 'Basketball', 'Tournament', '.', 'fifth', 'San', 'Francisco', 'fourth', '14', 'San', 'Francisco', 'Dons', 'the', 'West', 'Coast', 'Conference', 'Rex', 'Walters', 'first', 'the', 'West', 'Coast', 'Basketball', 'Tournament', 'Saint', 'Mary', "'s", 'the', 'University', 'of', 'San', 'Francisco', 'the', '2011', '–', '12', 'College', 'Basketball', 'Invitational', '2011', '–', 'Washington', 'State', '20', '8', 'the', 'War', 'Memorial', 'Gymnasium', 'Dons', 'West', 'Coast', '2012']
+	HIT=(True)117049 (11.569952011108398)-"West Coast Conference Tournament"
+	HIT=(True)117047 (11.207395553588867)-"West Coast Conference Tournament"
+	HIT=(True)117050 (11.15304183959961)-"West Coast Conference Tournament"
+	HIT=(False)107450 (11.07435417175293)-"2011 Big South Conference Men 's Basketball Tournament"
+	HIT=(False)121021 (11.023099899291992)-"Mountain West Basketball Tournament"
+queryId-120606
+queryMention-['Melodifestivalen', '1995']
+queryContext-['Melodifestivalen', '1995', '.', 'the', 'Eurovision', 'Song', 'Contest', 'Sweden', '10', 'Dublin', 'Håkan', 'Almqvist', 'Ingela', 'Forsman', '24', 'February', 'Melodifestivalen', '1995', '11', '"', 'se', 'på', 'mej', '"', 'look', 'at', 'I', 'Ireland', 'Bobby', 'Ljunggren', 'Jan', 'Johansen', 'swedish', 'Melodifestivalen', '1995']
+	HIT=(True)120602 (13.482863426208496)-"Melodifestivalen 1995"
+	HIT=(True)120604 (12.930830955505371)-"Melodifestivalen 1995"
+	HIT=(True)120605 (12.611842155456543)-"Melodifestivalen 1995"
+	HIT=(False)79956 (12.272595405578613)-"2016 Contest"
+	HIT=(False)101335 (12.024959564208984)-"Melodifestivalen 1994"
+queryId-85946
+queryMention-['murder', 'of', 'thousands', 'of', 'Italians']
+queryContext-['murder', 'of', 'thousands', 'of', 'Italians', '.', 'thousand', 'italian', 'Albania', 'Greece', '16', 'August', '1943', '317', 'greek', 'Kommeno', "''", 'GebirgsJäger', 'Regiment', '98', '32', '151st', 'Perugia', 'Infantry', 'Division', 'Cefalonia', '153', 'Josef', 'Salminger', 'the', '33', 'Acqui', 'Infantry', 'Division', '25', 'July', '1943', 'an', 'estimate', '100', 'Italians', 'September', '1943', 'Mousiotitsa']
+	HIT=(True)85928 (12.273687362670898)-"massacre of Italian troops by the Germans"
+	HIT=(True)85936 (11.861161231994629)-"murder of thousands of Italians"
+	HIT=(True)85938 (11.501473426818848)-"Massacre of the Acqui Division"
+	HIT=(False)NEG_392244 (11.496587753295898)-""
+	HIT=(False)NEG_131381 (11.443961143493652)-""
+queryId-113118
+queryMention-['T', 'in', 'the', 'Park', '2012']
+queryContext-['T', 'in', 'the', 'Park', '2012', '.', 'June', '2013', 'July', '2011', 'Radio', '1', "'s", 'Gemma', 'Cairney', 'Edith', 'Bowman', 'Alice', 'Levine', '2013', 'the', 'Reading', 'and', 'Leeds', 'Festival', 'BBC', 'three', "'s", 'BBC', 'Three', 'Glastonbury', 'James', 'T', 'in', 'the', 'Park', 'the', 'BBC', 'three', "'s", 'August', '2012', 'Fearne', 'Cotton', '2012', 'Big', 'Weekend']
+	HIT=(True)113120 (11.874752044677734)-"T in the Park 2012"
+	HIT=(False)113726 (11.105457305908203)-"2012 AFL Rising Star"
+	HIT=(False)117005 (10.572566986083984)-"T in the Park 2011"
+	HIT=(False)113721 (10.045564651489258)-"2012 AFL Rising Star"
+	HIT=(False)117007 (9.861449241638184)-"T in the Park 2011"
+queryId-125094
+queryMention-['Tezno']
+queryContext-['Tezno', '.', 'Yugoslavia', 'yugoslav', 'several', 'decade', 'Kočevski', 'Rog', 'Tezno', 'the', 'week', 'Huda', 'Jama']
+	HIT=(False)NEG_2332974 (8.654094696044922)-""
+	HIT=(False)NEG_852788 (8.531457901000977)-""
+	HIT=(False)NEG_469603 (8.387133598327637)-""
+	HIT=(False)NEG_1387909 (8.361159324645996)-""
+	HIT=(False)NEG_1641808 (8.336563110351562)-""
+queryId-83116
+queryMention-['were', 'massacred']
+queryContext-['were', 'massacred', '.', 'the', 'Ryukyu', 'Islands', 'December', '1871', 'japanese', 'first', 'Taiwan', 'Japan', '1874', 'ryukyuan']
+	HIT=(True)83112 (11.086676597595215)-"Mudan incident"
+	HIT=(False)118791 (11.006138801574707)-"Arakan massacres in 1942"
+	HIT=(False)NEG_410081 (10.39645767211914)-""
+	HIT=(False)112562 (10.394205093383789)-"Massacre of the Albanian Beys"
+	HIT=(False)NEG_2461598 (10.324202537536621)-""
+queryId-106439
+queryMention-['Kidnapping', 'of', 'Elizabeth', 'Smart']
+queryContext-['Kidnapping', 'of', 'Elizabeth', 'Smart', '.', 'Skeet', 'Ulrich', 'I', 'be', 'Elizabeth', 'Smart', 'Smart', 'Alana', 'Boden', '2017', 'Deirdre', 'Lovejoy', 'Elizabeth', 'Smart', 'Lifetime', 'american']
+	HIT=(True)106438 (14.231858253479004)-"Kidnapping of Elizabeth Smart"
+	HIT=(True)106437 (12.37879753112793)-"Elizabeth Smart kidnapping"
+	HIT=(False)NEG_1824367 (12.068201065063477)-""
+	HIT=(True)106441 (11.957929611206055)-"2002 kidnapping"
+	HIT=(False)NEG_1842150 (11.845357894897461)-""
+queryId-20460
+queryMention-['76th', 'ceremony']
+queryContext-['76th', 'ceremony', '.', 'ABC', '2004', '84th', '5:30', 'p.m.', 'PST', '2011', 'Los', 'Angeles', 'February', '26', ',', '2012', 'the', 'Academy', 'of', 'Motion', 'Picture', 'Arts', 'and', 'Sciences', 'Mischer', '24', 'Billy', 'Crystal', 'Oscars', 'first', '8:30', 'p.m.', 'EST', 'Brian', 'Grazer', 'Hollywood', 'the', 'United', 'States', 'Academy', 'Awards', '62nd', 'the', 'Hollywood', 'and', 'Highland', 'Center', 'Theatre', 'ninth', '1990', 'Don', 'Mischer', '76th', 'AMPAS']
+	HIT=(True)20492 (11.322604179382324)-"76th Academy Awards"
+	HIT=(False)NEG_1555117 (10.783522605895996)-""
+	HIT=(True)20451 (10.537956237792969)-"previous year 's ceremony"
+	HIT=(False)68879 (10.412187576293945)-"77th ceremony"
+	HIT=(False)83481 (10.291909217834473)-"1991 Academy Award"
+queryId-22839
+queryMention-['2013', 'BET', 'Awards']
+queryContext-['2013', 'BET', 'Awards', '.', '"', 'Power', 'Trip', '"', 'J.', 'Cole', 'BET', 'Awards', '2013', "''", 'Conan', "''", 'second', 'August', '13', ',', '2013', 'June', '30', ',', '2013']
+	HIT=(True)22824 (14.452620506286621)-"BET Awards 2013"
+	HIT=(True)22822 (14.11475658416748)-"2013 's BET Awards"
+	HIT=(True)22827 (13.905356407165527)-"2013 BET Awards"
+	HIT=(True)22843 (13.254257202148438)-"BET Awards"
+	HIT=(True)22832 (13.160917282104492)-"BET Awards 2013"
+queryId-126036
+queryMention-['2015', 'Zasyadko', 'mine', 'disaster']
+queryContext-['2015', 'Zasyadko', 'mine', 'disaster', '.', '1992', '17', 'the', 'Zasyadko', 'Mine', '101', 'seven', '2015', '2007', 'Donbass', 'Zasyadko', '1958']
+	HIT=(True)126035 (11.992568016052246)-"2015 Zasyadko mine disaster"
+	HIT=(False)48801 (11.055270195007324)-"Kursk submarine disaster"
+	HIT=(False)71272 (10.637749671936035)-"a series of wildfires"
+	HIT=(False)NEG_1925513 (10.389721870422363)-""
+	HIT=(False)90422 (10.133265495300293)-"deported Chechen nation"
+queryId-20473
+queryMention-['76th', 'Academy', 'Awards']
+queryContext-['76th', 'Academy', 'Awards', '.', 'Best', 'Original', 'Song', '76th', 'Lennox', 'Academy', 'Awards', 'Liv', 'Tyler', 'Oscar', 'one', 'eleven', 'Arwen', "''", 'Return', 'of', 'the', 'King', "''"]
+	HIT=(False)36265 (12.30591869354248)-"Cannes Film Festival"
+	HIT=(False)53133 (12.30591869354248)-"Berlin International Film Festival"
+	HIT=(False)NEG_175874 (12.226387023925781)-""
+	HIT=(False)NEG_2326281 (12.194009780883789)-""
+	HIT=(False)47524 (12.041515350341797)-"nominated for eleven"
+queryId-41596
+queryMention-['Lokomotiv', 'Yaroslavl', 'plane', 'crash']
+queryContext-['Lokomotiv', 'Yaroslavl', 'plane', 'crash', '.', '7', 'September', '2011', 'Yakovlev', 'Yak-42', 'Minsk', 'Russia', 'four', 'Yaroslavl', 'only', '18', 'Shuvalov', 'Lokomotiv']
+	HIT=(True)41608 (13.86236572265625)-"Lokomotiv Yaroslavl plane crash"
+	HIT=(True)41600 (13.152873992919922)-"an airplane crash"
+	HIT=(False)122086 (13.016504287719727)-"RusAir Flight 9605"
+	HIT=(False)NEG_1408465 (12.44385814666748)-""
+	HIT=(False)122084 (12.412345886230469)-"Flight 9605"
+queryId-84862
+queryMention-['Yushu', 'earthquake']
+queryContext-['Yushu', 'earthquake', '.', '2010', '9,449', 'Yushu', 'Samye', 'Ling', 'ROKPA', 'International', 'Kandze', 'Monastery']
+	HIT=(False)NEG_1342514 (12.132980346679688)-""
+	HIT=(True)84861 (12.045780181884766)-"2010 Yushu earthquake"
+	HIT=(True)84864 (11.962972640991211)-"2010 Yushu earthquake"
+	HIT=(True)84857 (11.946869850158691)-"Qinghai earthquake"
+	HIT=(False)72597 (11.898055076599121)-"Sumatra earthquake and other natural disasters"
+queryId-80976
+queryMention-['Big', 'East', 'Tournament']
+queryContext-['Big', 'East', 'Tournament', '.', 'Steve', 'Wojciechowski', 'Marquette', 'University', 'Villanova', 'first', 'year', '19', 'Marquette', '14', '4', 'Wisconsin', 'NCAA', 'Division', 'i', 'Marquette', 'Golden', 'Eagles', '13', 'Big', 'East', 'ninth', 'the', 'Big', 'East', 'Tournament', 'the', 'BMO', 'Harris', 'Bradley', 'Center', 'the', '2014', '–', '15', '2014', '–', '15', 'Milwaukee', 'the', 'Big', 'East', 'Conference']
+	HIT=(True)80973 (12.338666915893555)-"Big East Tournament"
+	HIT=(True)80983 (12.301183700561523)-"Big East Tournament"
+	HIT=(False)115335 (12.159870147705078)-"Big 5 Player of the Year"
+	HIT=(True)80985 (11.8087158203125)-"Big East Tournament"
+	HIT=(False)62696 (11.796026229858398)-"2014 Big East Tournament"
+queryId-120068
+queryMention-['Sanremo', 'Music', 'Festival', '2009']
+queryContext-['Sanremo', 'Music', 'Festival', '2009', '.', 'italian', "''", 'Malamorenò', "''", 'first', 'second', 'Sky', 'Uno', 'Arisa', 'January', '2010', 'fifth', '2009', 'the', 'Mia', 'Martini', 'Critics', 'Award', "''", 'Sincerità', "''", 'early', '2009', 'late', '2011', "''", 'the', 'X', 'Factor', "''", 'Sincerità', 'the', 'Sanremo', 'Music', 'Festival']
+	HIT=(True)120064 (13.602632522583008)-"Sanremo Music Festival 2009"
+	HIT=(True)120066 (12.788078308105469)-"59th Sanremo Music Festival"
+	HIT=(True)120069 (12.609563827514648)-"59th Sanremo Music Festival"
+	HIT=(False)107344 (12.185617446899414)-"Latin Billboard Music Awards"
+	HIT=(False)111066 (11.87936782836914)-"sixtieth edition"
+queryId-107286
+queryMention-['Miss', 'Russia', '2017']
+queryContext-['Miss', 'Russia', '2017', '.', 'Miss', 'Russia', '2017', 'russian', 'Polina', 'Alexeyevna', 'Popova', 'Russia', '1', 'June', '1995', 'Miss', 'World', '2017', '10']
+	HIT=(True)107285 (10.768816947937012)-"Miss Russia 2017"
+	HIT=(False)NEG_2422168 (9.551461219787598)-""
+	HIT=(False)NEG_2572177 (9.389577865600586)-""
+	HIT=(False)NEG_2335179 (9.334492683410645)-""
+	HIT=(False)NEG_2353556 (9.040226936340332)-""
+queryId-102961
+queryMention-['Second', 'Atlanta', 'International', 'Pop', 'Festival']
+queryContext-['Second', 'Atlanta', 'International', 'Pop', 'Festival', '.', 'the', 'Marshall', 'Tucker', 'Band', "''", 'Rolling', 'Stone', "''", 'Georgia', 'second', 'southern', 'Dickey', 'Betts', "'", 'Duane', 'Allman', 'the', '21st', 'century', 'Billy', 'Gibbons', 'decade', 'the', 'American', 'South', 'the', 'Allman', 'Brothers', 'Band', 'Second', 'Atlanta', 'International', 'Pop', 'Festival', 'first', 'two', 'Capricorn', 'Records', '2003', 'Macon', 'three', 'minute', 'the', 'early', '1990', 'the', 'Southern', 'United', 'States', 'Allman', 'Brothers', 'Band', 'the', 'Allman', 'Brothers', 'Band', 'Museum', 'at', 'the', 'Big', 'House', 'ZZ', 'Top', 'over', 'thirty', 'Hittin', "'", 'the', 'note', "''", 'Wet', 'Willie', 'Byron', 'Allman', 'the', 'Georgia', 'Allman', 'Brothers', 'Band', 'Association', 'Allmans', "''", 'live', 'at', 'the', 'Atlanta', 'International', 'Pop', 'Festival', ':', 'July', '3', '&', '5', ',', '1970', 'AllMusic', 'Haynes', 'Rolling', 'Stone', "''", 'America', '2012', 'July', '1970', 'Lynyrd', 'Skynyrd', 'Berry', 'Oakley', 'Curtis', 'Mayfield']
+	HIT=(True)102956 (11.165281295776367)-"Atlanta International Pop Festival"
+	HIT=(True)102948 (11.114940643310547)-"Second Annual Atlanta International Pop Festival"
+	HIT=(False)112785 (10.449148178100586)-"2015 Country Music Association Awards"
+	HIT=(False)NEG_215454 (10.18712329864502)-""
+	HIT=(False)94978 (10.142950057983398)-"All I Ever Wanted Tour"
+queryId-106750
+queryMention-['35th', 'Primetime', 'Emmy', 'Awards']
+queryContext-['35th', 'Primetime', 'Emmy', 'Awards', '.', '2004', "''", 'here', 'come', 'Garfield', "''", 'Primetime', 'Emmy', 'Awards', '35th', '1983', "''", 'Garfield', 'as', 'himself', "''", 'DVD', 'Talk', 'Randy', 'Miller', 'the', 'Outstanding', 'Individual', 'Achievement', 'in', 'Animated', 'Programming', 'Phil', 'Roman', 'the', 'Primetime', 'Emmy', 'Award']
+	HIT=(False)NEG_95784 (11.135566711425781)-""
+	HIT=(False)80619 (10.621623992919922)-"36th Primetime Emmy Awards"
+	HIT=(True)106753 (10.610647201538086)-"1983 Primetime Emmy Awards"
+	HIT=(True)106748 (10.186647415161133)-"1983 Primetime Emmy Awards"
+	HIT=(True)106745 (10.179524421691895)-"35th Primetime Emmy Awards"
+queryId-20455
+queryMention-['76th', 'Academy', 'Awards']
+queryContext-['76th', 'Academy', 'Awards', '.', '4', 'April', 'Kalyana', 'Shira', 'Film', 'Best', 'New', 'Director', "''", 'Biola', 'Tak', 'Berdawai', "''", '76th', '22', 'March', '2003', 'Best', 'Foreign', 'Language', 'Film', 'Academy', 'Awards', 'Asmara', 'indonesian', 'the', 'Cairo', 'International', 'Film', 'Festival', 'Sekar', 'Ayu', 'Asmara', 'Indonesia']
+	HIT=(False)68897 (11.215012550354004)-"Academy Award"
+	HIT=(False)NEG_74395 (11.175671577453613)-""
+	HIT=(False)NEG_535656 (11.044320106506348)-""
+	HIT=(False)NEG_738464 (11.00429630279541)-""
+	HIT=(False)68870 (10.89604663848877)-"77th"
+queryId-28377
+queryMention-['2012', 'Cannes', 'Film', 'Festival']
+queryContext-['2012', 'Cannes', 'Film', 'Festival', '.', 'the', 'Main', 'Competition', 'the', 'Eurovision', 'Song', 'Contest', 'Colombia', 'first', 'France', 'Cali', 'Cannes', 'Film', 'Festival', 'that', 'year', 'the', 'Cali', 'ExpoShow', 'in', 'Azerbaijan', '2012', 'Anggun', 'Baku']
+	HIT=(True)28404 (11.965376853942871)-"2012 Cannes Film Festival"
+	HIT=(True)28383 (11.639481544494629)-"2012 Cannes Film Festival"
+	HIT=(True)28495 (11.423442840576172)-"2012 Cannes Film Festival"
+	HIT=(False)NEG_1639215 (10.934541702270508)-""
+	HIT=(False)97551 (10.924068450927734)-"Küstendorf Film and Music Festival"
+queryId-64470
+queryMention-['42nd', 'Annual', 'American', 'Music', 'Awards']
+queryContext-['42nd', 'Annual', 'American', 'Music', 'Awards', '.', 'Nokia', 'Theatre', 'L.A.', 'Live', 'Tennessee', 'April', '19', ',', '2015', 'Los', 'Angeles', 'the', 'Academy', 'of', 'Country', 'Music', 'Awards', 'May', '17', ',', '2015', 'Nevada', 'November', '23', ',', '2014', 'Texas', 'Annual', 'American', 'Music', 'Awards', 'Kazantsev', 'the', 'T-Mobile', 'Arena', 'the', 'American', 'Country', 'Countdown', 'Awards', 'the', 'AT&T', 'Stadium', '2015', 'Las', 'Vegas', 'Pete', 'Wentz', 'Billboard', 'Music', 'Awards', 'Arlington', '42nd', 'Nashville', 'December', '15', ',', '2014', 'California']
+	HIT=(True)64453 (12.392154693603516)-"42nd American Music Awards"
+	HIT=(False)90846 (11.391860008239746)-"36th Annual American Music Awards"
+	HIT=(True)64474 (11.271388053894043)-"American Music Awards"
+	HIT=(False)NEG_1351756 (10.561026573181152)-""
+	HIT=(False)85910 (10.446450233459473)-"American Music Award"
+queryId-112841
+queryMention-['1969', 'Portugal', 'earthquake']
+queryContext-['1969', 'Portugal', 'earthquake', '.', 'Leuni', 'John', 'IV', 'Alexandre', 'Herculano', 'de', 'Carvalho', 'e', 'Araujo', 'António', 'de', 'Oliveira', 'Salazar', 'Peter', 'I', 'East', 'Timor', 'Mozambique', 'Peter', 'II', 'Narbasi', 'Tapoli', 'Peneda-Gerês', 'National', 'Park', 'Portugal', 'Day', 'John', 'III', 'Spain', 'Sancho', 'II', '1386', 'São', 'Tomé', 'and', 'Príncipe', 'Grovii', 'Maria', 'I', 'Lisbon', 'Cacheu', 'Daman', 'Luanqui', 'lusophone', 'Verde', 'Social', 'Democratic', 'Party', 'Madeira', 'Vandals', 'Chaul', 'Portuguese', 'Philip', 'IV', 'Sebastian', 'Peter', 'III', 'Porto', 'Metro', 'Greater', 'Lisbon', 'Guyana', 'Serra', "d'El-Rei", 'Treaty', 'of', 'Windsor', 'Pedro', 'I', 'Diu', 'Nagar', 'Haveli', 'Olivenza', 'Portugal', 'Celtici', 'John', 'II', 'Kionga', 'Triangle', 'Fernando', 'I', 'Cavaquinho', 'Converso', 'Afonso', 'II', 'Socialist', 'Party', 'portuguese', 'Catholic', 'Church', 'Avante', 'Henry', 'Porto', 'Santo', 'Island', 'Seurbi', 'Brazil', 'Pedro', 'Santana', 'Lopes', '13', 'January', '1750', 'Guinea', 'Limici', 'Miguel', 'of', 'Portugal', 'Portuguese', 'Ceylon', 'Zoelae', 'Guinea-Bissau', 'Suevi', 'Tamagani', 'Cape', 'Verde', 'Bracari', 'Joseph', 'I', 'the', 'Portugal', 'News', 'lusitanian', 'Portuguese', 'Timor', 'Interamici', 'Denis', 'Portuguese', 'Cape', 'Verde', 'Afonso', 'VI', 'Treaty', 'of', 'Tordesillas', 'Portuguese', 'Colonial', 'War', 'Viriathus', 'Celtiberians', 'Pedro', 'V', 'Afonso', 'III', 'Leonor', 'Manuel', 'I', 'Limpieza', 'de', 'sangre', 'Hispania', 'Afonso', 'V', 'Elmina', 'São', 'Tomé', '2nd', 'Madeira', 'Island', 'Philip', 'II', 'Dadra', 'Lusitanians', 'Afonso', 'I', 'Coelerni', 'Manuel', 'II', 'Ginjinha', 'Castro', 'Portuguese', 'Communist', 'Party', 'Afonso', 'IV', 'Edward', 'Philip', 'III', 'Sancho', 'I', 'António', 'de', 'Spínola', 'lusitanic', 'Equaesi', 'Zambezia', 'iberian', 'the', 'Great', 'War', 'Malacca', 'Treaty', 'of', 'Madrid', 'Marcomanni', 'Alves', 'Reis', 'Luis', 'I', 'John', 'VI', 'mirandese', 'Macau', 'John', 'V', 'Turduli', 'anglo-portuguese', 'Porto', 'Maria', 'II', 'Port', 'Greater', 'Porto', 'Elmina', 'Castle', 'Pimba']
+	HIT=(True)112838 (12.728021621704102)-"earthquake in 1969"
+	HIT=(True)112839 (12.109495162963867)-"1969 earthquake"
+	HIT=(False)110306 (12.072227478027344)-"1969 Santa Rosa earthquakes"
+	HIT=(False)125694 (12.028600692749023)-"powerful earthquake"
+	HIT=(False)110307 (11.977725982666016)-"two earthquakes"
+queryId-102956
+queryMention-['Atlanta', 'International', 'Pop', 'Festival']
+queryContext-['Atlanta', 'International', 'Pop', 'Festival', '.', '300,000', 'second', 'annual', 'early', 'that', 'year', 'Atlanta', 'International', 'Pop', 'Festival', 'about', '2,000', 'Jimi', 'Hendrix', 'the', 'Allman', 'Brothers', 'Band']
+	HIT=(False)116099 (10.576615333557129)-"19th Annual Gardel Awards"
+	HIT=(False)94978 (10.428507804870605)-"All I Ever Wanted Tour"
+	HIT=(False)64462 (10.36758041381836)-"2014 American Music Awards"
+	HIT=(False)NEG_2284637 (10.295992851257324)-""
+	HIT=(False)123501 (10.218448638916016)-"2013 Radio Disney Music Awards"
+queryId-28454
+queryMention-['Cannes', 'Film', 'Festival']
+queryContext-['Cannes', 'Film', 'Festival', '.', 'italian', '2001', 'Palme', "d'Or", 'winner', '19', 'August', '1953', 'Giovanni', '"', 'Nanni', '"', 'Moretti', '2012', 'the', 'Cannes', 'Film', 'Festival']
+	HIT=(False)102553 (10.994125366210938)-"Cannes Film Festival"
+	HIT=(False)52978 (10.669209480285645)-"Cannes Film Festival"
+	HIT=(False)52017 (10.612749099731445)-"Cannes Film Festival"
+	HIT=(False)102310 (10.363958358764648)-"Cannes Film Festival"
+	HIT=(True)28404 (10.355688095092773)-"2012 Cannes Film Festival"
+queryId-69231
+queryMention-['2007', 'contest']
+queryContext-['2007', 'contest', '.', '22nd', '170', '2006', 'Sweden', '10', '1991', 'Carola', '2005', '5th', '1st', '4th', '2007', '1983', '20th', 'Portugal', 'that', 'year', '3rd', 'the', 'Eurovision', 'Song', 'Contest', 'third', '5', '19th', 'Estonia', '12', 'Eurovision', '214']
+	HIT=(False)104004 (13.12030029296875)-"Andorra"
+	HIT=(True)69330 (13.117036819458008)-"2007 Eurovision Song Contest"
+	HIT=(True)69277 (12.980646133422852)-"2007 edition of the Contest"
+	HIT=(True)69455 (12.845272064208984)-"2007 Eurovision Song Contest"
+	HIT=(True)69429 (12.806941032409668)-"2007 contest"
+queryId-111785
+queryMention-['North', 'American', '/', 'Australian', 'Summer', 'Tour']
+queryContext-['North', 'American', '/', 'Australian', 'Summer', 'Tour', '.', 'Billboard', 'Epic', 'fourth', 'Outta', 'Nowhere', '"', 'Echa', 'Pa', "'", 'lla', 'Lil', 'Wayne', 'the', 'north', 'american', '/', 'australian', 'Summer', 'Tour', 'November', 'Danny', 'Mercer', 'the', 'Latin', 'Grammy', 'Awards', 'Christina', 'Aguilera', 'Global', 'Warming', '"', 'feel', 'this', 'moment', '"', '2013', 'late', 'May', 'Best', 'Urban', 'Performance', 'Kesha', '"', 'welcome', '2', 'Dade', 'County', '"', 'Pitbull', 'the', 'Miami', 'Heat', 'Lil', 'Wayne', "'s", '8', 'Billboard', 'Music', 'Awards', 'May', 'America', 'January', '18', ',', '2013', 'Bufo', "''", 'the', 'Voice', "''"]
+	HIT=(False)119249 (12.000556945800781)-"first leg of their world tour"
+	HIT=(False)57830 (11.520471572875977)-"1966 tour"
+	HIT=(False)111479 (11.39572811126709)-"2011 Kids ' Choice Awards"
+	HIT=(False)84257 (11.032207489013672)-"2002 Juno Awards"
+	HIT=(False)NEG_469158 (10.965898513793945)-""
+queryId-22827
+queryMention-['2013', 'BET', 'Awards']
+queryContext-['2013', 'BET', 'Awards', '.', '9', 'BET', 'Awards', '2013', 'iPhone', 'Fields', 'one', 'Yahoo!', 'Music', "''", 'opposite', 'attract', "''", 'June', '30', ',', '2013']
+	HIT=(True)22824 (13.100245475769043)-"BET Awards 2013"
+	HIT=(True)22822 (12.624624252319336)-"2013 's BET Awards"
+	HIT=(True)22843 (12.601262092590332)-"BET Awards"
+	HIT=(True)22835 (12.407145500183105)-"BET Awards"
+	HIT=(True)22839 (12.372173309326172)-"2013 BET Awards"
+queryId-28553
+queryMention-['65th', 'Annual', 'Cannes', 'Film', 'Festival']
+queryContext-['65th', 'Annual', 'Cannes', 'Film', 'Festival', '.', 'Victoria', 'Miranda', 'Tapsell', 'Vietnam', 'Cannes', 'France', 'four', 'Sebbens', "''", 'the', 'Sapphires', "''", '20', 'May', '2012', 'one', 'Deborah', 'Mailman', 'Jessica', 'Mauboy', 'australian', 'Cannes', 'Film', 'Festival', 'Wayne', 'Blair', '65th', 'Kay', 'McCrae', 'american', '2012']
+	HIT=(True)28404 (12.203191757202148)-"2012 Cannes Film Festival"
+	HIT=(True)28495 (12.023859024047852)-"2012 Cannes Film Festival"
+	HIT=(True)28383 (11.616161346435547)-"2012 Cannes Film Festival"
+	HIT=(True)28372 (11.446220397949219)-"65th Annual Cannes Film Festival"
+	HIT=(False)64323 (11.133919715881348)-"63rd annual Cannes Film Festival"
+queryId-113120
+queryMention-['T', 'in', 'the', 'Park', '2012']
+queryContext-['T', 'in', 'the', 'Park', '2012', '.', "''", 'stay', 'young', "''", 'the', 'View', 'Mclean', 'second', 'Russia', 'Camden', 'Town', '3000', '2011', '2016', '2014', 'Scott', 'Duffy', 'the', 'Y', 'Not', 'Festival', 'BBC', 'Dundee', 'FC', 'first', '8', 'November', '2013', 'London', 'Ice', 'Palace', 'two', 'Non-Zero', "'s", 'one', 'September', '2014', 'the', 'HMV', 'Picture', 'House', 'the', 'Summer', 'Sonic', 'Festival', 'Leeds', '25', 'April', '2012', 'Roundhouse', '2013', 'Dundee', 'College', '13', 'day', 'Riverman', 'Management', 'the', 'summer', 'of', '2014', 'Dundee', 'Placebo', 'Krasnodar', 'Dave', 'Mclean', 'Vic', 'Galloway', 'iTunes', 'Festival', '8', 'T', 'in', 'the', 'Park', 'Wilkie', 'England', 'the', 'Mirror', 'Trap', '2009', "''", 'the', 'Visible', 'Hand', "''", 'Edinburgh', 'Lee', 'Wilkie', 'Castle', 'Street', 'Japan', '2012', 'Brian', 'Molko', "''", 'the', 'last', 'great', 'Melodrama', "''", "''", 'Simulations', "''"]
+	HIT=(False)117005 (10.434762001037598)-"T in the Park 2011"
+	HIT=(False)113721 (10.000116348266602)-"2012 AFL Rising Star"
+	HIT=(False)113726 (9.794090270996094)-"2012 AFL Rising Star"
+	HIT=(False)117007 (9.641590118408203)-"T in the Park 2011"
+	HIT=(False)113828 (9.533459663391113)-"Young Artist Awards 2012"
+queryId-125097
+queryMention-['Tezno', 'massacre']
+queryContext-['Tezno', 'massacre', '.', 'Partisans', 'Kočevski', 'Rog', 'Tezno', 'Macelj', 'Barbara', 'Pit', 'Croats', 'Foibe', 'Bleiburg', 'Axis', 'partisan', '60,000']
+	HIT=(True)125094 (14.083511352539062)-"Tezno"
+	HIT=(False)27607 (13.64884090423584)-"massacre of 5.000 Bosniaks"
+	HIT=(False)85953 (13.342082977294922)-"Massacre of Kalavryta"
+	HIT=(False)NEG_846306 (12.830338478088379)-""
+	HIT=(False)14538 (12.590073585510254)-"Stalin 's deadly purges"
+queryId-20485
+queryMention-['2004', 'Academy', 'Awards']
+queryContext-['2004', 'Academy', 'Awards', '.', '2004', 'Samantha', 'Sandy', 'Seymour', "''", 'the', 'Lord', 'of', 'the', 'Rings', "''", 'trilogy', 'Heidi', 'Robert', 'Academy', 'Academy', 'Awards', 'Bletch', 'Lucille', 'only', '80,000', 'Trevor', 'two', 'Jackson', 'Sid', "''", 'Bad', 'Taste', "''", "''", 'meet', 'the', 'Feebles', "''"]
+	HIT=(False)68872 (13.288712501525879)-"2005 Academy Awards"
+	HIT=(False)68895 (12.638361930847168)-"Academy Award"
+	HIT=(False)68858 (12.510662078857422)-"2005 Academy Awards"
+	HIT=(False)NEG_227071 (12.499128341674805)-""
+	HIT=(False)68897 (12.486577033996582)-"Academy Award"
+queryId-114979
+queryMention-['1977', 'flood']
+queryContext-['1977', 'flood', '.', '1977', '1982', 'the', 'early', '1990', 'Johnstown']
+	HIT=(False)NEG_92215 (10.584218978881836)-""
+	HIT=(True)114980 (10.516815185546875)-"Johnstown Flood of 1977"
+	HIT=(False)NEG_2664728 (9.889192581176758)-""
+	HIT=(False)NEG_1545820 (9.746150970458984)-""
+	HIT=(False)NEG_1641945 (9.697297096252441)-""
+---------- Evaluation of Retriever Model ------------
+MRR@10=0.7246927803379415
+mAP@10=0.35384633273118266
+mAP@25=0.4011439602668544
+mAP@50=0.4203794151944923
+mAP@100=0.42712970039608034
+Measured from total of 341 queries and 923717 passages
+Using model-data/checkpoints/dev_spanbert_lasthidden_full_bm25_2it
+File: dev_queries=data/resources/train/Dev_training_queries.json, dev_passages=data/resources/WEC-ES/Dev_all_passages.json, golds=data/resources/WEC-ES/Dev_gold_clusters.json
+Parameters: max_query_len=64, max_pass_len=180, topk=100, add_qbound=False, query_style=bm25

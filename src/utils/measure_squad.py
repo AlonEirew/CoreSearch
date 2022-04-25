@@ -61,9 +61,9 @@ def eval_qa(predictions: List[QueryResult]):
         qa = query_result.query
         ground_truths = qa.answers
         # top_result = query_result.results[0]
-        for top_result in query_result.results[0:1]:
-            total += 1
+        for top_result in query_result.results:
             if top_result.goldChain == qa.goldChain:
+                total += 1
                 prediction = top_result.answer
                 # Only consider answers that are within the gold span or vice versa
                 if is_span_overlap(top_result):
@@ -80,6 +80,7 @@ def eval_qa(predictions: List[QueryResult]):
 
 def is_span_overlap(top_result: Passage):
     gold_start_offset, gold_end_offset = extract_gold_span_idx(top_result)
+    # return gold_start_offset == top_result.offsets_in_document[0].start and gold_end_offset == top_result.offsets_in_document[0].end
     return (gold_start_offset <= top_result.offsets_in_document[0].start and
             gold_end_offset >= top_result.offsets_in_document[0].end) or \
            (gold_start_offset >= top_result.offsets_in_document[0].start and
