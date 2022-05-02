@@ -1,3 +1,4 @@
+import json
 import logging
 from pathlib import Path
 from typing import Union, Optional, List, Type, Dict
@@ -150,6 +151,25 @@ class WECDensePassageRetriever(DensePassageRetriever):
         if not self.document_store:
             logger.error("Cannot perform retrieve() since DensePassageRetriever initialized with document_store=None")
             return []
-        # query_emb = self.embed_queries(texts=[query])
+
+        if isinstance(query, str):
+            query = json.loads(query)
+
         documents = self.document_store.get_passages(query_id=query["query_id"], top_k=top_k)
+        # query_emb = self.embed_queries(texts=[query])
+        # documents = self.document_store.query_by_embedding(query_emb=query_emb[0], top_k=top_k, filters=filters,
+        #                                                    index=index, headers=headers)
         return documents
+
+    @staticmethod
+    def predict_pairwise_cosine(query_rep, passage_rep):
+        prediction = torch.cosine_similarity(query_rep, passage_rep)
+        # prediction = torch.round(prediction)
+        return prediction
+
+    @staticmethod
+    def predict_pairwise_dot_product(query_rep, passage_rep):
+        # prediction = torch.dot(query_rep, passage_rep)
+        prediction = query_rep @ passage_rep.T
+        # prediction = torch.round(prediction)
+        return prediction.squeeze()

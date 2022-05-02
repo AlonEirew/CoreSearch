@@ -5,3 +5,4 @@ results/old
 event_search.egg-info
 **/__pycache__/
 file_indexes
+results/Train_spanbert_hidden_cls_spatial_ctx_2it_top500.json

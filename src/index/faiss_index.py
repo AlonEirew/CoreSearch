@@ -3,7 +3,7 @@ from typing import List
 
 from haystack import Document
 
-from src.override_classes.wec_context_processor import WECContextProcessor
+from src.override_classes.retriever.wec_context_processor import WECContextProcessor
 from src.utils import io_utils, dpr_utils
 
 

@@ -10,9 +10,9 @@ import torch
 from tqdm import tqdm
 
 from src.data_obj import Passage, Feat, Cluster, QueryResult, TrainExample
-from src.models.weces_retriever import WECESRetriever
 from src.override_classes.retriever.wec_bm25_processor import WECBM25Processor
 from src.override_classes.retriever.wec_context_processor import WECContextProcessor
+from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
 
 from src.pipeline.run_haystack_pipeline import print_measurements, generate_query_text
 from src.utils import dpr_utils, io_utils, data_utils
@@ -136,7 +136,7 @@ def run_top_pass(model, query: Feat, dev_passages_ids, all_dev_passages_encode, 
     all_predictions: List[Tuple[str, float]] = list()
     for batch_idx, pass_batch_encoded in enumerate(all_dev_passages_encode):
         batch_passage_ides = dev_passages_ids[batch_idx]
-        predictions = WECESRetriever.predict_pairwise_dot_product(query_encoded, pass_batch_encoded.cuda()).detach().cpu()
+        predictions = WECDensePassageRetriever.predict_pairwise_dot_product(query_encoded, pass_batch_encoded.cuda()).detach().cpu()
         for index in range(len(batch_passage_ides)):
             if batch_passage_ides[index] != query.feat_ref.id:
                 all_predictions.append((batch_passage_ides[index], predictions[index].item()))
