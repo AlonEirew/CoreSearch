@@ -4,12 +4,12 @@ from src.override_classes.reader.wec_reader import WECReader
 
 
 def main():
-    '''
+    """
     qa_models deepset/roberta-base-squad2,
                 distilbert-base-uncased-distilled-squad,
                 facebook/dpr-reader-single-nq-base,
                 facebook/dpr-reader-multiset-base
-    '''
+    """
     qa_model = "deepset/roberta-base-squad2"
 
     add_special_tokens = False
