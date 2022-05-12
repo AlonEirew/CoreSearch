@@ -10,9 +10,9 @@ from src.utils.io_utils import load_json_file, read_passages_file
 
 def main():
     train_queries: Dict[str, TrainExample] = TrainExample.list_to_map(io_utils.read_train_example_file(
-        "data/resources/train/" + SPLIT + "_training_queries.json"))
-    clusters: List[Cluster] = io_utils.read_gold_file("data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json")
-    passages_file = "data/resources/WEC-ES/" + SPLIT + "_all_passages.json"
+        "data/resources/WEC-ES/" + SPLIT + "_training_queries.json"))
+    clusters: List[Cluster] = io_utils.read_gold_file("data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json")
+    passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
     result_file = "file_indexes/" + SPLIT.lower() + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
 
     passage_dict: Dict[str, Passage] = {obj.id: obj for obj in read_passages_file(passages_file)}
@@ -21,11 +21,13 @@ def main():
     assert train_queries
     assert clusters
     query_style = "context"
+    num_of_positives = 1
+    num_of_negatives = 24
 
     if query_style == "bm25":
         squad_out = "data/resources/squad/bm25/" + SPLIT + "_squad_format.json"
     elif query_style == "context":
-        squad_out = "data/resources/squad/context/" + SPLIT + "_squad_format_1pos.json"
+        squad_out = "data/resources/squad/context/" + SPLIT + "_squad_format_1pos_24neg.json"
     else:
         raise ValueError(f"Not a supported query_style-{query_style}")
 
@@ -39,14 +41,15 @@ def main():
             query_example = train_queries[ment_id]
             pos_exampl_id_list = list()
             neg_exampl_id_list = list()
+            # Selecting query top candidates from retrieved (DPR) results passages
             for res in results_dict[ment_id]:
                 if res["pass_id"] in clust.mention_ids:
                     pos_exampl_id_list.append(res["pass_id"])
                 else:
                     neg_exampl_id_list.append(res["pass_id"])
 
-            pos_exampl_id_list = pos_exampl_id_list[:1]
-            neg_exampl_id_list = neg_exampl_id_list[:24]
+            pos_exampl_id_list = pos_exampl_id_list[:num_of_positives]
+            neg_exampl_id_list = neg_exampl_id_list[:num_of_negatives]
             for ctx_id in pos_exampl_id_list:
                 if ctx_id not in all_contexts:
                     all_contexts[ctx_id] = list()
@@ -96,6 +99,9 @@ def create_qas_obj(query_example, is_impossible, query_style, passage=None):
     else:
         qas_obj["question"] = " ".join(query_example.context)
     qas_obj["id"] = query_example.id
+    qas_obj["ment_start"] = query_example.startIndex
+    qas_obj["ment_end"] = query_example.endIndex
+    qas_obj["ment_query"] = query_example.mention
     qas_obj["answers"] = answers
     qas_obj["is_impossible"] = is_impossible
     return qas_obj

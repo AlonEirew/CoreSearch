@@ -50,7 +50,7 @@ def main():
 
 
 def load_res():
-    passages_file = "../data/resources/train/Dev_training_passages.json"
+    passages_file = "../data/resources/train_obsolete/Dev_training_passages.json"
     gold_cluster_file = "../data/resources/WEC-ES/Dev_gold_clusters.json"
     dev_golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)

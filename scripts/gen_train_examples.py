@@ -1,17 +1,18 @@
 """
-This script generate the training files which include negative samples collected by the top BM25 negative results, similarly to what was done in DPR.
+This script generate the training files which include negative samples collected by the top BM25 negative results,
+this is similar to what was done in DPR.
 Prerequisite for running this script is generating the Elasticsearch index using elastic_index.py script
 """
 import json
 from typing import List, Tuple, Set
 
+import spacy
 from tqdm import tqdm
 
 from src.data_obj import Query, Cluster, QueryResult, TrainExample, Passage
 from src.index import elastic_index
 from src.pipeline.pipelines import RetrievalOnlyPipeline
 from src.utils import io_utils, data_utils
-from src.utils.nlp_utils import NLPUtils
 
 
 def create_train_examples(query_results, golds) -> Tuple[List[TrainExample], Set[str]]:
@@ -33,21 +34,25 @@ def create_train_examples(query_results, golds) -> Tuple[List[TrainExample], Set
 
         json_obj = query_res.query.__dict__
         json_obj["positive_examples"] = gold_list
-        json_obj["negative_examples"] = neg_ids
+        json_obj["negative_examples"] = neg_ids[:20]
         json_obj["bm25_query"] = query_res.searched_query
 
-        train_examples.append(TrainExample(json_obj))
+        example = TrainExample(json_obj)
+        # No need and because json throws exception (set())
+        example.answers = None
+        train_examples.append(example)
 
     return train_examples, all_pass_ids
 
 
-def extract_bm25_query_and_run(nlp, pipeline, query_examples) -> List[QueryResult]:
+def extract_bm25_query_and_run(pipeline, query_examples) -> List[QueryResult]:
     assert query_examples
     query_results = list()
-    for query in query_examples:
+    spacy_parser = spacy.load('en_core_web_trf')
+    for query in tqdm(query_examples, desc="Running BM25"):
         query_mention = " ".join(query.mention)
-        query_ners: List[Tuple[str, str, str, str]] = nlp.extract_ner_spans(" ".join(query.context))
-        ner_text = set([ner[1] for ner in query_ners])
+        query_ners: List[Tuple[str, str, str, str, str]] = extract_ner_spans(spacy_parser, " ".join(query.context))
+        ner_text = set([ner[0] for ner in query_ners])
         query_text = query_mention + " . " + " ".join(ner_text)
         result = pipeline.run_pipeline(query_text)
         query_res = pipeline.extract_results(query, result)
@@ -68,15 +73,21 @@ def filter_only_used_passages(passages_file, all_pass_ids) -> List[Passage]:
     return filtered_passages
 
 
+def extract_ner_spans(spacy_parser, context: str) -> List[Tuple[str, str, str, str, str]]:
+    doc = spacy_parser(context)
+    ents = [(e.text, e.lemma_, e.start_char, e.end_char, e.label_) for e in doc.ents]
+    return ents
+
+
 def main():
-    passages_file = "resources/WEC-ES/" + SPLIT + "_passages.json"
-    queries_file = "resources/WEC-ES/" + SPLIT + "_queries.json"
-    gold_file = "resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
+    passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
+    queries_file = "data/resources/WEC-ES/clean/" + SPLIT + "_queries.json"
+    gold_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
 
-    train_exml_out_file = "resources/train/" + SPLIT + "_training_queries.json"
-    train_filtered_pass_out = "resources/train/" + SPLIT + "_training_passages.json"
+    train_exml_out_file = "data/resources/WEC-ES/" + SPLIT + "_training_queries.json"
+    train_filtered_pass_out = "data/resources/WEC-ES/" + SPLIT + "_training_passages.json"
 
-    topk = 20
+    topk = 50
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_file)
     query_examples: List[Query] = io_utils.read_query_file(queries_file)
@@ -84,8 +95,7 @@ def main():
     pipeline = RetrievalOnlyPipeline(document_store=document_store,
                                      retriever=retriever,
                                      ret_topk=topk)
-    nlp = NLPUtils()
-    query_results = extract_bm25_query_and_run(nlp, pipeline, query_examples)
+    query_results = extract_bm25_query_and_run(pipeline, query_examples)
     train_examples, all_pass_ids = create_train_examples(query_results, golds)
     filtered_passages = filter_only_used_passages(passages_file, all_pass_ids)
 
@@ -97,6 +107,8 @@ def main():
     print("Writing-" + train_filtered_pass_out)
     with open(train_filtered_pass_out, 'w', encoding='utf-8') as filtered_pass_os:
         json.dump(filtered_passages, filtered_pass_os, default=lambda o: o.__dict__, ensure_ascii=False, indent=4)
+
+    print("Done!")
 
 
 if __name__ == '__main__':
