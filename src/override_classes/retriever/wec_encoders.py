@@ -8,7 +8,6 @@ from haystack.modeling.model.language_model import DPRContextEncoder, DPRQuestio
 class WECContextEncoder(DPRContextEncoder):
     def __init__(self):
         super(WECContextEncoder, self).__init__()
-        # self.dropout = nn.Dropout(0.1)
 
     def forward(self, passage_input_ids: torch.Tensor, passage_segment_ids: torch.Tensor,
                 passage_attention_mask: torch.Tensor, **kwargs):

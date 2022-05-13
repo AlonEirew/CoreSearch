@@ -13,12 +13,13 @@ from src.utils import io_utils
 
 def main():
     queries: Dict[str, TrainExample] = TrainExample.list_to_map(io_utils.read_train_example_file(
-        "data/resources/WEC-ES/" + SPLIT + "_training_queries.json"))
+        "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"))
     passages: Dict[str, Passage] = Passage.list_to_map(io_utils.read_passages_file(
-        "data/resources/WEC-ES/" + SPLIT + "_training_passages.json"))
+        "data/resources/WEC-ES/train/" + SPLIT + "_passages.json"))
 
     # query_style_bm25 if true will replace the query.context with the bm25 query
     # permute_all_positive = True
+    negative_samples = 20
     query_style_bm25 = False
     if query_style_bm25:
         dpr_out = "data/resources/dpr/bm25/" + SPLIT + ".json"
@@ -30,7 +31,7 @@ def main():
     dpr_examples = list()
     for qid, query in tqdm(queries.items(), "Converting"):
         positives = query.positive_examples
-        negatives = query.negative_examples
+        negatives = query.negative_examples[:negative_samples]
         dpr_question = " ".join(query.context)
         if query_style_bm25:
             dpr_question = query.bm25_query
@@ -77,5 +78,5 @@ def main():
 
 
 if __name__ == '__main__':
-    SPLIT = "Dev"
+    SPLIT = "Train"
     main()

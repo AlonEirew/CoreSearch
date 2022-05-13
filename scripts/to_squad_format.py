@@ -10,13 +10,13 @@ from src.utils.io_utils import load_json_file, read_passages_file
 
 def main():
     train_queries: Dict[str, TrainExample] = TrainExample.list_to_map(io_utils.read_train_example_file(
-        "data/resources/WEC-ES/" + SPLIT + "_training_queries.json"))
+        "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"))
     clusters: List[Cluster] = io_utils.read_gold_file("data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json")
     passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
-    result_file = "file_indexes/" + SPLIT.lower() + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
+    retriver_file = "file_indexes/" + SPLIT.lower() + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
 
     passage_dict: Dict[str, Passage] = {obj.id: obj for obj in read_passages_file(passages_file)}
-    results_dict = load_json_file(result_file)
+    retriever_results = load_json_file(retriver_file)
 
     assert train_queries
     assert clusters
@@ -42,7 +42,7 @@ def main():
             pos_exampl_id_list = list()
             neg_exampl_id_list = list()
             # Selecting query top candidates from retrieved (DPR) results passages
-            for res in results_dict[ment_id]:
+            for res in retriever_results[ment_id]:
                 if res["pass_id"] in clust.mention_ids:
                     pos_exampl_id_list.append(res["pass_id"])
                 else:

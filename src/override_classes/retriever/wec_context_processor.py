@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 from haystack.modeling.data_handler.samples import SampleBasket, Sample
 
-from src.data_obj import TrainExample, QueryFeat
+from src.data_obj import TrainExample, QueryFeat, Passage, PassageFeat
 from src.override_classes.retriever.wec_processor import QUERY_SPAN_END, QUERY_SPAN_START, WECSimilarityProcessor
 
 logger = logging.getLogger(__name__)
@@ -71,7 +71,7 @@ class WECContextProcessor(WECSimilarityProcessor):
                 token_query_lower = "".join(
                     [s.strip('##') for s in query_tokenized[query_feat.query_event_start+1:query_feat.query_event_end]])
                 if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower})")
+                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_obj.id}")
         else:
             assert query_feat.input_ids[query_feat.query_event_start:query_feat.query_event_end + 1] == self.query_tokenizer.convert_tokens_to_ids(
                 self.query_tokenizer.tokenize(" ".join(query_obj.mention)))

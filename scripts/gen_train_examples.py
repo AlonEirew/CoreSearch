@@ -15,7 +15,7 @@ from src.pipeline.pipelines import RetrievalOnlyPipeline
 from src.utils import io_utils, data_utils
 
 
-def create_train_examples(query_results, golds) -> Tuple[List[TrainExample], Set[str]]:
+def create_train_examples(query_results, golds, negative_sample) -> Tuple[List[TrainExample], Set[str]]:
     assert query_results
     assert golds
     train_examples = list()
@@ -34,7 +34,7 @@ def create_train_examples(query_results, golds) -> Tuple[List[TrainExample], Set
 
         json_obj = query_res.query.__dict__
         json_obj["positive_examples"] = gold_list
-        json_obj["negative_examples"] = neg_ids[:20]
+        json_obj["negative_examples"] = neg_ids[:negative_sample]
         json_obj["bm25_query"] = query_res.searched_query
 
         example = TrainExample(json_obj)
@@ -84,10 +84,11 @@ def main():
     queries_file = "data/resources/WEC-ES/clean/" + SPLIT + "_queries.json"
     gold_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
 
-    train_exml_out_file = "data/resources/WEC-ES/" + SPLIT + "_training_queries.json"
-    train_filtered_pass_out = "data/resources/WEC-ES/" + SPLIT + "_training_passages.json"
+    train_exml_out_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
+    train_filtered_pass_out = "data/resources/WEC-ES/train/" + SPLIT + "_passages.json"
 
-    topk = 50
+    topk = 100
+    negative_sample = 25
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_file)
     query_examples: List[Query] = io_utils.read_query_file(queries_file)
@@ -96,7 +97,7 @@ def main():
                                      retriever=retriever,
                                      ret_topk=topk)
     query_results = extract_bm25_query_and_run(pipeline, query_examples)
-    train_examples, all_pass_ids = create_train_examples(query_results, golds)
+    train_examples, all_pass_ids = create_train_examples(query_results, golds, negative_sample)
     filtered_passages = filter_only_used_passages(passages_file, all_pass_ids)
 
     print(SPLIT + " train queries=" + str(len(train_examples)))

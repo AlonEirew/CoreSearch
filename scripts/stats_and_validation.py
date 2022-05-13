@@ -37,29 +37,17 @@ def get_sum_dpr_queries_from_clusters(clusters):
     return total_mentions
 
 
-if __name__ == '__main__':
-    # print("#### Total Queries ####")
-    # read_query_files("data/resources/WEC-ES/clean/Train_queries.json",
-    #                  "data/resources/WEC-ES/clean/Dev_queries.json",
-    #                  "data/resources/WEC-ES/clean/Test_queries.json")
-    # print("########")
-    #
-    # print("#### Total Passage collections ####")
-    # read_passage_files("data/resources/WEC-ES/clean/Train_all_passages.json",
-    #                    "data/resources/WEC-ES/clean/Dev_all_passages.json",
-    #                    "data/resources/WEC-ES/clean/Test_all_passages.json")
-    # print("########")
-
-    print("#### Total Queries for training (should be the same as total queries) ####")
-    read_query_files("data/resources/WEC-ES/Train_training_queries.json",
-                     "data/resources/WEC-ES/Dev_training_queries.json",
-                     "data/resources/WEC-ES/Test_training_queries.json")
+def run_clean_stats():
+    print("#### Total Queries ####")
+    read_query_files("data/resources/WEC-ES/clean/Train_queries.json",
+                     "data/resources/WEC-ES/clean/Dev_queries.json",
+                     "data/resources/WEC-ES/clean/Test_queries.json")
     print("########")
 
-    print("#### Total Passages for Training (that serve as positive or negative examples) ####")
-    read_passage_files("data/resources/WEC-ES/Train_training_passages.json",
-                       "data/resources/WEC-ES/Dev_training_passages.json",
-                       "data/resources/WEC-ES/Test_training_passages.json")
+    print("#### Total Passage collections ####")
+    read_passage_files("data/resources/WEC-ES/clean/Train_all_passages.json",
+                       "data/resources/WEC-ES/clean/Dev_all_passages.json",
+                       "data/resources/WEC-ES/clean/Test_all_passages.json")
     print("########")
 
     print("#### Total Clusters ####")
@@ -80,6 +68,24 @@ if __name__ == '__main__':
     print("Test Mentions=" + str(test_ments))
     print("########")
 
+    return train_clusters, dev_clusters, test_clusters
+
+
+def run_train_stats():
+    print("#### Total Queries for training (should be the same as total queries) ####")
+    read_query_files("data/resources/WEC-ES/train/Train_queries.json",
+                     "data/resources/WEC-ES/train/Dev_queries.json",
+                     "data/resources/WEC-ES/train/Test_queries.json")
+    print("########")
+
+    print("#### Total Passages for Training (that serve as positive or negative examples) ####")
+    read_passage_files("data/resources/WEC-ES/train/Train_passages.json",
+                       "data/resources/WEC-ES/train/Dev_passages.json",
+                       "data/resources/WEC-ES/train/Test_passages.json")
+    print("########")
+
+
+def run_dpr_stats(train_clusters, dev_clusters, test_clusters):
     print("#### Total queries for retriever (DPR format) ==sum(each cluster mentions)^2)-size(cluster) ####")
     train_dpr = WECSimilarityProcessor._read_dpr_json("data/resources/dpr/context/Train.json")
     dev_dpr = WECSimilarityProcessor._read_dpr_json("data/resources/dpr/context/Dev.json")
@@ -89,7 +95,17 @@ if __name__ == '__main__':
     print(f"Test Queries={len(test_dpr)}=={get_sum_dpr_queries_from_clusters(test_clusters)}")
     print("########")
 
+
+def run_squad_stats():
     print("#### Total queries for reader (SQUAD format)")
     train_squad = _read_squad_file("data/resources/dpr/context/Train.json")
     dev_squad = _read_squad_file("data/resources/dpr/context/Dev.json")
     test_squad = _read_squad_file("data/resources/dpr/context/Test.json")
+    print("########")
+
+
+if __name__ == '__main__':
+    train_clusters, dev_clusters, test_clusters = run_clean_stats()
+    run_train_stats()
+    run_dpr_stats(train_clusters, dev_clusters, test_clusters)
+    print("Done!")

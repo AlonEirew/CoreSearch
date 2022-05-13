@@ -73,10 +73,10 @@ def load_faiss_dpr(faiss_file_path, faiss_config_file, query_encode, passage_enc
     return document_store, retriever
 
 
-def load_wec_faiss_dpr(faiss_file_path, faiss_config_file, query_encode, passage_encode,
+def load_wec_faiss_dpr(result_file, passage_file, query_encode, passage_encode,
                        infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size,
                        processor_type, add_special_tokens):
-    document_store = load_faiss_doc_store(faiss_file_path, faiss_config_file)
+    document_store = create_file_doc_store(result_file, passage_file)
     retriever = WECDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                          passage_embedding_model=passage_encode,
                                          infer_tokenizer_classes=infer_tokenizer_classes,

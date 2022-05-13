@@ -1,3 +1,4 @@
+import os
 import copy
 import itertools
 import math
@@ -8,6 +9,7 @@ from typing import List, Dict, Tuple
 
 import torch
 from tqdm import tqdm
+os.environ["MILVUS2_ENABLED"] = "false"
 
 from src.data_obj import Passage, Feat, Cluster, QueryResult, TrainExample
 from src.override_classes.retriever.wec_bm25_processor import WECBM25Processor
@@ -19,19 +21,18 @@ from src.utils import dpr_utils, io_utils, data_utils
 from src.utils.data_utils import generate_index_batches
 from src.utils.io_utils import save_query_results
 
-SPLIT = "Train"
+SPLIT = "Dev"
 
 
 def main():
     random.seed(1234)
-    dev_examples_file = "data/resources/train/" + SPLIT + "_training_queries.json"
-    # dev_examples_file = "data/resources/train/small_training_queries.json"
-    dev_passages_file = "data/resources/WEC-ES/" + SPLIT + "_all_passages.json"
-    # dev_passages_file = "data/resources/train/Dev_training_passages.json"
-    gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
+    examples_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
+    passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
+    # passages_file = "data/resources/WEC-ES/train/Dev_passages.json"
+    gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
     # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
-    model_file = "data/checkpoints/dev_spanbert_hidden_cls_spatial_ctx_2it"
-    index_file = "results/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
+    model_file = "data/checkpoints/span_bert_2it"
+    out_index_file = "file_indexes/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
 
     add_qbound = True
     query_style = "context"
@@ -50,27 +51,21 @@ def main():
     else:
         raise TypeError(f"No processor that support {query_style}")
 
-    faiss_index_prefix = "indexes/spanbert_notft/dev_index"
-    faiss_index_file = faiss_index_prefix + ".faiss"
-    faiss_config_file = faiss_index_prefix + ".json"
-    _, model = dpr_utils.load_wec_faiss_dpr(faiss_index_file,
-                                            faiss_config_file,
-                                            model_file + "/query_encoder",
-                                            model_file + "/passage_encoder",
-                                            True,
-                                            max_query_len,
-                                            max_pass_len,
-                                            16,
-                                            processor_type,
-                                            add_qbound)
+    model = WECDensePassageRetriever(document_store=None, query_embedding_model=model_file + "/query_encoder",
+                                     passage_embedding_model=model_file + "/passage_encoder",
+                                     infer_tokenizer_classes=True,
+                                     max_seq_len_query=max_query_len, max_seq_len_passage=max_pass_len,
+                                     batch_size=16, use_gpu=True, embed_title=False,
+                                     use_fast_tokenizers=False, processor_type=processor_type,
+                                     add_special_tokens=add_qbound)
 
-    print(f"Experiment using model={model_file}, query_file={dev_examples_file}, passage_file={dev_passages_file}")
+    print(f"Experiment using model={model_file}, query_file={examples_file}, passage_file={passages_file}")
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
 
-    query_examples: List[TrainExample] = io_utils.read_train_example_file(dev_examples_file)
-    passage_examples: List[Passage] = io_utils.read_passages_file(dev_passages_file)
+    query_examples: List[TrainExample] = io_utils.read_train_example_file(examples_file)
+    passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
     passage_dict: Dict[str, Passage] = {passage.id: passage for passage in passage_examples}
     generate_query_text(passage_dict, query_examples=query_examples, query_method=query_style)
     dev_queries_feats = model.processor.generate_query_feats(query_examples)
@@ -101,7 +96,7 @@ def main():
         query_result = QueryResult(query=query.feat_ref, results=results)
         all_queries_pred.append(query_result)
 
-    save_query_results(all_queries_pred, index_file)
+    save_query_results(all_queries_pred, out_index_file)
 
     print("Generating 50 examples:")
     query_pred_sample = random.sample(all_queries_pred, k=50)
@@ -118,7 +113,7 @@ def main():
     print(join_result)
     print(f"Measured from total of {total_queries} queries and {total_passages} passages")
     print(f"Using model-{model_file}")
-    print(f"File: dev_queries={dev_examples_file}, dev_passages={dev_passages_file}, golds={gold_cluster_file}")
+    print(f"File: dev_queries={examples_file}, dev_passages={passages_file}, golds={gold_cluster_file}")
     print(f"Parameters: max_query_len={str(max_query_len)}, max_pass_len={str(max_pass_len)}, "
           f"topk={str(topk)}, add_qbound={str(add_qbound)}, query_style={query_style}")
     print("Done!")

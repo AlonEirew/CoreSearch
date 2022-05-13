@@ -14,20 +14,20 @@ from typing import List
 
 from docopt import docopt
 from haystack import Document
-from haystack.document_stores import ElasticsearchDocumentStore
 from haystack.nodes import ElasticsearchRetriever
 
+from src.index.wec_elasticsearch import WECElasticsearchDocumentStore
 from src.utils import io_utils
 
 
 def load_elastic_bm25(index):
-    document_store = ElasticsearchDocumentStore(index=index)
+    document_store = WECElasticsearchDocumentStore(index=index)
     retriever = ElasticsearchRetriever(document_store)
     return document_store, retriever
 
 
 def elastic_index(index: str, documents: List[Document]):
-    document_store = ElasticsearchDocumentStore(host="localhost", username="", password="", index=index)
+    document_store = WECElasticsearchDocumentStore(host="localhost", username="", password="", index=index)
     document_store.delete_documents()
     print("Writing document to Elastic...")
     document_store.write_documents(documents)
