@@ -21,7 +21,7 @@ from src.utils import dpr_utils, io_utils, data_utils
 from src.utils.data_utils import generate_index_batches
 from src.utils.io_utils import save_query_results
 
-SPLIT = "Dev"
+SPLIT = "Test"
 
 
 def main():
@@ -32,7 +32,9 @@ def main():
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
     # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
     model_file = "data/checkpoints/span_bert_2it"
-    out_index_file = "file_indexes/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
+    index_name = "file_indexes/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500"
+    out_index_file = index_name + ".json"
+    out_result_file = index_name + "_results.txt"
 
     add_qbound = True
     query_style = "context"
@@ -98,24 +100,30 @@ def main():
 
     save_query_results(all_queries_pred, out_index_file)
 
-    print("Generating 50 examples:")
+    to_print = list()
+    to_print.append("Generating 50 examples:")
     query_pred_sample = random.sample(all_queries_pred, k=50)
     for query_res in query_pred_sample:
-        print(f"queryId-{query_res.query.id}")
-        print(f"queryMention-{query_res.query.mention}")
-        print(f"queryContext-{query_res.query.context}")
+        to_print.append(f"queryId-{query_res.query.id}")
+        to_print.append(f"queryMention-{query_res.query.mention}")
+        to_print.append(f"queryContext-{query_res.query.context}")
         for passage_res in query_res.results[:5]:
             hit = True if passage_res.goldChain == query_res.query.goldChain else False
-            print("\tHIT=(" + str(hit) + ")" + passage_res.id + " (" + str(passage_res.score) + ")-\"" + " ".join(passage_dict[passage_res.id].mention) + "\"")
+            to_print.append("\tHIT=(" + str(hit) + ")" + passage_res.id + " (" + str(passage_res.score) + ")-\"" + " ".join(passage_dict[passage_res.id].mention) + "\"")
 
-    to_print = print_measurements(all_queries_pred, golds_arranged, run_pipe_str)
-    join_result = "\n".join(to_print)
-    print(join_result)
-    print(f"Measured from total of {total_queries} queries and {total_passages} passages")
-    print(f"Using model-{model_file}")
-    print(f"File: dev_queries={examples_file}, dev_passages={passages_file}, golds={gold_cluster_file}")
-    print(f"Parameters: max_query_len={str(max_query_len)}, max_pass_len={str(max_pass_len)}, "
+    to_print.extend(print_measurements(all_queries_pred, golds_arranged, run_pipe_str))
+
+    to_print.append(f"Measured from total of {total_queries} queries and {total_passages} passages")
+    to_print.append(f"Using model-{model_file}")
+    to_print.append(f"File: dev_queries={examples_file}, dev_passages={passages_file}, golds={gold_cluster_file}")
+    to_print.append(f"Parameters: max_query_len={str(max_query_len)}, max_pass_len={str(max_pass_len)}, "
           f"topk={str(topk)}, add_qbound={str(add_qbound)}, query_style={query_style}")
+
+    join_result = "\n".join(to_print)
+    print("Saving report to-" + out_result_file)
+    with open(out_result_file, 'w') as f:
+        f.write(join_result)
+
     print("Done!")
 
 

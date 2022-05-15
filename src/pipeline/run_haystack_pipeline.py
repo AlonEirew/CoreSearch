@@ -26,10 +26,10 @@ def main():
     run_pipe_str = "qa"
     # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
     es_index = SPLIT.lower()
-    experiment_name = "test_1pos"
+    experiment_name = "test_1pos_24neg"
     # magnitude = all/cluster meaning if to use all queries (all) or just single clusters query (cluster)
     magnitude = "cluster"
-    query_method = "full_ctx"
+    query_method = "with_bounds"
 
     infer_tokenizer_classes = True
     ret_top_k = 200
@@ -44,7 +44,7 @@ def main():
     passage_encode = checkpoint_dir + "dev_spanbert_hidden_cls_spatial_ctx_2it/passage_encoder"
 
     # reader_model_file = "deepset/roberta-base-squad2"
-    reader_model_file = "data/checkpoints/squad_roberta_ctx"
+    reader_model_file = "data/checkpoints/squad_roberta_ctx_1pos_24neg"
 
     gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
     queries_file = "data/resources/train/" + SPLIT + "_training_queries.json"

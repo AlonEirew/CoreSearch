@@ -12,10 +12,11 @@ def main():
     train_queries: Dict[str, TrainExample] = TrainExample.list_to_map(io_utils.read_train_example_file(
         "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"))
     clusters: List[Cluster] = io_utils.read_gold_file("data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json")
-    passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
-    retriver_file = "file_indexes/" + SPLIT.lower() + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
 
+    passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
     passage_dict: Dict[str, Passage] = {obj.id: obj for obj in read_passages_file(passages_file)}
+
+    retriver_file = "file_indexes/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
     retriever_results = load_json_file(retriver_file)
 
     assert train_queries
@@ -83,11 +84,15 @@ def create_qas_obj(query_example, is_impossible, query_style, passage=None):
     answers = list()
     if not is_impossible:
         query_ans = " ".join(passage.mention)
-        start_idxs = [m.start() for m in re.finditer(re.escape(query_ans), " ".join(passage.context))]
-        for index in start_idxs:
-            ans_obj = {"text": query_ans, "answer_start": index,
-                       "ment_start": passage.startIndex, "ment_end": passage.endIndex, "ment_text": passage.mention}
-            answers.append(ans_obj)
+        # start_idxs = [m.start() for m in re.finditer(re.escape(query_ans), " ".join(passage.context))]
+        start_idx = len(" ".join(passage.context[:passage.startIndex]))
+        if start_idx > 0:
+            # if start_index > 0 we need to add the space to get to the start of the answer
+            start_idx += 1
+
+        ans_obj = {"text": query_ans, "answer_start": start_idx,
+                   "ment_start": passage.startIndex, "ment_end": passage.endIndex, "ment_text": passage.mention}
+        answers.append(ans_obj)
     else:
         ans_obj = {"text": "", "answer_start": 0,
                    "ment_start": 0, "ment_end": 0,
@@ -116,6 +121,6 @@ def create_qas_list(query_id_list, train_queries, query_style):
 
 
 if __name__ == '__main__':
-    SPLIT = "Dev"
+    SPLIT = "Test"
     main()
     print("Done generating for " + SPLIT)
