@@ -106,7 +106,7 @@ def create_qas_obj(query_example, is_impossible, query_style, passage=None):
     qas_obj["id"] = query_example.id
     qas_obj["ment_start"] = query_example.startIndex
     qas_obj["ment_end"] = query_example.endIndex
-    qas_obj["ment_query"] = query_example.mention
+    qas_obj["query_mention"] = query_example.mention
     qas_obj["answers"] = answers
     qas_obj["is_impossible"] = is_impossible
     return qas_obj
@@ -121,6 +121,6 @@ def create_qas_list(query_id_list, train_queries, query_style):
 
 
 if __name__ == '__main__':
-    SPLIT = "Test"
+    SPLIT = "Dev"
     main()
     print("Done generating for " + SPLIT)

@@ -1,5 +1,8 @@
 import json
+import os
 from os import path
+
+os.environ["MILVUS2_ENABLED"] = "false"
 
 from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
 
