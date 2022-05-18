@@ -6,8 +6,12 @@ from haystack.modeling.data_handler.processor import InferenceProcessor, Process
 from haystack.modeling.infer import QAInferencer
 from haystack.modeling.model.adaptive_model import BaseAdaptiveModel, AdaptiveModel
 from haystack.modeling.utils import initialize_device_settings
+from src.override_classes.reader.qa_head import WECQuestionAnsweringHead
+from torch import nn
 
 from src.override_classes.reader.wec_squad_processor import WECSquadProcessor
+from src.override_classes.wec_adaptive_model import WECAdaptiveModel
+from src.override_classes.wec_converter import WECConverter
 
 
 class WECQAInferencer(QAInferencer):
@@ -25,7 +29,7 @@ class WECQAInferencer(QAInferencer):
             num_processes: Optional[int] = None,
             disable_tqdm: bool = False
     ):
-        super().__init__(
+        super(WECQAInferencer, self).__init__(
             model,
             processor,
             task_type,
@@ -62,6 +66,7 @@ class WECQAInferencer(QAInferencer):
             devices: Optional[List[Union[int, str, torch.device]]] = None,
             use_auth_token: Union[bool, str] = None,
             add_special_tokens: bool = False,
+            replace_prediction_heads: bool = False,
             **kwargs
     ):
         if tokenizer_args is None:
@@ -74,7 +79,8 @@ class WECQAInferencer(QAInferencer):
 
         # a) either from local dir
         if os.path.exists(model_name_or_path):
-            model = BaseAdaptiveModel.load(load_dir=model_name_or_path, device=devices[0], strict=strict)
+            model = WECAdaptiveModel.load(load_dir=model_name_or_path, device=devices[0], strict=strict,
+                                          replace_prediction_heads=replace_prediction_heads)
             if task_type == "embeddings":
                 processor = InferenceProcessor.load_from_dir(model_name_or_path)
             else:
@@ -90,12 +96,23 @@ class WECQAInferencer(QAInferencer):
                                  "Valid options for arg `task_type`:"
                                  "'question_answering'")
 
-            model = AdaptiveModel.convert_from_transformers(model_name_or_path,
-                                                            revision=revision,
-                                                            device=devices[0],  # type: ignore
-                                                            task_type=task_type,
-                                                            use_auth_token=use_auth_token,
-                                                            **kwargs)
+            # override model predicting_head with pairwise head
+            if replace_prediction_heads:
+                model = WECConverter.convert_from_transformers(model_name_or_path,
+                                                               revision=revision,
+                                                               device=devices[0],
+                                                               task_type=task_type,
+                                                               processor=None,
+                                                               use_auth_token=use_auth_token,
+                                                               **kwargs)
+            else:
+                model = AdaptiveModel.convert_from_transformers(model_name_or_path,
+                                                                revision=revision,
+                                                                device=devices[0],  # type: ignore
+                                                                task_type=task_type,
+                                                                use_auth_token=use_auth_token,
+                                                                **kwargs)
+
             processor = WECSquadProcessor.convert_from_transformers(model_name_or_path,
                                                                     revision=revision,
                                                                     task_type=task_type,

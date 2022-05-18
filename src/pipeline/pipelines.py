@@ -34,6 +34,7 @@ class WECPipeline(object):
             query_dict["query_id"] = query.id
             query_dict["start_index"] = query.startIndex
             query_dict["end_index"] = query.endIndex
+            query_dict["query_coref_link"] = int(query.goldChain)
             try:
                 # results = self.run_pipeline(json.dumps(query_dict, ensure_ascii=False))
                 results = self.run_pipeline(query_text=query_dict)
@@ -93,7 +94,7 @@ class QAPipeline(WECPipeline):
                 meta = ans_doc.meta
                 meta["id"] = ans_id
                 meta["context"] = ans_doc.content
-                meta["score"] = ans_doc.score
+                meta["score"] = result.score
                 meta["answer"] = result.answer
                 meta["offsets_in_document"] = result.offsets_in_document
                 converted_list.append(Passage(meta))

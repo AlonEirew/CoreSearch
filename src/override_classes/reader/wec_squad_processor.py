@@ -1,17 +1,20 @@
+import logging
 from pathlib import Path
 from typing import Optional, Union, List, Dict
 
 import numpy as np
 from haystack.modeling.data_handler.processor import SquadProcessor, InferenceProcessor
-from haystack.modeling.data_handler.samples import SampleBasket
+from haystack.modeling.data_handler.samples import SampleBasket, get_passage_offsets, Sample
 from haystack.modeling.model.tokenization import Tokenizer, _get_start_of_word_QA
 
 from src.override_classes.retriever.wec_processor import QUERY_SPAN_END, QUERY_SPAN_START
 
+logger = logging.getLogger(__name__)
+
 
 class WECSquadProcessor(SquadProcessor):
     def __init__(self, tokenizer, max_seq_len: int, data_dir: Optional[Union[Path, str]], add_special_tokens=False, **kwargs):
-        super().__init__(tokenizer, max_seq_len, data_dir, **kwargs)
+        super(WECSquadProcessor, self).__init__(tokenizer, max_seq_len, data_dir, **kwargs)
         self.add_special_tokens = add_special_tokens
 
     @classmethod
@@ -116,13 +119,41 @@ class WECSquadProcessor(SquadProcessor):
             document_text = d["context"]
             # # Tokenize questions one by one
             for i_q, q in enumerate(d["qas"]):
-                question_text = self.tokenize_query(q)
+                if isinstance(q['question'], dict):
+                    query_obj = {
+                        "query_ctx": q['question']['query'].split(" "),
+                        "query_ment_start": q['question']['start_index'],
+                        "query_ment_end": q['question']['end_index'],
+                        "query_mention": q['question']['query_mention'],
+                        "query_id": q['question']['query_id'],
+                        "query_coref_link": q['question']['query_coref_link']
+                    }
+                else:
+                    query_obj = {
+                        "query_ctx": q['question'].split(" "),
+                        "query_ment_start": q['ment_start'],
+                        "query_ment_end": q['ment_end'],
+                        "query_mention": q['query_mention'],
+                        "query_id": q['id'],
+                        "query_coref_link": q['query_coref_link']
+                    }
+
+                question_text = self.tokenize_query(query_obj)
                 tokenized_q = self.tokenizer.encode_plus(question_text, return_offsets_mapping=True,
                                                          return_special_tokens_mask=True, add_special_tokens=False)
                 # Extract relevant data
                 question_tokenids = tokenized_q["input_ids"]
                 question_offsets = [x[0] for x in tokenized_q["offset_mapping"]]
                 question_sow = _get_start_of_word_QA(tokenized_q.encodings[0].words)
+
+                query_ment_start = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[0])
+                query_ment_end = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[1])
+
+                query_coref_link = query_obj['query_coref_link']
+                do_corefer = 0
+                if len(q['answers']) > 0:
+                    pass_coref_link = q['answers'][0]['ment_coref_link']
+                    do_corefer = 1 if query_coref_link == pass_coref_link else 0
 
                 external_id = q["id"]
                 # The internal_id depends on unique ids created for each process before forking
@@ -132,54 +163,176 @@ class WECSquadProcessor(SquadProcessor):
                        "question_text": question_text, "question_tokens": question_tokenids,
                        "question_offsets": question_offsets, "question_start_of_word": question_sow,
                        "answers": q["answers"], "document_tokens_strings": tokenized_docs_batch.encodings[i_doc].tokens,
-                       "question_tokens_strings": tokenized_q.encodings[0].tokens}
+                       "question_tokens_strings": tokenized_q.encodings[0].tokens, "query_mention": query_obj['query_mention'],
+                       "query_id": query_obj["query_id"], "query_ment_start": query_ment_start,
+                       "query_ment_end": query_ment_end, "do_corefer": do_corefer}
                 # TODO add only during debug mode (need to create debug mode)
 
                 baskets.append(SampleBasket(raw=raw, id_internal=internal_id, id_external=external_id, samples=None))
         return baskets
 
     def tokenize_query(self, query_obj: Dict):
-        if isinstance(query_obj['question'], dict):
-            query_ctx = query_obj['question']['query'].split(" ")
-            ans_ment_start = query_obj['question']['start_index']
-            ans_ment_end = query_obj['question']['end_index']
-        else:
-            query_ctx = query_obj['question'].split(" ")
-            ans_ment_start = query_obj['answers'][0]['ment_start']
-            ans_ment_end = query_obj['answers'][0]['ment_end']
-        query_tokenized = list()
-        query_event_start_ind = query_event_end_ind = 0
+        query_ctx = query_obj["query_ctx"]
+        query_ment_start = query_obj["query_ment_start"]
+        query_ment_end = query_obj["query_ment_end"]
+        # query_event_start_ind = query_event_end_ind = 0
         if self.add_special_tokens and QUERY_SPAN_END not in query_ctx and QUERY_SPAN_START not in query_ctx:
-            self.add_query_bound(query_ctx, ans_ment_start, ans_ment_end)
-        for index, word in enumerate(query_ctx):
-            query_tokenized.append(word)
-            if self.add_special_tokens:
-                if word == QUERY_SPAN_START:
-                    query_event_start_ind = len(query_tokenized) - 1
-                elif word == QUERY_SPAN_END:
-                    query_event_end_ind = len(query_tokenized) - 1
+            self.add_query_bound(query_ctx, query_ment_start, query_ment_end)
+
+        pointer_start = query_ment_start
+        pointer_end = query_ment_end + 3
+        query_tokenized_len = 0
+        final_query_tokenized = query_ctx[pointer_start:pointer_end]
+        while query_tokenized_len < self.max_query_length - 1 and (pointer_start > 0 or pointer_end < len(query_ctx) - 1):
+            if pointer_end < len(query_ctx) - 1:
+                pointer_end += 1
+                query_tokenized_len += len(self.tokenizer.encode(query_ctx[pointer_end]))
+                # query_tokenized_len += len(self.tokenizer.tokenize(query_ctx[pointer_end]))
+                if query_tokenized_len >= self.max_query_length - 1:
+                    break
+                final_query_tokenized.append(query_ctx[pointer_end])
+
+            if pointer_start > 0:
+                pointer_start -= 1
+                query_tokenized_len += len(self.tokenizer.encode(query_ctx[pointer_start]))
+                # query_tokenized_len += len(self.tokenizer.tokenize(query_ctx[pointer_start]))
+                if query_tokenized_len >= self.max_query_length - 1:
+                    break
+                final_query_tokenized.insert(0, query_ctx[pointer_start])
+
+        return " ".join(final_query_tokenized)
+
+    def _passages_to_pytorch_features(self, baskets:List[SampleBasket], return_baskets:bool):
+        """
+        Convert internal representation (nested baskets + samples with mixed types) to python features (arrays of numbers).
+        We first join question and passages into one large vector.
+        Then we add vectors for: - input_ids (token ids)
+                                 - segment_ids (does a token belong to question or document)
+                                 - padding_mask
+                                 - span_mask (valid answer tokens)
+                                 - start_of_word
+        """
+        for basket in baskets:
+            # Add features to samples
+            for num, sample in enumerate(basket.samples): # type: ignore
+                # Initialize some basic variables
+                if sample.tokenized is not None:
+                    question_tokens = sample.tokenized["question_tokens"]
+                    question_start_of_word = sample.tokenized["question_start_of_word"]
+                    question_len_t = len(question_tokens)
+                    passage_start_t = sample.tokenized["passage_start_t"]
+                    passage_tokens = sample.tokenized["passage_tokens"]
+                    passage_start_of_word = sample.tokenized["passage_start_of_word"]
+                    passage_len_t = len(passage_tokens)
+                    sample_id = [int(x) for x in sample.id.split("-")]
+
+                    # - Combines question_tokens and passage_tokens into a single vector called input_ids
+                    # - input_ids also contains special tokens (e.g. CLS or SEP tokens).
+                    # - It will have length = question_len_t + passage_len_t + n_special_tokens. This may be less than
+                    #   max_seq_len but never greater since truncation was already performed when the document was chunked into passages
+                    question_input_ids = sample.tokenized["question_tokens"]
+                    passage_input_ids = sample.tokenized["passage_tokens"]
+
+                input_ids = self.tokenizer.build_inputs_with_special_tokens(token_ids_0=question_input_ids,
+                                                                            token_ids_1=passage_input_ids)
+
+                segment_ids = self.tokenizer.create_token_type_ids_from_sequences(token_ids_0=question_input_ids,
+                                                                                  token_ids_1=passage_input_ids)
+                # To make the start index of passage tokens the start manually
+                seq_2_start_t = self.sp_toks_start + question_len_t + self.sp_toks_mid
+
+                start_of_word = [0] * self.sp_toks_start + \
+                                question_start_of_word + \
+                                [0] * self.sp_toks_mid + \
+                                passage_start_of_word + \
+                                [0] * self.sp_toks_end
+
+                # The mask has 1 for real tokens and 0 for padding tokens. Only real
+                # tokens are attended to.
+                padding_mask = [1] * len(input_ids)
+
+                # The span_mask has 1 for tokens that are valid start or end tokens for QA spans.
+                # 0s are assigned to question tokens, mid special tokens, end special tokens, and padding
+                # Note that start special tokens are assigned 1 since they can be chosen for a no_answer prediction
+                span_mask = [1] * self.sp_toks_start
+                span_mask += [0] * question_len_t
+                span_mask += [0] * self.sp_toks_mid
+                span_mask += [1] * passage_len_t
+                span_mask += [0] * self.sp_toks_end
+
+                # Pad up to the sequence length. For certain models, the pad token id is not 0 (e.g. Roberta where it is 1)
+                pad_idx = self.tokenizer.pad_token_id
+                padding = [pad_idx] * (self.max_seq_len - len(input_ids))
+                zero_padding = [0] * (self.max_seq_len - len(input_ids))
+
+                input_ids += padding
+                padding_mask += zero_padding
+                segment_ids += zero_padding
+                start_of_word += zero_padding
+                span_mask += zero_padding
+
+                # TODO possibly remove these checks after input validation is in place
+                len_check = len(input_ids) == len(padding_mask) == len(segment_ids) == len(start_of_word) == len(span_mask)
+                id_check = len(sample_id) == 3
+                label_check = return_baskets or len(sample.tokenized.get("labels",[])) == self.max_answers # type: ignore
+                # labels are set to -100 when answer cannot be found
+                label_check2 = return_baskets or np.all(sample.tokenized["labels"] > -99) # type: ignore
+                if len_check and id_check and label_check and label_check2:
+                    # - The first of the labels will be used in train, and the full array will be used in eval.
+                    # - start_of_word and spec_tok_mask are not actually needed by model.forward() but are needed for
+                    #   model.formatted_preds() during inference for creating answer strings
+                    # - passage_start_t is index of passage's first token relative to document
+                    feature_dict = {"input_ids": input_ids,
+                                    "padding_mask": padding_mask,
+                                    "segment_ids": segment_ids,
+                                    "passage_start_t": passage_start_t,
+                                    "start_of_word": start_of_word,
+                                    "labels": sample.tokenized.get("labels",[]), # type: ignore
+                                    "do_corefer": [basket.raw["do_corefer"]],
+                                    "id": sample_id,
+                                    "seq_2_start_t": seq_2_start_t,
+                                    "span_mask": span_mask,
+                                    "query_ment_start": basket.raw["query_ment_start"] + 1,
+                                    "query_ment_end": basket.raw["query_ment_end"] + 1}
+
+                    self.validate_query_toks(query_mention=basket.raw['query_mention'], query_id=basket.raw['query_id'],
+                                             query_feat=feature_dict, query_tokenized=basket.raw['question_tokens_strings'])
+                    # other processor's features can be lists
+                    sample.features = [feature_dict] # type: ignore
+                else:
+                    self.problematic_sample_ids.add(sample.id)
+                    sample.features = None
+        return baskets
+
+    def validate_query_toks(self, query_mention, query_id, query_feat, query_tokenized):
+        if self.add_special_tokens:
+            if QUERY_SPAN_START in self.tokenizer.additional_special_tokens and QUERY_SPAN_END in self.tokenizer.additional_special_tokens:
+                if query_feat["input_ids"][query_feat["query_ment_start"]] != self.tokenizer.additional_special_tokens_ids[0] or \
+                        query_feat["input_ids"][query_feat["query_ment_end"]] != self.tokenizer.additional_special_tokens_ids[1]:
+                    raise AssertionError(f"Query ID={query_id} start/end tokens")
             else:
-                if index == ans_ment_start:
-                    query_event_start_ind = len(query_tokenized) - 1
-                if index == ans_ment_end:
-                    query_event_end_ind = len(query_tokenized) - 1
+                raise AssertionError("add_spatial_token=True and no spatial tokens in added_tokens_encoder list!")
+            # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
+            if query_mention:
+                query_lower = "".join(query_mention)
+                token_query_lower = "".join(
+                    [s.strip('Ġ') for s in
+                     query_tokenized[query_feat["query_ment_start"]:query_feat["query_ment_end"] - 1]])
+                if query_lower != token_query_lower:
+                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
+        else:
+            assert query_feat["input_ids"][
+                   query_feat["query_ment_start"]:query_feat["query_ment_end"] + 1] == self.tokenizer.convert_tokens_to_ids(
+                self.tokenizer.tokenize(" ".join(query_mention)))
+            # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
+            if query_mention:
+                query_lower = "".join(query_mention)
+                token_query_lower = "".join([
+                    s.strip('Ġ') for s in query_tokenized[query_feat["query_ment_start"]:query_feat["query_ment_end"] + 1]
+                ]).lower()
 
-        pointer_start = query_event_start_ind
-        pointer_end = query_event_end_ind
-
-        if len(query_tokenized) > self.max_query_length:
-            trimmed_query_tok = query_tokenized[pointer_start:pointer_end + 1]
-            while len(trimmed_query_tok) < self.max_query_length - 1:
-                if pointer_end < len(query_tokenized) - 1:
-                    pointer_end += 1
-                    trimmed_query_tok.append(query_tokenized[pointer_end])
-                if pointer_start > 0:
-                    pointer_start -= 1
-                    trimmed_query_tok.insert(0, query_tokenized[pointer_start])
-
-            query_tokenized = trimmed_query_tok
-
-        return " ".join(query_tokenized)
+                if query_lower != token_query_lower:
+                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower})")
 
     @staticmethod
     def add_query_bound(query_ctx: List[str], start_index: int, end_index: int):

@@ -1,5 +1,6 @@
-from haystack.nodes import FARMReader
+import os
 
+os.environ["MILVUS2_ENABLED"] = "false"
 from src.override_classes.reader.wec_reader import WECReader
 
 
@@ -11,19 +12,24 @@ def main():
                 facebook/dpr-reader-multiset-base
     """
     qa_model = "deepset/roberta-base-squad2"
+    add_special_tokens = True
+    replace_prediction_heads = True
+    num_processes = 8
+    evaluate_every = 2200
+    n_epochs = 1
 
-    add_special_tokens = False
     reader = WECReader(model_name_or_path=qa_model, use_gpu=True,
-                       num_processes=8, add_special_tokens=add_special_tokens)
+                       num_processes=num_processes, add_special_tokens=add_special_tokens,
+                       replace_prediction_heads=replace_prediction_heads)
     reader.train(
         data_dir="data/resources/squad/context",
-        train_filename="Train_squad_format_1pos.json",
-        dev_filename="Dev_squad_format_1pos.json",
-        evaluate_every=2800,
+        train_filename="Train_squad_format_1pos_24neg.json",
+        dev_filename="Dev_squad_format_1pos_24neg.json",
+        evaluate_every=evaluate_every,
         use_gpu=True,
-        n_epochs=1,
-        num_processes=8,
-        save_dir="data/checkpoints/squad_roberta_ctx_1pos"
+        n_epochs=n_epochs,
+        num_processes=num_processes,
+        save_dir="data/checkpoints/deepset_roberta_base_squad2_pairwise"
     )
 
     print("Done!")

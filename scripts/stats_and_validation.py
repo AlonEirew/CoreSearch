@@ -98,9 +98,9 @@ def run_dpr_stats(train_clusters, dev_clusters, test_clusters):
 
 def run_squad_stats():
     print("#### Total queries for reader (SQUAD format)")
-    train_squad = _read_squad_file("data/resources/dpr/context/Train.json")
-    dev_squad = _read_squad_file("data/resources/dpr/context/Dev.json")
-    test_squad = _read_squad_file("data/resources/dpr/context/Test.json")
+    train_squad = _read_squad_file("data/resources/squad/context/Train.json")
+    dev_squad = _read_squad_file("data/resources/squad/context/Dev.json")
+    test_squad = _read_squad_file("data/resources/squad/context/Test.json")
     print("########")
 
 

@@ -12,7 +12,6 @@ def main():
     train_queries: Dict[str, TrainExample] = TrainExample.list_to_map(io_utils.read_train_example_file(
         "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"))
     clusters: List[Cluster] = io_utils.read_gold_file("data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json")
-
     passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
     passage_dict: Dict[str, Passage] = {obj.id: obj for obj in read_passages_file(passages_file)}
 
@@ -91,12 +90,13 @@ def create_qas_obj(query_example, is_impossible, query_style, passage=None):
             start_idx += 1
 
         ans_obj = {"text": query_ans, "answer_start": start_idx,
-                   "ment_start": passage.startIndex, "ment_end": passage.endIndex, "ment_text": passage.mention}
+                   "ment_start": passage.startIndex, "ment_end": passage.endIndex,
+                   "ment_text": passage.mention, "ment_coref_link": int(passage.goldChain)}
         answers.append(ans_obj)
     else:
         ans_obj = {"text": "", "answer_start": 0,
                    "ment_start": 0, "ment_end": 0,
-                   "ment_text": ["NA"]}
+                   "ment_text": ["NA"], "ment_coref_link": -1}
         answers.append(ans_obj)
 
     if query_style == "bm25":
@@ -107,6 +107,7 @@ def create_qas_obj(query_example, is_impossible, query_style, passage=None):
     qas_obj["ment_start"] = query_example.startIndex
     qas_obj["ment_end"] = query_example.endIndex
     qas_obj["query_mention"] = query_example.mention
+    qas_obj["query_coref_link"] = int(query_example.goldChain)
     qas_obj["answers"] = answers
     qas_obj["is_impossible"] = is_impossible
     return qas_obj

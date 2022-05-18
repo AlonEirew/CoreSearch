@@ -1,6 +1,11 @@
 import json
 import logging
+import os
 from typing import List, Dict
+
+import resource
+
+os.environ["MILVUS2_ENABLED"] = "false"
 
 from haystack.nodes import FARMReader
 
@@ -15,20 +20,27 @@ from src.utils import io_utils, measurments, data_utils, dpr_utils, measure_squa
 from src.utils.dpr_utils import create_file_doc_store
 from src.utils.measurments import precision, precision_squad
 
+
 logger = logging.getLogger("run_haystack_pipeline")
 logger.setLevel(logging.DEBUG)
 
 
+SPLIT = "Dev"
+
+
 def main():
+    # resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
     # index_type = "elastic_bm25"
     index_type = "faiss_dpr"
     # run_pipe_str = "retriever"
     run_pipe_str = "qa"
     # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
     es_index = SPLIT.lower()
-    experiment_name = "test_1pos_24neg"
+    experiment_name = "reader_baseline_pairwise"
     # magnitude = all/cluster meaning if to use all queries (all) or just single clusters query (cluster)
     magnitude = "cluster"
+
+    replace_prediction_heads = True
     query_method = "with_bounds"
 
     infer_tokenizer_classes = True
@@ -37,20 +49,21 @@ def main():
     max_seq_len_query = 64
     max_seq_len_passage = 180
     batch_size = 16
+    num_processes = 1
 
-    index_file = "file_indexes/dev_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
+    index_file = "file_indexes/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
     checkpoint_dir = "data/checkpoints/"
-    query_encode = checkpoint_dir + "dev_spanbert_hidden_cls_spatial_ctx_2it/query_encoder"
-    passage_encode = checkpoint_dir + "dev_spanbert_hidden_cls_spatial_ctx_2it/passage_encoder"
+    query_encode = checkpoint_dir + "span_bert_2it/query_encoder"
+    passage_encode = checkpoint_dir + "span_bert_2it/passage_encoder"
 
     # reader_model_file = "deepset/roberta-base-squad2"
-    reader_model_file = "data/checkpoints/squad_roberta_ctx_1pos_24neg"
+    reader_model_file = "data/checkpoints/deepset_roberta_base_squad2_pairwise"
 
-    gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
-    queries_file = "data/resources/train/" + SPLIT + "_training_queries.json"
-    # queries_file = "data/resources/train/small_training_queries.json"
+    gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
+    # queries_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
+    queries_file = "data/resources/WEC-ES/train/smalldev_queries.json"
     # passages are only to generate the query gold answers
-    passages_file = "data/resources/WEC-ES/" + SPLIT + "_all_passages.json"
+    passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
 
     result_out_file = "results/" + es_index + "_" + query_method + "_" + index_type + "_" + experiment_name + ".txt"
 
@@ -97,14 +110,17 @@ def main():
         if query_method == "full_ctx" or query_method == "with_bounds":
             pipeline = QAPipeline(document_store=document_store,
                                   retriever=retriever,
-                                  reader=WECReader(model_name_or_path=reader_model_file, use_gpu=True, num_processes=8,
-                                                   add_special_tokens=add_special_tokens),
+                                  reader=WECReader(model_name_or_path=reader_model_file, use_gpu=True,
+                                                   num_processes=num_processes,
+                                                   add_special_tokens=add_special_tokens,
+                                                   replace_prediction_heads=replace_prediction_heads),
                                   ret_topk=ret_top_k,
                                   read_topk=read_top_k)
         elif query_method == "bm25":
             pipeline = QAPipeline(document_store=document_store,
                                   retriever=retriever,
-                                  reader=FARMReader(model_name_or_path=reader_model_file, use_gpu=True, num_processes=8),
+                                  reader=FARMReader(model_name_or_path=reader_model_file, use_gpu=True,
+                                                    num_processes=num_processes),
                                   ret_topk=ret_top_k,
                                   read_topk=read_top_k)
         else:
@@ -214,6 +230,8 @@ def print_measurements(predictions, golds_arranged, run_pipe_str):
     to_print.append("mAP@100=" + str(measurments.mean_average_precision(
         predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=100)))
 
+    to_print.append("Recall@5=" + str(measurments.recall(
+        predictions=predictions, golds=golds_arranged, topk=5)))
     to_print.append("Recall@10=" + str(measurments.recall(
         predictions=predictions, golds=golds_arranged, topk=10)))
     to_print.append("Recall@25=" + str(measurments.recall(
@@ -234,5 +252,4 @@ def print_measurements(predictions, golds_arranged, run_pipe_str):
 
 
 if __name__ == '__main__':
-    SPLIT = "Dev"
     main()

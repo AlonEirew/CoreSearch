@@ -42,6 +42,7 @@ class WECReader(FARMReader):
             force_download=False,
             use_auth_token: Optional[Union[str, bool]] = None,
             add_special_tokens: bool = False,
+            replace_prediction_heads: bool = False,
             **kwargs
     ):
         self.add_special_tokens = add_special_tokens
@@ -73,6 +74,7 @@ class WECReader(FARMReader):
                                                devices=self.devices,
                                                use_auth_token=use_auth_token,
                                                add_special_tokens=self.add_special_tokens,
+                                               replace_prediction_heads=replace_prediction_heads,
                                                **kwargs)
         self.inferencer.model.prediction_heads[0].context_window_size = context_window_size
         self.inferencer.model.prediction_heads[0].no_ans_boost = no_ans_boost
