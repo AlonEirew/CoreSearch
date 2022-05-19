@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import os
 from pathlib import Path
 from typing import List, Optional, Union, Dict, Tuple
@@ -82,7 +83,8 @@ class WECQuestionAnsweringHead(PredictionHead):
         self.temperature_for_confidence = nn.Parameter(torch.ones(1) * temperature_for_confidence)
         self.use_confidence_scores_for_ranking = use_confidence_scores_for_ranking
         # Dim is the contatenation of the (mention_start & mention end) * 2 + (multiplication of them)
-        self.pairwize = self.get_sequential(6 * layer_dims[0], 128)
+        self.start_end_ff = FeedForwardBlock([2 * layer_dims[0], 1])
+        self.pairwize = FeedForwardBlock([2 * layer_dims[0], 1])
         self.linear = nn.Linear(128, 1)
 
     @staticmethod
@@ -142,25 +144,55 @@ class WECQuestionAnsweringHead(PredictionHead):
 
         start_logits = start_logits.contiguous()
         end_logits = end_logits.contiguous()
-        _, start_idxs = torch.max(start_logits, 1)
-        _, end_idxs = torch.max(end_logits, 1)
 
         indicies = torch.arange(embedding.size(0))
-        query_start_embeds = embedding[indicies, query_ment_start]
-        query_end_embeds = embedding[indicies, query_ment_end]
-        passages_start_embeds = embedding[indicies, start_idxs]
-        passage_end_embeds = embedding[indicies, end_idxs]
+        query_start_logits = start_logits[indicies, query_ment_start]
+        query_end_logits = end_logits[indicies, query_ment_end]
 
-        score_query_ment = torch.cat((query_start_embeds, query_end_embeds), dim=1)
-        score_pass_ment = torch.cat((passages_start_embeds, passage_end_embeds), dim=1)
+        # Calculate the query score (we know the span in the embedding sequence)
+        query_start_embed = embedding[indicies, query_ment_start]
+        query_end_embed = embedding[indicies, query_ment_end]
+        query_start_end_embed = torch.cat((query_start_embed, query_end_embed), dim=1)
+        query_start_end = self.start_end_ff(query_start_end_embed)
+        # sum to get query score
+        query_score = (query_start_logits + query_end_logits + query_start_end.squeeze()) / 3
 
-        span1_span2 = score_query_ment * score_pass_ment
-        concat_scores = torch.cat((score_query_ment, score_pass_ment, span1_span2), dim=1)
-        pairwize = self.pairwize(concat_scores)
-        pair_result = self.linear(pairwize)
+        # Calculate the passage score
+        # Add all start/end combinations for start/end logits
+        max_seq_len = start_logits.shape[1]
+        pass_start_logits = start_logits.unsqueeze(2)
+        pass_end_logits = end_logits.unsqueeze(2)
+        pass_start_matrix = pass_start_logits.expand(-1, -1, max_seq_len)
+        pass_end_matrix = pass_end_logits.expand(-1, -1, max_seq_len)
+        pass_start_plus_end_matrix = pass_start_matrix + pass_end_matrix.transpose(1, 2)
 
-        scale = self.temperature_scale(logits)
-        return scale, pair_result
+        # get and concat all start/end combinations of start and end embeddings
+        start_embed_matrix = embedding.unsqueeze(2)
+        end_embed_matrix = embedding.unsqueeze(2)
+        start_embed_matrix_ex = start_embed_matrix.expand(-1, -1, max_seq_len, -1)
+        end_embed_matrix_ex = end_embed_matrix.expand(-1, -1, max_seq_len, -1)
+        pass_start_end_matrix = torch.cat((start_embed_matrix_ex, end_embed_matrix_ex.transpose(1, 2)), dim=3)
+        pass_start_cat_end_matrix = self.start_end_ff(pass_start_end_matrix).squeeze()
+        # sum to get passage score
+        pass_score = (pass_start_plus_end_matrix + pass_start_cat_end_matrix) / 3
+
+        pass_pairwize_score = self.pairwize(pass_start_end_matrix).squeeze()
+        query_pairwize_score = self.pairwize(query_start_end_embed)
+        # expend to cover all combinations
+        query_pairwize_score_expanded = query_pairwize_score.expand(-1, max_seq_len).unsqueeze(2).expand(-1, -1, max_seq_len)
+        query_score_ex = query_score.unsqueeze(1).expand(-1, max_seq_len).unsqueeze(2).expand(-1, -1, max_seq_len).clone()
+
+        score_query_pass = (query_pairwize_score_expanded + pass_pairwize_score) / 2
+
+        # prun where end < start
+        # (set the lower triangular matrix to low value, excluding diagonal)
+        indices = torch.tril_indices(max_seq_len, max_seq_len, offset=-1, device=pass_score.device)
+        pass_score[:, indices[0][:], indices[1][:]] = 0
+        query_score_ex[:, indices[0][:], indices[1][:]] = 0
+        score_query_pass[:, indices[0][:], indices[1][:]] = 0
+
+        final_pairwize_score = query_score_ex + pass_score + score_query_pass
+        return final_pairwize_score
 
     def logits_to_loss(self, logits: torch.Tensor, labels: torch.Tensor, **kwargs):
         """
@@ -171,34 +203,19 @@ class WECQuestionAnsweringHead(PredictionHead):
         # most that occurs in the SQuAD dev set. The 2 in the final dimension corresponds to [start, end]
         start_position = labels[:, 0, 0]
         end_position = labels[:, 0, 1]
+        # create the labels matrix
+        indicies_x = torch.arange(logits.size(0)).to(device=logits.device)
+        prep_labels = torch.zeros(logits.size())
+        prep_labels[indicies_x, start_position, end_position] = 1
 
-        # logits is of shape [batch_size, max_seq_len, 2]. Like above, the final dimension corresponds to [start, end]
-        start_logits, end_logits = logits.split(1, dim=-1)
-        start_logits = start_logits.squeeze(-1)
-        end_logits = end_logits.squeeze(-1)
-
-        # Squeeze final singleton dimensions
-        if len(start_position.size()) > 1:
-            start_position = start_position.squeeze(-1)
-        if len(end_position.size()) > 1:
-            end_position = end_position.squeeze(-1)
-
-        ignored_index = start_logits.size(1)
-        start_position.clamp_(0, ignored_index)
-        end_position.clamp_(0, ignored_index)
-
-        # Workaround for pytorch bug in version 1.10.0 with non-continguous tensors
-        # Fix expected in 1.10.1 based on https://github.com/pytorch/pytorch/pull/64954
-        start_logits = start_logits.contiguous()
-        start_position = start_position.contiguous()
-        end_logits = end_logits.contiguous()
-        end_position = end_position.contiguous()
+        # Prepare for loss
+        prep_logits = logits.view(logits.shape[0], -1)
+        _, prep_labels = torch.nonzero(prep_labels.view(prep_labels.shape[0], -1), as_tuple=True)
 
         loss_fct = CrossEntropyLoss(reduction="none")
-        start_loss = loss_fct(start_logits, start_position)
-        end_loss = loss_fct(end_logits, end_position)
-        per_sample_loss = sum(start_loss + end_loss)
-        return per_sample_loss
+        loss = loss_fct(prep_logits, prep_labels.to(device=logits.device))
+
+        return loss
 
     def pairs_to_loss(self, pairs_scores: torch.Tensor, do_corefer: torch.Tensor, **kwargs):
         # calculate loss for pairwise score

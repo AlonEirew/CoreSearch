@@ -98,8 +98,8 @@ class WECAdaptiveModel(AdaptiveModel):
                 (f"Label_tensor_names are missing inside the {head.task_name} Prediction Head. Did you connect the model"
                 " with the processor through either 'model.connect_heads_with_processor(processor.tasks)'"
                 " or by passing the processor to the Adaptive Model?")
-            all_losses.append(head.logits_to_loss(logits=logits_for_one_head[0], **kwargs))
-            all_losses.append(head.pairs_to_loss(pairs_scores=logits_for_one_head[1], **kwargs))
+            all_losses.append(head.logits_to_loss(logits=logits_for_one_head, **kwargs))
+            # all_losses.append(head.pairs_to_loss(pairs_scores=logits_for_one_head[1], **kwargs))
         return all_losses
 
     @staticmethod
@@ -110,7 +110,7 @@ class WECAdaptiveModel(AdaptiveModel):
         :param loss_per_head: List of losses.
         """
         # [L(Start) + L(End) + L(Pair)] / 3
-        return sum(loss_per_head) / 3
+        return sum(loss_per_head)
 
     def logits_to_preds(self, logits: torch.Tensor, **kwargs):
         """
