@@ -49,6 +49,7 @@ def main():
     max_seq_len_query = 64
     max_seq_len_passage = 180
     batch_size = 16
+    batch_size_qa = 16
     num_processes = 1
 
     index_file = "file_indexes/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
@@ -60,8 +61,8 @@ def main():
     reader_model_file = "data/checkpoints/deepset_roberta_base_squad2_pairwise"
 
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
-    # queries_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
-    queries_file = "data/resources/WEC-ES/train/smalldev_queries.json"
+    queries_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
+    # queries_file = "data/resources/WEC-ES/train/smalldev_queries.json"
     # passages are only to generate the query gold answers
     passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
 
@@ -113,6 +114,7 @@ def main():
                                   reader=WECReader(model_name_or_path=reader_model_file, use_gpu=True,
                                                    num_processes=num_processes,
                                                    add_special_tokens=add_special_tokens,
+                                                   batch_size=batch_size_qa,
                                                    replace_prediction_heads=replace_prediction_heads),
                                   ret_topk=ret_top_k,
                                   read_topk=read_top_k)

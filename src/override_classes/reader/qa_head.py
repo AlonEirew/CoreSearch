@@ -276,34 +276,17 @@ class WECQuestionAnsweringHead(PredictionHead):
         # Note that ~top_n = n   if no_answer is     within the top_n predictions
         #           ~top_n = n+1 if no_answer is not within the top_n predictions
         all_top_n = []
-
-        # logits is of shape [batch_size, max_seq_len, 2]. The final dimension corresponds to [start, end]
-        start_logits, end_logits = logits[0].split(1, dim=-1)
-        start_logits = start_logits.squeeze(-1)
-        end_logits = end_logits.squeeze(-1)
-
-        # Calculate a few useful variables
-        batch_size = start_logits.size()[0]
-        max_seq_len = start_logits.shape[1]  # target dim
-
-        # get scores for all combinations of start and end logits => candidate answers
-        start_matrix = start_logits.unsqueeze(2).expand(-1, -1, max_seq_len)
-        end_matrix = end_logits.unsqueeze(1).expand(-1, max_seq_len, -1)
-        start_end_matrix = (start_matrix + end_matrix)
-
+        batch_size = logits.size()[0]
+        max_seq_len = logits.shape[1]  # target dim
         # disqualify answers where end < start
-        # (set the lower triangular matrix to low value, excluding diagonal)
-        indices = torch.tril_indices(max_seq_len, max_seq_len, offset=-1, device=start_end_matrix.device)
-        start_end_matrix[:, indices[0][:], indices[1][:]] = -888
-
+        indices = torch.tril_indices(max_seq_len, max_seq_len, offset=-1, device=logits.device)
+        logits[:, indices[0][:], indices[1][:]] = -888
         # disqualify answers where answer span is greater than max_answer_length
         # (set the upper triangular matrix to low value, excluding diagonal)
-        indices_long_span = torch.triu_indices(max_seq_len, max_seq_len, offset=max_answer_length,
-                                               device=start_end_matrix.device)
-        start_end_matrix[:, indices_long_span[0][:], indices_long_span[1][:]] = -777
-
+        indices_long_span = torch.triu_indices(max_seq_len, max_seq_len, offset=max_answer_length, device=logits.device)
+        logits[:, indices_long_span[0][:], indices_long_span[1][:]] = -777
         # disqualify answers where start=0, but end != 0
-        start_end_matrix[:, 0, 1:] = -666
+        logits[:, 0, 1:] = -666
 
         # Turn 1d span_mask vectors into 2d span_mask along 2 different axes
         # span mask has:
@@ -314,13 +297,15 @@ class WECQuestionAnsweringHead(PredictionHead):
         span_mask_2d = span_mask_start + span_mask_end
         # disqualify spans where either start or end is on an invalid token
         invalid_indices = torch.nonzero((span_mask_2d != 2), as_tuple=True)
-        start_end_matrix[invalid_indices[0][:], invalid_indices[1][:], invalid_indices[2][:]] = -999
+        logits[invalid_indices[0][:], invalid_indices[1][:], invalid_indices[2][:]] = -999
 
         # Sort the candidate answers by their score. Sorting happens on the flattened matrix.
         # flat_sorted_indices.shape: (batch_size, max_seq_len^2, 1)
-        flat_scores = start_end_matrix.view(batch_size, -1)
-        flat_sorted_indices_2d = flat_scores.sort(descending=True)[1]
+        flat_scores = logits.view(batch_size, -1)
+        flat_scores = torch.softmax(flat_scores, dim=1)
+        _, flat_sorted_indices_2d = flat_scores.sort(descending=True)
         flat_sorted_indices = flat_sorted_indices_2d.unsqueeze(2)
+        confidence_scors = flat_scores.view(batch_size, max_seq_len, max_seq_len)
 
         # The returned indices are then converted back to the original dimensionality of the matrix.
         # sorted_candidates.shape : (batch_size, max_seq_len^2, 2)
@@ -331,10 +316,13 @@ class WECQuestionAnsweringHead(PredictionHead):
         # Get the n_best candidate answers for each sample
         for sample_idx in range(batch_size):
             sample_top_n = self.get_top_candidates(sorted_candidates[sample_idx],
-                                                   start_end_matrix[sample_idx],
-                                                   sample_idx, start_matrix=start_matrix[sample_idx],
-                                                   end_matrix=end_matrix[sample_idx],
-                                                   pairs_scores=logits[1][sample_idx])
+                                                   logits[sample_idx],
+                                                   sample_idx,
+                                                   start_matrix=None,
+                                                   end_matrix=None,
+                                                   # start_matrix=start_matrix[sample_idx],
+                                                   # end_matrix=end_matrix[sample_idx],
+                                                   pairs_scores=confidence_scors[sample_idx])
             all_top_n.append(sample_top_n)
 
         return all_top_n
@@ -352,9 +340,9 @@ class WECQuestionAnsweringHead(PredictionHead):
         start_idx_candidates = set()
         end_idx_candidates = set()
 
-        start_matrix_softmax_start = torch.softmax(start_matrix[:, 0], dim=-1)
-        end_matrix_softmax_end = torch.softmax(end_matrix[0, :], dim=-1)
-        pairs_scores_sig = torch.sigmoid(pairs_scores)
+        # start_matrix_softmax_start = torch.softmax(start_matrix[:, 0], dim=-1)
+        # end_matrix_softmax_end = torch.softmax(end_matrix[0, :], dim=-1)
+        # pairs_scores_sig = torch.sigmoid(pairs_scores)
         # Iterate over all candidates and break when we have all our n_best candidates
         for candidate_idx in range(n_candidates):
             if len(top_candidates) == self.n_best_per_sample:
@@ -370,8 +358,7 @@ class WECQuestionAnsweringHead(PredictionHead):
                         start_idx in start_idx_candidates or end_idx in end_idx_candidates):
                     continue
                 score = start_end_matrix[start_idx, end_idx].item()
-                confidence = (start_matrix_softmax_start[start_idx].item() +
-                              end_matrix_softmax_end[end_idx].item() + pairs_scores_sig.item()) / 3
+                confidence = pairs_scores[start_idx, end_idx].item()
                 top_candidates.append(QACandidate(offset_answer_start=start_idx,
                                                   offset_answer_end=end_idx,
                                                   score=score,
@@ -388,8 +375,7 @@ class WECQuestionAnsweringHead(PredictionHead):
                         end_idx_candidates.add(end_idx - i)
 
         no_answer_score = start_end_matrix[0, 0].item()
-        no_answer_confidence = (start_matrix_softmax_start[0].item() +
-                                end_matrix_softmax_end[0].item() + pairs_scores_sig.item()) / 3
+        no_answer_confidence = pairs_scores[0, 0].item()
         top_candidates.append(QACandidate(offset_answer_start=0,
                                           offset_answer_end=0,
                                           score=no_answer_score,

@@ -25,7 +25,7 @@ def main():
     reader.train(
         data_dir="data/resources/squad/context",
         train_filename="Train_squad_format_1pos_24neg.json",
-        dev_filename="dev_small.json",
+        dev_filename="Dev_squad_format_1pos_24neg.json",
         evaluate_every=evaluate_every,
         use_gpu=True,
         n_epochs=n_epochs,
