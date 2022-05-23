@@ -172,6 +172,7 @@ class WECSquadProcessor(SquadProcessor):
         return baskets
 
     def tokenize_query(self, query_obj: Dict):
+        max_query_len = self.max_query_length - self.tokenizer.num_special_tokens_to_add(pair=False)
         query_ctx = query_obj["query_ctx"]
         query_ment_start = query_obj["query_ment_start"]
         query_ment_end = query_obj["query_ment_end"]
@@ -180,25 +181,28 @@ class WECSquadProcessor(SquadProcessor):
             self.add_query_bound(query_ctx, query_ment_start, query_ment_end)
 
         pointer_start = query_ment_start
-        pointer_end = query_ment_end + 3
+        pointer_end = query_ment_end + 2
         query_tokenized_len = 0
-        final_query_tokenized = query_ctx[pointer_start:pointer_end]
-        while query_tokenized_len < self.max_query_length - 1 and (pointer_start > 0 or pointer_end < len(query_ctx) - 1):
+        final_query_tokenized = query_ctx[pointer_start:pointer_end+1]
+        query_tokenized_len += len(self.tokenizer.encode(" ".join(final_query_tokenized), add_special_tokens=False))
+        while query_tokenized_len < max_query_len and (pointer_start > 0 or pointer_end < len(query_ctx) - 1):
             if pointer_end < len(query_ctx) - 1:
                 pointer_end += 1
-                query_tokenized_len += len(self.tokenizer.encode(query_ctx[pointer_end]))
+                query_tokenized_len += len(self.tokenizer.encode(query_ctx[pointer_end], add_special_tokens=False))
                 # query_tokenized_len += len(self.tokenizer.tokenize(query_ctx[pointer_end]))
-                if query_tokenized_len >= self.max_query_length - 1:
+                if query_tokenized_len < max_query_len:
+                    final_query_tokenized.append(query_ctx[pointer_end])
+                else:
                     break
-                final_query_tokenized.append(query_ctx[pointer_end])
 
             if pointer_start > 0:
                 pointer_start -= 1
-                query_tokenized_len += len(self.tokenizer.encode(query_ctx[pointer_start]))
+                query_tokenized_len += len(self.tokenizer.encode(query_ctx[pointer_start], add_special_tokens=False))
                 # query_tokenized_len += len(self.tokenizer.tokenize(query_ctx[pointer_start]))
-                if query_tokenized_len >= self.max_query_length - 1:
+                if query_tokenized_len < max_query_len:
+                    final_query_tokenized.insert(0, query_ctx[pointer_start])
+                else:
                     break
-                final_query_tokenized.insert(0, query_ctx[pointer_start])
 
         return " ".join(final_query_tokenized)
 

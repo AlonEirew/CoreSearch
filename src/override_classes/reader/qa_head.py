@@ -142,20 +142,20 @@ class WECQuestionAnsweringHead(PredictionHead):
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)
 
-        start_logits = start_logits.contiguous()
-        end_logits = end_logits.contiguous()
+        # start_logits = start_logits.contiguous()
+        # end_logits = end_logits.contiguous()
 
         indicies = torch.arange(embedding.size(0))
-        query_start_logits = start_logits[indicies, query_ment_start]
-        query_end_logits = end_logits[indicies, query_ment_end]
+        # query_start_logits = start_logits[indicies, query_ment_start]
+        # query_end_logits = end_logits[indicies, query_ment_end]
 
         # Calculate the query score (we know the span in the embedding sequence)
         query_start_embed = embedding[indicies, query_ment_start]
         query_end_embed = embedding[indicies, query_ment_end]
         query_start_end_embed = torch.cat((query_start_embed, query_end_embed), dim=1)
-        query_start_end = self.start_end_ff(query_start_end_embed)
+        # query_start_end = self.start_end_ff(query_start_end_embed)
         # sum to get query score
-        query_score = (query_start_logits + query_end_logits + query_start_end.squeeze()) / 3
+        # query_score = (query_start_logits + query_end_logits + query_start_end.squeeze()) / 3
 
         # Calculate the passage score
         # Add all start/end combinations for start/end logits
@@ -167,11 +167,11 @@ class WECQuestionAnsweringHead(PredictionHead):
         pass_start_plus_end_matrix = pass_start_matrix + pass_end_matrix.transpose(1, 2)
 
         # get and concat all start/end combinations of start and end embeddings
-        start_embed_matrix = embedding.unsqueeze(2)
-        end_embed_matrix = embedding.unsqueeze(2)
-        start_embed_matrix_ex = start_embed_matrix.expand(-1, -1, max_seq_len, -1)
-        end_embed_matrix_ex = end_embed_matrix.expand(-1, -1, max_seq_len, -1)
-        pass_start_end_matrix = torch.cat((start_embed_matrix_ex, end_embed_matrix_ex.transpose(1, 2)), dim=3)
+        embed_matrix = embedding.unsqueeze(2)
+        # end_embed_matrix = embedding.unsqueeze(2)
+        embed_matrix_ex = embed_matrix.expand(-1, -1, max_seq_len, -1)
+        # end_embed_matrix_ex = end_embed_matrix.expand(-1, -1, max_seq_len, -1)
+        pass_start_end_matrix = torch.cat((embed_matrix_ex, embed_matrix_ex.transpose(1, 2)), dim=3)
         pass_start_cat_end_matrix = self.start_end_ff(pass_start_end_matrix).squeeze()
         # sum to get passage score
         pass_score = (pass_start_plus_end_matrix + pass_start_cat_end_matrix) / 3
@@ -180,18 +180,19 @@ class WECQuestionAnsweringHead(PredictionHead):
         query_pairwize_score = self.pairwize(query_start_end_embed)
         # expend to cover all combinations
         query_pairwize_score_expanded = query_pairwize_score.expand(-1, max_seq_len).unsqueeze(2).expand(-1, -1, max_seq_len)
-        query_score_ex = query_score.unsqueeze(1).expand(-1, max_seq_len).unsqueeze(2).expand(-1, -1, max_seq_len).clone()
+        # query_score_ex = query_score.unsqueeze(1).expand(-1, max_seq_len).unsqueeze(2).expand(-1, -1, max_seq_len).clone()
 
-        score_query_pass = (query_pairwize_score_expanded + pass_pairwize_score) / 2
+        score_query_pass = query_pairwize_score_expanded + pass_pairwize_score
 
         # prun where end < start
         # (set the lower triangular matrix to low value, excluding diagonal)
         indices = torch.tril_indices(max_seq_len, max_seq_len, offset=-1, device=pass_score.device)
         pass_score[:, indices[0][:], indices[1][:]] = 0
-        query_score_ex[:, indices[0][:], indices[1][:]] = 0
+        # query_score_ex[:, indices[0][:], indices[1][:]] = 0
         score_query_pass[:, indices[0][:], indices[1][:]] = 0
 
-        final_pairwize_score = query_score_ex + pass_score + score_query_pass
+        lambda_thresh = 0.5
+        final_pairwize_score = (lambda_thresh * pass_score) + ((1 - lambda_thresh) * score_query_pass)
         return final_pairwize_score
 
     def logits_to_loss(self, logits: torch.Tensor, labels: torch.Tensor, **kwargs):

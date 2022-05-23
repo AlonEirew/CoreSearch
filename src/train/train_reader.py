@@ -9,13 +9,14 @@ def main():
     qa_models deepset/roberta-base-squad2,
                 distilbert-base-uncased-distilled-squad,
                 facebook/dpr-reader-single-nq-base,
-                facebook/dpr-reader-multiset-base
+                facebook/dpr-reader-multiset-base,
+                roberta-base
     """
-    qa_model = "deepset/roberta-base-squad2"
+    qa_model = "roberta-base"
     add_special_tokens = True
     replace_prediction_heads = True
     num_processes = 8
-    evaluate_every = 2 #2200
+    evaluate_every = 2200
     n_epochs = 1
     batch_size = 10
 
@@ -31,7 +32,7 @@ def main():
         n_epochs=n_epochs,
         batch_size=batch_size,
         num_processes=num_processes,
-        save_dir="data/checkpoints/deepset_roberta_base_squad2_pairwise"
+        save_dir="data/checkpoints/roberta_base_pairwise"
     )
 
     print("Done!")
