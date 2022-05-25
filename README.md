@@ -7,6 +7,13 @@ An Information Retrieval system for corefering events
 This script will create a new ElasticSearch index containing documents generated from the input file.
 In case given index already exists, it will be deleted by this process and recreated.
 ```
+Prerequisite:
+Pulling elastic image:
+    docker pull docker.elastic.co/elasticsearch/elasticsearch:7.9.2
+    
+Running docker:
+    docker run -d -p 9200:9200 -e "discovery.type=single-node" elasticsearch:7.9.2
+
 Usage:
     elastic_index.py --input=<PassageFile> --index=<IndexName>
 

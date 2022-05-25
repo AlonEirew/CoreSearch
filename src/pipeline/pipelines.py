@@ -25,16 +25,19 @@ class WECPipeline(object):
     def extract_results(self, query: BasicMent, result: Dict) -> QueryResult:
         raise NotImplementedError
 
-    def run_end_to_end(self, query_examples: List[BasicMent]) -> List[QueryResult]:
+    def run_end_to_end(self, query_examples: List[BasicMent], query_as_dict: bool = True) -> List[QueryResult]:
         predictions = list()
         for query in tqdm(query_examples, "Running Queries"):
-            query_dict = dict()
-            query_dict["query"] = " ".join(query.context)
-            query_dict["query_mention"] = query.mention
-            query_dict["query_id"] = query.id
-            query_dict["start_index"] = query.startIndex
-            query_dict["end_index"] = query.endIndex
-            query_dict["query_coref_link"] = int(query.goldChain)
+            if query_as_dict:
+                query_dict = dict()
+                query_dict["query"] = " ".join(query.context)
+                query_dict["query_mention"] = query.mention
+                query_dict["query_id"] = query.id
+                query_dict["start_index"] = query.startIndex
+                query_dict["end_index"] = query.endIndex
+                query_dict["query_coref_link"] = int(query.goldChain)
+            else:
+                query_dict = " ".join(query.context)
             try:
                 # results = self.run_pipeline(json.dumps(query_dict, ensure_ascii=False))
                 results = self.run_pipeline(query_text=query_dict)
