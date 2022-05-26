@@ -1,11 +1,12 @@
 import json
 import os
-import re
 from typing import Dict, List
 
 from src.data_obj import TrainExample, Cluster, Passage
 from src.utils import io_utils
 from src.utils.io_utils import load_json_file, read_passages_file
+
+SPLIT = "Train"
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
     passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
     passage_dict: Dict[str, Passage] = {obj.id: obj for obj in read_passages_file(passages_file)}
 
-    retriver_file = "file_indexes/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
+    retriver_file = "file_indexes/" + SPLIT + "_Baseline4_spanbert_2it_top500.json"
     retriever_results = load_json_file(retriver_file)
 
     assert train_queries
@@ -35,6 +36,7 @@ def main():
     data = list()
     squad_examples["data"] = data
 
+    discarded_queries = 0
     all_contexts = dict()
     for clust in clusters:
         for ment_id in clust.mention_ids:
@@ -49,6 +51,9 @@ def main():
                     neg_exampl_id_list.append(res["pass_id"])
 
             pos_exampl_id_list = pos_exampl_id_list[:num_of_positives]
+            if len(pos_exampl_id_list) == 0:
+                discarded_queries += 1
+                continue
             neg_exampl_id_list = neg_exampl_id_list[:num_of_negatives]
             for ctx_id in pos_exampl_id_list:
                 if ctx_id not in all_contexts:
@@ -59,6 +64,8 @@ def main():
                 if ctx_id not in all_contexts:
                     all_contexts[ctx_id] = list()
                 all_contexts[ctx_id].append(create_qas_obj(query_example, True, query_style))
+
+    print(f"Discarded queries={discarded_queries}")
 
     for ctx_id, qas_list in all_contexts.items():
         paragraphs = list()
@@ -122,6 +129,5 @@ def create_qas_list(query_id_list, train_queries, query_style):
 
 
 if __name__ == '__main__':
-    SPLIT = "Dev"
     main()
     print("Done generating for " + SPLIT)

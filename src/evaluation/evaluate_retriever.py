@@ -21,35 +21,37 @@ from src.utils import dpr_utils, io_utils, data_utils
 from src.utils.data_utils import generate_index_batches
 from src.utils.io_utils import save_query_results
 
-SPLIT = "Test"
+SPLIT = "Train"
 
 
 def main():
     random.seed(1234)
     examples_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
     passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
-    # passages_file = "data/resources/WEC-ES/train/Dev_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
-    # model_file = "data/checkpoints/dev_spanbert_bm25_2it"
-    model_file = "data/checkpoints/span_bert_2it"
-    index_name = "file_indexes/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500"
+    model_file = "data/checkpoints/Baseline4_spanbert_2it"
+
+    index_name = "file_indexes/" + SPLIT + "_Baseline4_spanbert_2it_top500_results.txt"
     out_index_file = index_name + ".json"
     out_result_file = index_name + "_results.txt"
-
-    add_qbound = True
-    query_style = "context"
 
     max_query_len = 64
     max_pass_len = 180
     topk = 500
-    run_pipe_str = "retriever"
     batch_size = 240
+    query_style = "context"
+
     process_num = multiprocessing.cpu_count()
 
     if query_style == "bm25":
         processor_type = WECBM25Processor
+        add_qbound = False
     elif query_style == "context":
         processor_type = WECContextProcessor
+        add_qbound = True
+    elif query_style == "context_no_toks":
+        processor_type = WECContextProcessor
+        add_qbound = False
     else:
         raise TypeError(f"No processor that support {query_style}")
 
@@ -111,7 +113,7 @@ def main():
             hit = True if passage_res.goldChain == query_res.query.goldChain else False
             to_print.append("\tHIT=(" + str(hit) + ")" + passage_res.id + " (" + str(passage_res.score) + ")-\"" + " ".join(passage_dict[passage_res.id].mention) + "\"")
 
-    to_print.extend(print_measurements(all_queries_pred, golds_arranged, run_pipe_str))
+    to_print.extend(print_measurements(all_queries_pred, golds_arranged, "retriever"))
 
     to_print.append(f"Measured from total of {total_queries} queries and {total_passages} passages")
     to_print.append(f"Using model-{model_file}")

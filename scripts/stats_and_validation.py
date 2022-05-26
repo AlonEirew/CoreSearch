@@ -98,9 +98,37 @@ def run_dpr_stats(train_clusters, dev_clusters, test_clusters):
 
 def run_squad_stats():
     print("#### Total queries for reader (SQUAD format)")
-    train_squad = _read_squad_file("data/resources/squad/context/Train.json")
-    dev_squad = _read_squad_file("data/resources/squad/context/Dev.json")
-    test_squad = _read_squad_file("data/resources/squad/context/Test.json")
+    train_squad = _read_squad_file("data/resources/squad/context/Train_squad_format_1pos_24neg.json")
+    dev_squad = _read_squad_file("data/resources/squad/context/Dev_squad_format_1pos_24neg.json")
+    test_squad = _read_squad_file("data/resources/squad/context/Test_squad_format_1pos_24neg.json")
+    generate_squad_stats(train_squad, "Train")
+    generate_squad_stats(dev_squad, "dev")
+    generate_squad_stats(test_squad, "Test")
+    print("########")
+
+
+def generate_squad_stats(squad_set_data, set_str):
+    num_contexts = 0
+    total_queries = 0
+    pos_queries = 0
+    neg_queries = 0
+    for paragraphs_dict in squad_set_data:
+        paragraphs = paragraphs_dict['paragraphs']
+        num_contexts += len(paragraphs)
+        for qas_dict in paragraphs:
+            qas = qas_dict['qas']
+            total_queries += len(qas)
+            for query in qas:
+                is_impossible = query['is_impossible']
+                if is_impossible:
+                    neg_queries += 1
+                else:
+                    pos_queries += 1
+
+    print(f"{set_str} Queries={str(total_queries)}")
+    print(f"{set_str} Contexts={str(num_contexts)}")
+    print(f"{set_str} Positive Queries={str(pos_queries)}")
+    print(f"{set_str} Negative Queries={str(neg_queries)}")
     print("########")
 
 
@@ -108,4 +136,5 @@ if __name__ == '__main__':
     train_clusters, dev_clusters, test_clusters = run_clean_stats()
     run_train_stats()
     run_dpr_stats(train_clusters, dev_clusters, test_clusters)
+    run_squad_stats()
     print("Done!")

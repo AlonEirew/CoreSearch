@@ -8,7 +8,6 @@ from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
 
 from src.override_classes.retriever.wec_bm25_processor import WECBM25Processor
 from src.override_classes.retriever.wec_context_processor import WECContextProcessor
-from src.override_classes.retriever.wec_start_end_processor import WECStartEndProcessor
 from src.utils.io_utils import write_json
 
 
@@ -21,13 +20,13 @@ def train():
                            Then this will indicate to the encoder to extract the QUERY_START/QUERY_END tokens
     """
     parameters = dict()
-    parameters["note"] = "This is the best retriever model configuration, using new training files"
+    parameters["note"] = "Baseline3-Train facebook multiset model, query surrounding context *with* <span> tokens"
 
     parameters["doc_dir"] = "data/resources/dpr/context/"
     parameters["train_filename"] = "Train.json"
     parameters["dev_filename"] = "Dev.json"
 
-    parameters["model_str"] = "test"
+    parameters["model_str"] = "Baseline3_facebook_multiset"
 
     parameters["query_style"] = "context"
     parameters["n_epochs"] = 2
@@ -36,8 +35,8 @@ def train():
     parameters["batch_size"] = 16
 
     parameters["infer_tokenizer_classes"] = True
-    parameters["query_model"] = "SpanBERT/spanbert-base-cased"
-    parameters["passage_model"] = "SpanBERT/spanbert-base-cased"
+    parameters["query_model"] = "facebook/dpr-question_encoder-multiset-base"
+    parameters["passage_model"] = "facebook/dpr-ctx_encoder-multiset-base"
 
     parameters["out_model_name"] = parameters["model_str"] + "_" + str(parameters["n_epochs"]) + "it"
 
@@ -56,8 +55,8 @@ def run(parameters, checkpoint_dir, evaluate_every):
     elif query_style == "context":
         processor_type = WECContextProcessor
         parameters["add_special_tokens"] = True
-    elif query_style == "start_end":
-        processor_type = WECStartEndProcessor
+    elif query_style == "context_no_toks":
+        processor_type = WECContextProcessor
         parameters["add_special_tokens"] = False
     else:
         raise TypeError(f"No processor that support {query_style}")
