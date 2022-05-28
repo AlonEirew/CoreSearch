@@ -29,14 +29,14 @@ def main():
     # resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
     # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
     # magnitude = all/cluster meaning if to use all queries (all) or just single clusters query (cluster)
-    experiment_name = "reader_baseline"
-    magnitude = "cluster"
+    experiment_name = "Reader5_roberta_pairwise"
+    magnitude = "all"
 
     replace_prediction_heads = True
     query_method = "with_bounds"
 
     infer_tokenizer_classes = True
-    ret_top_k = 200
+    ret_top_k = 500
     read_top_k = 50
     max_seq_len_query = 64
     max_seq_len_passage = 180
@@ -44,13 +44,13 @@ def main():
     batch_size_qa = 16
     num_processes = 1
 
-    index_file = "file_indexes/" + SPLIT + "_spanbert_hidden_cls_spatial_ctx_2it_top500.json"
+    index_file = "file_indexes/" + SPLIT + "_Baseline4_spanbert_2it_top500.json"
     checkpoint_dir = "data/checkpoints/"
-    query_encode = checkpoint_dir + "span_bert_2it/query_encoder"
-    passage_encode = checkpoint_dir + "span_bert_2it/passage_encoder"
+    query_encode = checkpoint_dir + "Baseline4_spanbert_2it/query_encoder"
+    passage_encode = checkpoint_dir + "Baseline4_spanbert_2it/passage_encoder"
 
     # reader_model_file = "deepset/roberta-base-squad2"
-    reader_model_file = checkpoint_dir + "roberta_base_pairwise"
+    reader_model_file = checkpoint_dir + "Reader5-roberta_base_pairwise"
 
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
     queries_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
@@ -58,7 +58,7 @@ def main():
     # passages are only to generate the query gold answers
     passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
 
-    result_out_file = "results/" + SPLIT.lower() + "_" + query_method + "_" + experiment_name + ".txt"
+    result_out_file = "results/" + SPLIT + "_" + experiment_name + ".txt"
 
     if query_method == "full_ctx":
         processor_type = WECContextProcessor

@@ -16,7 +16,7 @@ def main():
     add_special_tokens = True
     replace_prediction_heads = True
     num_processes = 8
-    evaluate_every = 2200
+    evaluate_every = 2300
     n_epochs = 1
     batch_size = 10
 
@@ -32,7 +32,7 @@ def main():
         n_epochs=n_epochs,
         batch_size=batch_size,
         num_processes=num_processes,
-        save_dir="data/checkpoints/roberta_base_pairwise"
+        save_dir="data/checkpoints/Reader5-roberta_base_pairwise"
     )
 
     print("Done!")

@@ -145,7 +145,10 @@ class WECAdaptiveModel(AdaptiveModel):
         elif replace_prediction_heads:
             model = cls.load_from_file(**kwargs)
         else:
-            model = cls.subclasses["AdaptiveModel"].load(**kwargs)
+            load_dir = kwargs['load_dir']
+            device = kwargs['device']
+            strict = kwargs['strict']
+            model = cls.subclasses["AdaptiveModel"].load(load_dir=load_dir, device=device, strict=strict)
         return model
 
     @classmethod
