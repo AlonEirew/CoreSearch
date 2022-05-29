@@ -6,7 +6,7 @@ from src.data_obj import TrainExample, Cluster, Passage
 from src.utils import io_utils
 from src.utils.io_utils import load_json_file, read_passages_file
 
-SPLIT = "Train"
+SPLIT = "Dev"
 
 
 def main():
@@ -23,7 +23,7 @@ def main():
     assert clusters
     query_style = "context"
     num_of_positives = 1
-    num_of_negatives = 24
+    num_of_negatives = 23
 
     if query_style == "bm25":
         squad_out = "data/resources/squad/bm25/" + SPLIT + "_squad_format.json"
@@ -51,10 +51,11 @@ def main():
                     neg_exampl_id_list.append(res["pass_id"])
 
             pos_exampl_id_list = pos_exampl_id_list[:num_of_positives]
+            neg_exampl_id_list = neg_exampl_id_list[:num_of_negatives]
             if len(pos_exampl_id_list) == 0:
                 discarded_queries += 1
                 continue
-            neg_exampl_id_list = neg_exampl_id_list[:num_of_negatives]
+
             for ctx_id in pos_exampl_id_list:
                 if ctx_id not in all_contexts:
                     all_contexts[ctx_id] = list()
@@ -70,10 +71,10 @@ def main():
     for ctx_id, qas_list in all_contexts.items():
         paragraphs = list()
         data_obj = dict()
-        data_obj['title'] = passage_dict[ctx_id].goldChain
         data_obj['paragraphs'] = paragraphs
 
         paragraph = dict()
+        paragraph['title'] = int(passage_dict[ctx_id].goldChain)
         paragraph["qas"] = qas_list
         paragraph["context"] = " ".join(passage_dict[ctx_id].context)
         paragraphs.append(paragraph)
@@ -98,12 +99,12 @@ def create_qas_obj(query_example, is_impossible, query_style, passage=None):
 
         ans_obj = {"text": query_ans, "answer_start": start_idx,
                    "ment_start": passage.startIndex, "ment_end": passage.endIndex,
-                   "ment_text": passage.mention, "ment_coref_link": int(passage.goldChain)}
+                   "ment_text": passage.mention}
         answers.append(ans_obj)
     else:
         ans_obj = {"text": "", "answer_start": 0,
                    "ment_start": 0, "ment_end": 0,
-                   "ment_text": ["NA"], "ment_coref_link": -1}
+                   "ment_text": ["NA"]}
         answers.append(ans_obj)
 
     if query_style == "bm25":
