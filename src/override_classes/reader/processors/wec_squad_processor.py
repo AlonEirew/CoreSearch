@@ -80,6 +80,8 @@ class WECSquadProcessor(SquadProcessor):
         # Convert internal representation (nested baskets + samples with mixed types) to pytorch features (arrays of numbers)
         baskets = self._passages_to_pytorch_features(baskets, return_baskets)
 
+        baskets = self.arrange_by_queries(baskets)
+
         # Convert features into pytorch dataset, this step also removes potential errors during preprocessing
         dataset, tensor_names, baskets = self._create_dataset(baskets)
 
@@ -116,6 +118,7 @@ class WECSquadProcessor(SquadProcessor):
             start_of_words_batch.append(_get_start_of_word_QA(e.words))
 
         for i_doc, d in enumerate(pre_baskets):
+            doc_coref_link = d["title"]
             document_text = d["context"]
             # # Tokenize questions one by one
             for i_q, q in enumerate(d["qas"]):
@@ -150,10 +153,6 @@ class WECSquadProcessor(SquadProcessor):
                 query_ment_end = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[1])
 
                 query_coref_link = query_obj['query_coref_link']
-                do_corefer = 0
-                if len(q['answers']) > 0:
-                    pass_coref_link = q['answers'][0]['ment_coref_link']
-                    do_corefer = 1 if query_coref_link == pass_coref_link else 0
 
                 external_id = q["id"]
                 # The internal_id depends on unique ids created for each process before forking
@@ -165,7 +164,7 @@ class WECSquadProcessor(SquadProcessor):
                        "answers": q["answers"], "document_tokens_strings": tokenized_docs_batch.encodings[i_doc].tokens,
                        "question_tokens_strings": tokenized_q.encodings[0].tokens, "query_mention": query_obj['query_mention'],
                        "query_id": query_obj["query_id"], "query_ment_start": query_ment_start,
-                       "query_ment_end": query_ment_end, "do_corefer": do_corefer}
+                       "query_ment_end": query_ment_end, "passage_coref_link": doc_coref_link, "query_coref_link": query_coref_link}
                 # TODO add only during debug mode (need to create debug mode)
 
                 baskets.append(SampleBasket(raw=raw, id_internal=internal_id, id_external=external_id, samples=None))
@@ -292,7 +291,8 @@ class WECSquadProcessor(SquadProcessor):
                                     "passage_start_t": passage_start_t,
                                     "start_of_word": start_of_word,
                                     "labels": sample.tokenized.get("labels",[]), # type: ignore
-                                    "do_corefer": [basket.raw["do_corefer"]],
+                                    "passage_coref_link": basket.raw["passage_coref_link"],
+                                    "query_coref_link": basket.raw["query_coref_link"],
                                     "id": sample_id,
                                     "seq_2_start_t": seq_2_start_t,
                                     "span_mask": span_mask,
@@ -342,3 +342,19 @@ class WECSquadProcessor(SquadProcessor):
     def add_query_bound(query_ctx: List[str], start_index: int, end_index: int):
         query_ctx.insert(end_index + 1, QUERY_SPAN_END)
         query_ctx.insert(start_index, QUERY_SPAN_START)
+
+    @staticmethod
+    def arrange_by_queries(baskets):
+        query_to_passage = dict()
+        for sample_bask in baskets:
+            query_id = sample_bask.raw['query_id']
+            if query_id not in query_to_passage:
+                query_to_passage[query_id] = list()
+
+            query_to_passage[query_id].append(sample_bask)
+
+        ret_baskets = list()
+        for pass_list in query_to_passage.values():
+            ret_baskets.extend(pass_list)
+
+        return ret_baskets
