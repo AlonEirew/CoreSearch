@@ -1,9 +1,10 @@
+import logging
 from pathlib import Path
 from typing import Optional, Union, List
-import logging
 
-from haystack.modeling.data_handler.samples import Sample, SampleBasket, get_passage_offsets
+import numpy as np
 
+from haystack.modeling.data_handler.samples import SampleBasket, offset_to_token_idx_vecorized
 from src.override_classes.reader.processors.wec_squad_processor import WECSquadProcessor
 
 logger = logging.getLogger(__name__)
@@ -14,65 +15,100 @@ class WECReaderProcessor(WECSquadProcessor):
         super(WECReaderProcessor, self).__init__(tokenizer, max_seq_len, data_dir, **kwargs)
         self.add_special_tokens = add_special_tokens
 
-    def _split_docs_into_passages(self, baskets: List[SampleBasket]):
+    def _passages_to_pytorch_features(self, baskets:List[SampleBasket], return_baskets:bool):
         """
-        Because of the sequence length limitation of Language Models, the documents need to be divided into smaller
-        parts that we call passages.
+        Convert internal representation (nested baskets + samples with mixed types) to python features (arrays of numbers).
+        We first join question and passages into one large vector.
+        Then we add vectors for: - input_ids (token ids)
+                                 - segment_ids (does a token belong to question or document)
+                                 - query_padding_mask
+                                 - span_mask (valid answer tokens)
+                                 - start_of_word
         """
         for basket in baskets:
-            samples = []
-            ########## perform some basic checking
-            # TODO, eventually move checking into input validation functions
-            # ignore samples with empty context
-            if basket.raw["document_text"] == "":
-                logger.warning("Ignoring sample with empty context")
-                continue
-            ########## end checking
+            # Add features to samples
+            for num, sample in enumerate(basket.samples): # type: ignore
+                # Initialize some basic variables
+                if sample.tokenized is not None:
+                    question_tokens = sample.tokenized["question_tokens"]
+                    question_len_t = len(question_tokens)
+                    passage_start_t = sample.tokenized["passage_start_t"]
+                    passage_tokens = sample.tokenized["passage_tokens"]
+                    passage_len_t = len(passage_tokens)
+                    sample_id = [int(x) for x in sample.id.split("-")]
 
-            # passage_spans is a list of dictionaries where each defines the start and end of each passage
-            # on both token and character level
-            try:
-                passage_spans = get_passage_offsets(basket.raw["document_offsets"],
-                                                    self.max_seq_len-self.max_query_length,
-                                                    self.max_seq_len-self.max_query_length,
-                                                    basket.raw["document_text"])
-            except Exception as e:
-                logger.warning(f"Could not devide document into passages. Document: {basket.raw['document_text'][:200]}\n"
-                               f"With error: {e}")
-                passage_spans = []
+                    # - Combines question_tokens and passage_tokens into a single vector called input_ids
+                    # - input_ids also contains special tokens (e.g. CLS or SEP tokens).
+                    # - It will have length = question_len_t + passage_len_t + n_special_tokens. This may be less than
+                    #   max_seq_len but never greater since truncation was already performed when the document was chunked into passages
+                    question_input_ids = sample.tokenized["question_tokens"]
+                    passage_input_ids = sample.tokenized["passage_tokens"]
 
-            assert len(passage_spans) == 1
-            for passage_span in passage_spans:
-                # Unpack each variable in the dictionary. The "_t" and "_c" indicate
-                # whether the index is on the token or character level
-                passage_start_t = passage_span["passage_start_t"]
-                passage_end_t = passage_span["passage_end_t"]
-                passage_start_c = passage_span["passage_start_c"]
-                passage_end_c = passage_span["passage_end_c"]
+                query_input_ids = self.tokenizer.build_inputs_with_special_tokens(token_ids_0=question_input_ids)
+                passage_input_ids = self.tokenizer.build_inputs_with_special_tokens(token_ids_0=passage_input_ids)
 
-                passage_start_of_word = basket.raw["document_start_of_word"][passage_start_t: passage_end_t]
-                passage_tokens = basket.raw["document_tokens"][passage_start_t: passage_end_t]
-                passage_text = basket.raw["document_text"][passage_start_c: passage_end_c]
+                query_segment_ids = self.tokenizer.create_token_type_ids_from_sequences(token_ids_0=question_input_ids)
+                passage_segment_ids = self.tokenizer.create_token_type_ids_from_sequences(token_ids_0=passage_input_ids)
 
-                clear_text = {"passage_text": passage_text,
-                              "question_text": basket.raw["question_text"],
-                              "passage_id": passage_span["passage_id"],
-                              }
-                tokenized = {"passage_start_t": passage_start_t,
-                             "passage_start_c": passage_start_c,
-                             "passage_tokens": passage_tokens,
-                             "passage_start_of_word": passage_start_of_word,
-                             "question_tokens": basket.raw["question_tokens"][:self.max_query_length],
-                             "question_offsets": basket.raw["question_offsets"][:self.max_query_length],
-                             "question_start_of_word": basket.raw["question_start_of_word"][:self.max_query_length],
-                             }
-                # The sample ID consists of internal_id and a passage numbering
-                sample_id = f"{basket.id_internal}-{passage_span['passage_id']}"
-                samples.append(Sample(id=sample_id,
-                                      clear_text=clear_text,
-                                      tokenized=tokenized))
+                # The mask has 1 for real tokens and 0 for padding tokens. Only real
+                # tokens are attended to.
+                query_padding_mask = [1] * len(query_input_ids)
+                passage_padding_mask = [1] * len(passage_input_ids)
 
-            assert len(samples) == 1
-            basket.samples = samples
+                # The span_mask has 1 for tokens that are valid start or end tokens for QA spans.
+                # 0s are assigned to question tokens, mid special tokens, end special tokens, and padding
+                # Note that start special tokens are assigned 1 since they can be chosen for a no_answer prediction
+                span_mask = [1] * self.sp_toks_start
+                span_mask += [0] * question_len_t
+                span_mask += [0] * self.sp_toks_mid
+                span_mask += [1] * passage_len_t
+                span_mask += [0] * self.sp_toks_end
 
+                # Pad up to the sequence length. For certain models, the pad token id is not 0 (e.g. Roberta where it is 1)
+                max_passage_length = self.max_seq_len - self.max_query_length
+                pad_idx = self.tokenizer.pad_token_id
+                query_padding = [pad_idx] * (self.max_seq_len - max_passage_length)
+                passage_padding = [pad_idx] * (self.max_seq_len - self.max_query_length)
+                query_zero_padding = [0] * (self.max_seq_len - max_passage_length)
+                passage_zero_padding = [0] * (self.max_seq_len - self.max_query_length)
+
+                query_input_ids += query_padding
+                query_padding_mask += query_zero_padding
+                query_segment_ids += query_zero_padding
+
+                passage_input_ids += passage_padding
+                passage_padding_mask += passage_zero_padding
+                passage_segment_ids += passage_zero_padding
+
+                # TODO possibly remove these checks after input validation is in place
+                len_check1 = len(query_input_ids) == len(query_padding_mask) == len(query_segment_ids)
+                len_check2 = len(passage_input_ids) == len(passage_padding_mask) == len(passage_segment_ids)
+                id_check = len(sample_id) == 3
+                label_check = return_baskets or len(sample.tokenized.get("labels",[])) == self.max_answers
+                # labels are set to -100 when answer cannot be found
+                label_check2 = return_baskets or np.all(sample.tokenized["labels"] > -99) # type: ignore
+                if len_check1 and id_check and label_check and label_check2:
+                    # - The first of the labels will be used in train, and the full array will be used in eval.
+                    # - start_of_word and spec_tok_mask are not actually needed by model.forward() but are needed for
+                    #   model.formatted_preds() during inference for creating answer strings
+                    # - passage_start_t is index of passage's first token relative to document
+                    feature_dict = {"input_ids": query_input_ids,
+                                    "query_padding_mask": query_padding_mask,
+                                    "segment_ids": query_segment_ids,
+                                    "passage_start_t": passage_start_t,
+                                    "labels": sample.tokenized.get("labels",[]), # type: ignore
+                                    "passage_coref_link": basket.raw["passage_coref_link"],
+                                    "query_coref_link": basket.raw["query_coref_link"],
+                                    "id": sample_id,
+                                    "span_mask": span_mask,
+                                    "query_ment_start": basket.raw["query_ment_start"] + 1,
+                                    "query_ment_end": basket.raw["query_ment_end"] + 1}
+
+                    self.validate_query_toks(query_mention=basket.raw['query_mention'], query_id=basket.raw['query_id'],
+                                             query_feat=feature_dict, query_tokenized=basket.raw['question_tokens_strings'])
+                    # other processor's features can be lists
+                    sample.features = [feature_dict] # type: ignore
+                else:
+                    self.problematic_sample_ids.add(sample.id)
+                    sample.features = None
         return baskets

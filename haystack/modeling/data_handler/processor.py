@@ -574,8 +574,7 @@ class SquadProcessor(Processor):
                                       clear_text=clear_text,
                                       tokenized=tokenized))
 
-
-            basket.samples=samples
+            basket.samples = samples
 
         return baskets
 

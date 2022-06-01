@@ -172,7 +172,7 @@ class DataSilo:
                 )
 
                 # temporary fix
-                results = map(partial(self._dataset_from_chunk, processor=self.processor), grouper(dicts, 1))  # type: ignore
+                results = map(partial(self._dataset_from_chunk, processor=self.processor), grouper(dicts, len(dicts)))  # type: ignore
 
             datasets = []
             problematic_ids_all = set()
@@ -345,7 +345,8 @@ class DataSilo:
             if self.distributed:
                 sampler_train = DistributedSampler(self.data["train"])
             else:
-                sampler_train = RandomSampler(self.data["train"])
+                # sampler_train = RandomSampler(self.data["train"])
+                sampler_train = SequentialSampler(self.data["train"])
 
             data_loader_train = NamedDataLoader(
                 dataset=self.data["train"],

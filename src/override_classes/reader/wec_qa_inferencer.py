@@ -2,14 +2,12 @@ import os
 from typing import Optional, Dict, List, Union
 
 import torch
+
 from haystack.modeling.data_handler.processor import InferenceProcessor, Processor
 from haystack.modeling.infer import QAInferencer
-from haystack.modeling.model.adaptive_model import BaseAdaptiveModel, AdaptiveModel
+from haystack.modeling.model.adaptive_model import AdaptiveModel
 from haystack.modeling.utils import initialize_device_settings
-from src.override_classes.reader.qa_head import WECQuestionAnsweringHead
-from torch import nn
-
-from src.override_classes.reader.wec_squad_processor import WECSquadProcessor
+from src.override_classes.reader.processors.wec_squad_processor import WECSquadProcessor
 from src.override_classes.wec_adaptive_model import WECAdaptiveModel
 from src.override_classes.wec_converter import WECConverter
 

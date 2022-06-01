@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional
 
 
 class Question:
@@ -14,8 +14,9 @@ class Question:
 
 
 class QAInput:
-    def __init__(self, doc_text: str, questions: Union[List[Question], Question]):
+    def __init__(self, doc_text: str, questions: Union[List[Question], Question], title=Optional[str]):
         self.doc_text = doc_text
+        self.title = title
         if type(questions) == Question:
             self.questions = [questions]
         else:
@@ -24,6 +25,7 @@ class QAInput:
     def to_dict(self):
         questions = [q.to_dict() for q in self.questions]
         ret = {"qas": questions,
-               "context": self.doc_text}
+               "context": self.doc_text,
+               "title": self.title}
         return ret
 

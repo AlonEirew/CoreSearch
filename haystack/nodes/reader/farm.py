@@ -708,7 +708,8 @@ class FARMReader(BaseReader):
         for doc in documents:
             cur = QAInput(doc_text=doc.content,
                           questions=Question(text=query,
-                                             uid=doc.id))
+                                             uid=doc.id),
+                          title=doc.meta['goldChain'])
             inputs.append(cur)
 
         # get answers from QA model

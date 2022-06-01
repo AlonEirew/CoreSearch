@@ -29,7 +29,7 @@ def main():
     # resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
     # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
     # magnitude = all/cluster meaning if to use all queries (all) or just single clusters query (cluster)
-    experiment_name = "Reader5_roberta_pairwise"
+    experiment_name = "test_pairwise_new"
     magnitude = "all"
 
     replace_prediction_heads = True
@@ -41,7 +41,7 @@ def main():
     max_seq_len_query = 64
     max_seq_len_passage = 180
     batch_size = 16
-    batch_size_qa = 16
+    batch_size_qa = 12
     num_processes = 1
 
     index_file = "file_indexes/" + SPLIT + "_Baseline4_spanbert_2it_top500.json"
@@ -50,7 +50,7 @@ def main():
     passage_encode = checkpoint_dir + "Baseline4_spanbert_2it/passage_encoder"
 
     # reader_model_file = "deepset/roberta-base-squad2"
-    reader_model_file = checkpoint_dir + "Reader5-roberta_base_pairwise"
+    reader_model_file = checkpoint_dir + "Reader8-roberta_base_pairwise"
 
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
     queries_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
@@ -176,6 +176,7 @@ def print_results(predictions, golds_arranged, run_pipe_str, result_out_file):
                 result_answer = result.answer
             to_print.append("\t\tANSWER=" + str(result_answer))
             to_print.append("\t\tGOLD_MENTION=" + str(result_mention))
+            to_print.append("\t\tSCORE=" + str(result.score))
             to_print.append("\t\tCONTEXT=" + str(result_context))
 
     join_result = "\n".join(to_print)

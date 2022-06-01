@@ -1,6 +1,3 @@
-import os
-
-os.environ["MILVUS2_ENABLED"] = "false"
 from src.override_classes.reader.wec_reader import WECReader
 
 
@@ -14,11 +11,11 @@ def main():
     """
     qa_model = "roberta-base"
     add_special_tokens = True
-    replace_prediction_heads = True
-    num_processes = 8
+    replace_prediction_heads = False
+    num_processes = 1 # Must be one, wont work otherwise as examples will be shuffled
     evaluate_every = 2300
-    n_epochs = 1
-    batch_size = 10
+    n_epochs = 2
+    batch_size = 12
 
     reader = WECReader(model_name_or_path=qa_model, use_gpu=True,
                        num_processes=num_processes, add_special_tokens=add_special_tokens,
@@ -32,7 +29,7 @@ def main():
         n_epochs=n_epochs,
         batch_size=batch_size,
         num_processes=num_processes,
-        save_dir="data/checkpoints/Reader5-roberta_base_pairwise"
+        save_dir="data/checkpoints/Reader2-roberta_base_pairwise"
     )
 
     print("Done!")

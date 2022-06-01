@@ -11,7 +11,7 @@ from haystack.modeling.model.prediction_head import PredictionHead, FeedForwardB
 from haystack.modeling.model.predictions import QACandidate, QAPred
 from haystack.modeling.utils import try_get
 from torch import nn, optim
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, NLLLoss
 from transformers import AutoModelForQuestionAnswering
 
 logger = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ class WECQuestionAnsweringHead(PredictionHead):
         # Dim is the contatenation of the (mention_start & mention end) * 2 + (multiplication of them)
         self.start_end_ff = FeedForwardBlock([2 * layer_dims[0], 1])
         self.pairwize = FeedForwardBlock([2 * layer_dims[0], 1])
-        self.linear = nn.Linear(128, 1)
+        # self.linear = nn.Linear(128, 1)
 
     @staticmethod
     def get_sequential(ind, out):
@@ -131,69 +131,59 @@ class WECQuestionAnsweringHead(PredictionHead):
 
         return head
 
-    def forward(self, embedding: torch.Tensor, query_ment_start: torch.Tensor, query_ment_end: torch.Tensor, **kwargs):
+    def forward(self, query_embed, passage_embed, embedding: torch.Tensor,
+                query_ment_start: torch.Tensor, query_ment_end: torch.Tensor, **kwargs):
         """
         One forward pass through the prediction head model, starting with language model output on token level.
         """
-        logits = self.feed_forward(embedding)
-
-        # logits is of shape [batch_size, max_seq_len, 2]. Like above, the final dimension corresponds to [start, end]
-        start_logits, end_logits = logits.split(1, dim=-1)
-        start_logits = start_logits.squeeze(-1)
-        end_logits = end_logits.squeeze(-1)
-
-        # start_logits = start_logits.contiguous()
-        # end_logits = end_logits.contiguous()
 
         indicies = torch.arange(embedding.size(0))
-        # query_start_logits = start_logits[indicies, query_ment_start]
-        # query_end_logits = end_logits[indicies, query_ment_end]
+        start_passage_idx = kwargs['seq_2_start_t'][0]
+        # -1 exclude [SEP] token
+        # Calculate query score
+        # query_ment_start_end_score = self.feed_forward(query_embed)
+        # query_ment_start_end_score = query_ment_start_end_score[indicies, query_ment_start]
 
-        # Calculate the query score (we know the span in the embedding sequence)
-        query_start_embed = embedding[indicies, query_ment_start]
-        query_end_embed = embedding[indicies, query_ment_end]
-        query_start_end_embed = torch.cat((query_start_embed, query_end_embed), dim=1)
-        # query_start_end = self.start_end_ff(query_start_end_embed)
-        # sum to get query score
-        # query_score = (query_start_logits + query_end_logits + query_start_end.squeeze()) / 3
+        # Query (Start, End) score
+        # query_start_embed = query_embed[indicies, query_ment_start]
+        # query_end_embed = query_embed[indicies, query_ment_end]
+        # query_start_end_embed = torch.cat((query_start_embed, query_end_embed), dim=1)
+        # query_ment_start_concat_end_score = self.start_end_ff(query_start_end_embed)
+        # query_concat_scores = torch.cat((query_ment_start_end_score, query_ment_start_concat_end_score), dim=1)
+        # query_score = torch.sum(query_concat_scores, dim=1) / 3
 
-        # Calculate the passage score
-        # Add all start/end combinations for start/end logits
-        max_seq_len = start_logits.shape[1]
-        pass_start_logits = start_logits.unsqueeze(2)
-        pass_end_logits = end_logits.unsqueeze(2)
-        pass_start_matrix = pass_start_logits.expand(-1, -1, max_seq_len)
-        pass_end_matrix = pass_end_logits.expand(-1, -1, max_seq_len)
-        pass_start_plus_end_matrix = pass_start_matrix + pass_end_matrix.transpose(1, 2)
+        # Calculate passage score
+        passage_ment_start_end_score = self.feed_forward(passage_embed)
+        passage_ment_start_end_score_ext = passage_ment_start_end_score.unsqueeze(2).expand(-1, -1, passage_embed.size(1), -1)
 
-        # get and concat all start/end combinations of start and end embeddings
-        embed_matrix = embedding.unsqueeze(2)
-        # end_embed_matrix = embedding.unsqueeze(2)
-        embed_matrix_ex = embed_matrix.expand(-1, -1, max_seq_len, -1)
-        # end_embed_matrix_ex = end_embed_matrix.expand(-1, -1, max_seq_len, -1)
-        pass_start_end_matrix = torch.cat((embed_matrix_ex, embed_matrix_ex.transpose(1, 2)), dim=3)
-        pass_start_cat_end_matrix = self.start_end_ff(pass_start_end_matrix).squeeze()
-        # sum to get passage score
-        pass_score = (pass_start_plus_end_matrix + pass_start_cat_end_matrix) / 3
+        # Passage (Start, End) scores
+        passage_embed_ext = passage_embed.unsqueeze(2).expand(-1, -1, passage_embed.size(1), -1)
+        passage_start_end_embed = torch.cat((passage_embed_ext, passage_embed_ext.transpose(1, 2)), dim=3)
+        passage_ment_start_concat_end_score = self.start_end_ff(passage_start_end_embed)
+        # Calculating the average or passage mention scores
+        passage_concat_scores = torch.cat((passage_ment_start_end_score_ext, passage_ment_start_concat_end_score), dim=3)
+        passage_score = torch.sum(passage_concat_scores, dim=3) / 3
 
-        pass_pairwize_score = self.pairwize(pass_start_end_matrix).squeeze()
-        query_pairwize_score = self.pairwize(query_start_end_embed)
-        # expend to cover all combinations
-        query_pairwize_score_expanded = query_pairwize_score.expand(-1, max_seq_len).unsqueeze(2).expand(-1, -1, max_seq_len)
-        # query_score_ex = query_score.unsqueeze(1).expand(-1, max_seq_len).unsqueeze(2).expand(-1, -1, max_seq_len).clone()
+        # # Again for query, this time from the concat embedding (query, passage)
+        # comb_query_start_embed = embedding[indicies, query_ment_start]
+        # comb_query_end_embed = embedding[indicies, query_ment_end]
+        # comb_query_start_end_embed = torch.cat((comb_query_start_embed, comb_query_end_embed), dim=1)
+        # query_pairwise_score = self.pairwize(comb_query_start_end_embed)
 
-        score_query_pass = query_pairwize_score_expanded + pass_pairwize_score
+        # pairwise mention/passage, calculate score on concat embedding
+        comb_pass_embed = embedding[indicies, start_passage_idx:]
+        # Append passage with [CLS] token
+        cls_toks = embedding[indicies, 0].unsqueeze(1)
+        comb_pass_embed = torch.cat((cls_toks, comb_pass_embed), dim=1)
 
-        # prun where end < start
-        # (set the lower triangular matrix to low value, excluding diagonal)
-        indices = torch.tril_indices(max_seq_len, max_seq_len, offset=-1, device=pass_score.device)
-        pass_score[:, indices[0][:], indices[1][:]] = 0
-        # query_score_ex[:, indices[0][:], indices[1][:]] = 0
-        score_query_pass[:, indices[0][:], indices[1][:]] = 0
+        comb_pass_start_embed_ext = comb_pass_embed.unsqueeze(2).expand(-1, -1, comb_pass_embed.size(1), -1)
+        comb_pass_start_end_embed_concat = torch.cat((comb_pass_start_embed_ext, comb_pass_start_embed_ext.transpose(1, 2)), dim=3)
+        pairwise_score = self.pairwize(comb_pass_start_end_embed_concat)
 
-        lambda_thresh = 0.5
-        final_pairwize_score = (lambda_thresh * pass_score) + ((1 - lambda_thresh) * score_query_pass)
-        return final_pairwize_score
+        lambda_ = 0.5
+        final_score = torch.mul(passage_score.unsqueeze(-1), lambda_) + torch.mul(pairwise_score, (1 - lambda_))
+
+        return final_score.squeeze(-1)
 
     def logits_to_loss(self, logits: torch.Tensor, labels: torch.Tensor, **kwargs):
         """
@@ -204,24 +194,21 @@ class WECQuestionAnsweringHead(PredictionHead):
         # most that occurs in the SQuAD dev set. The 2 in the final dimension corresponds to [start, end]
         start_position = labels[:, 0, 0]
         end_position = labels[:, 0, 1]
-        # create the labels matrix
-        indicies_x = torch.arange(logits.size(0)).to(device=logits.device)
-        prep_labels = torch.zeros(logits.size())
-        prep_labels[indicies_x, start_position, end_position] = 1
 
-        # Prepare for loss
-        prep_logits = logits.view(logits.shape[0], -1)
-        _, prep_labels = torch.nonzero(prep_labels.view(prep_labels.shape[0], -1), as_tuple=True)
+        start_passage_idx = kwargs['seq_2_start_t'][0]
+
+        # +1 for [CLS] token which is concat below
+        start_position = start_position - start_passage_idx + 1
+        end_position = end_position - start_passage_idx + 1
+        start_position[start_position < 0] = 0
+        end_position[end_position < 0] = 0
+
+        start_end_positions = (start_position * logits.size(1)) + end_position
+        logits_flat = torch.flatten(logits, start_dim=1, end_dim=-1)
 
         loss_fct = CrossEntropyLoss(reduction="none")
-        loss = loss_fct(prep_logits, prep_labels.to(device=logits.device))
-
+        loss = loss_fct(logits_flat, start_end_positions)
         return loss
-
-    def pairs_to_loss(self, pairs_scores: torch.Tensor, do_corefer: torch.Tensor, **kwargs):
-        # calculate loss for pairwise score
-        loss_func = torch.nn.BCEWithLogitsLoss()
-        return loss_func(pairs_scores, do_corefer.float())
 
     def temperature_scale(self, logits: torch.Tensor):
         return torch.div(logits, self.temperature_for_confidence)
@@ -277,15 +264,23 @@ class WECQuestionAnsweringHead(PredictionHead):
         # Note that ~top_n = n   if no_answer is     within the top_n predictions
         #           ~top_n = n+1 if no_answer is not within the top_n predictions
         all_top_n = []
+
+        # logits is of shape [batch_size, max_seq_len, max_seq_len].
+        # Calculate a few useful variables
         batch_size = logits.size()[0]
         max_seq_len = logits.shape[1]  # target dim
+
         # disqualify answers where end < start
+        # (set the lower triangular matrix to low value, excluding diagonal)
         indices = torch.tril_indices(max_seq_len, max_seq_len, offset=-1, device=logits.device)
         logits[:, indices[0][:], indices[1][:]] = -888
+
         # disqualify answers where answer span is greater than max_answer_length
         # (set the upper triangular matrix to low value, excluding diagonal)
-        indices_long_span = torch.triu_indices(max_seq_len, max_seq_len, offset=max_answer_length, device=logits.device)
+        indices_long_span = torch.triu_indices(max_seq_len, max_seq_len, offset=max_answer_length,
+                                               device=logits.device)
         logits[:, indices_long_span[0][:], indices_long_span[1][:]] = -777
+
         # disqualify answers where start=0, but end != 0
         logits[:, 0, 1:] = -666
 
@@ -293,8 +288,14 @@ class WECQuestionAnsweringHead(PredictionHead):
         # span mask has:
         #   0 for every position that is never a valid start or end index (question tokens, mid and end special tokens, padding)
         #   1 everywhere else
-        span_mask_start = span_mask.unsqueeze(2).expand(-1, -1, max_seq_len)
-        span_mask_end = span_mask.unsqueeze(1).expand(-1, max_seq_len, -1)
+        idxs = torch.arange(logits.size(0))
+        passage_span_mask = span_mask[idxs, seq_2_start_t[0]:]
+        # add cls token
+        cls_mask = span_mask[idxs, 0].unsqueeze(-1)
+        passage_span_mask = torch.cat((cls_mask, passage_span_mask), dim=1)
+
+        span_mask_start = passage_span_mask.unsqueeze(2).expand(-1, -1, max_seq_len)
+        span_mask_end = passage_span_mask.unsqueeze(1).expand(-1, max_seq_len, -1)
         span_mask_2d = span_mask_start + span_mask_end
         # disqualify spans where either start or end is on an invalid token
         invalid_indices = torch.nonzero((span_mask_2d != 2), as_tuple=True)
@@ -303,10 +304,8 @@ class WECQuestionAnsweringHead(PredictionHead):
         # Sort the candidate answers by their score. Sorting happens on the flattened matrix.
         # flat_sorted_indices.shape: (batch_size, max_seq_len^2, 1)
         flat_scores = logits.view(batch_size, -1)
-        flat_scores = torch.softmax(flat_scores, dim=1)
-        _, flat_sorted_indices_2d = flat_scores.sort(descending=True)
+        flat_sorted_indices_2d = flat_scores.sort(descending=True)[1]
         flat_sorted_indices = flat_sorted_indices_2d.unsqueeze(2)
-        confidence_scors = flat_scores.view(batch_size, max_seq_len, max_seq_len)
 
         # The returned indices are then converted back to the original dimensionality of the matrix.
         # sorted_candidates.shape : (batch_size, max_seq_len^2, 2)
@@ -319,17 +318,16 @@ class WECQuestionAnsweringHead(PredictionHead):
             sample_top_n = self.get_top_candidates(sorted_candidates[sample_idx],
                                                    logits[sample_idx],
                                                    sample_idx,
-                                                   start_matrix=None,
-                                                   end_matrix=None,
                                                    # start_matrix=start_matrix[sample_idx],
-                                                   # end_matrix=end_matrix[sample_idx],
-                                                   pairs_scores=confidence_scors[sample_idx])
+                                                   # end_matrix=end_matrix[sample_idx]
+                                                   start_matrix=None,
+                                                   end_matrix=None
+                                                   )
             all_top_n.append(sample_top_n)
 
         return all_top_n
 
-    def get_top_candidates(self, sorted_candidates, start_end_matrix, sample_idx: int,
-                           start_matrix, end_matrix, pairs_scores):
+    def get_top_candidates(self, sorted_candidates, start_end_matrix, sample_idx: int, start_matrix, end_matrix):
         """
         Returns top candidate answers as a list of Span objects. Operates on a matrix of summed start and end logits.
         This matrix corresponds to a single sample (includes special tokens, question tokens, passage tokens).
@@ -341,9 +339,9 @@ class WECQuestionAnsweringHead(PredictionHead):
         start_idx_candidates = set()
         end_idx_candidates = set()
 
-        # start_matrix_softmax_start = torch.softmax(start_matrix[:, 0], dim=-1)
-        # end_matrix_softmax_end = torch.softmax(end_matrix[0, :], dim=-1)
-        # pairs_scores_sig = torch.sigmoid(pairs_scores)
+        start_end_flat = torch.flatten(start_end_matrix)
+        start_end_matrix_softmax = torch.softmax(start_end_flat, dim=0)
+        start_end_matrix_softmax = start_end_matrix_softmax.view(start_end_matrix.size())
         # Iterate over all candidates and break when we have all our n_best candidates
         for candidate_idx in range(n_candidates):
             if len(top_candidates) == self.n_best_per_sample:
@@ -358,8 +356,8 @@ class WECQuestionAnsweringHead(PredictionHead):
                 if self.duplicate_filtering > -1 and (
                         start_idx in start_idx_candidates or end_idx in end_idx_candidates):
                     continue
-                score = start_end_matrix[start_idx, end_idx].item()
-                confidence = pairs_scores[start_idx, end_idx].item()
+                score = start_end_matrix[start_idx][end_idx].item()
+                confidence = start_end_matrix_softmax[start_idx][end_idx].item()
                 top_candidates.append(QACandidate(offset_answer_start=start_idx,
                                                   offset_answer_end=end_idx,
                                                   score=score,
@@ -376,7 +374,7 @@ class WECQuestionAnsweringHead(PredictionHead):
                         end_idx_candidates.add(end_idx - i)
 
         no_answer_score = start_end_matrix[0, 0].item()
-        no_answer_confidence = pairs_scores[0, 0].item()
+        no_answer_confidence = start_end_matrix_softmax[0][0]
         top_candidates.append(QACandidate(offset_answer_start=0,
                                           offset_answer_end=0,
                                           score=no_answer_score,
@@ -499,13 +497,14 @@ class WECQuestionAnsweringHead(PredictionHead):
 
             # curr_passage_start_t is the token offset of the current passage
             # It will always be a multiple of doc_stride
-            curr_passage_start_t = passage_start_t[sample_idx]
+            # Need to remove the CLS token
+            curr_passage_start_t = passage_start_t[sample_idx] - 1
 
             # This is to account for the fact that all model input sequences start with some special tokens
             # and also the question tokens before passage tokens.
-            if seq_2_start_t:
-                cur_seq_2_start_t = seq_2_start_t[sample_idx]
-                curr_passage_start_t -= cur_seq_2_start_t
+            # if seq_2_start_t:
+            #     cur_seq_2_start_t = seq_2_start_t[sample_idx]
+            #     curr_passage_start_t -= cur_seq_2_start_t
 
             # Converts the passage level predictions+labels to document level predictions+labels. Note
             # that on the passage level a no answer is (0,0) but at document level it is (-1,-1) since (0,0)

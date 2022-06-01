@@ -10,9 +10,9 @@ from haystack.modeling.training import Trainer
 from haystack.modeling.utils import initialize_device_settings, set_all_seeds
 from haystack.nodes import FARMReader, BaseReader
 from haystack.schema import Document, MultiLabel
+from src.override_classes.reader.processors.wec_reader_processor import WECSquadProcessor
 
 from src.override_classes.reader.wec_qa_inferencer import WECQAInferencer
-from src.override_classes.reader.wec_squad_processor import WECSquadProcessor
 from src.override_classes.retriever.wec_processor import QUERY_SPAN_START, QUERY_SPAN_END
 
 logger = logging.getLogger(__name__)

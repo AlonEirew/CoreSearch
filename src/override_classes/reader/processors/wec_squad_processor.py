@@ -1,21 +1,27 @@
 import logging
+import random
 from pathlib import Path
 from typing import Optional, Union, List, Dict
 
 import numpy as np
-from haystack.modeling.data_handler.processor import SquadProcessor, InferenceProcessor
-from haystack.modeling.data_handler.samples import SampleBasket, get_passage_offsets, Sample
-from haystack.modeling.model.tokenization import Tokenizer, _get_start_of_word_QA
 
+from haystack.modeling.data_handler.dataset import convert_features_to_dataset
+from haystack.modeling.data_handler.processor import SquadProcessor, InferenceProcessor
+from haystack.modeling.data_handler.samples import SampleBasket, offset_to_token_idx_vecorized, Sample
+from haystack.modeling.model.tokenization import Tokenizer, _get_start_of_word_QA
 from src.override_classes.retriever.wec_processor import QUERY_SPAN_END, QUERY_SPAN_START
 
 logger = logging.getLogger(__name__)
 
 
 class WECSquadProcessor(SquadProcessor):
-    def __init__(self, tokenizer, max_seq_len: int, data_dir: Optional[Union[Path, str]], add_special_tokens=False, **kwargs):
+    def __init__(self, tokenizer, max_seq_len: int, data_dir: Optional[Union[Path, str]], add_special_tokens=False,
+                 num_positives: int = 1, num_negatives: int = 23, batch_size: int = 12, **kwargs):
         super(WECSquadProcessor, self).__init__(tokenizer, max_seq_len, data_dir, **kwargs)
         self.add_special_tokens = add_special_tokens
+        self.num_positives = num_positives
+        self.num_negatives = num_negatives
+        self.batch_size = batch_size
 
     @classmethod
     def convert_from_transformers(cls, tokenizer_name_or_path, task_type, max_seq_len, doc_stride,
@@ -53,7 +59,7 @@ class WECSquadProcessor(SquadProcessor):
     def dataset_from_dicts(self,
                            dicts: List[dict],
                            indices: Optional[List[int]] = None,
-                           return_baskets:bool = False):
+                           return_baskets: bool = False):
         """
         Convert input dictionaries into a pytorch dataset for Question Answering.
         For this we have an internal representation called "baskets".
@@ -80,10 +86,11 @@ class WECSquadProcessor(SquadProcessor):
         # Convert internal representation (nested baskets + samples with mixed types) to pytorch features (arrays of numbers)
         baskets = self._passages_to_pytorch_features(baskets, return_baskets)
 
-        baskets = self.arrange_by_queries(baskets)
+        if not return_baskets:
+            baskets = self.arrange_by_queries(baskets)
 
         # Convert features into pytorch dataset, this step also removes potential errors during preprocessing
-        dataset, tensor_names, baskets = self._create_dataset(baskets)
+        dataset, tensor_names, baskets = self.create_dataset(baskets, return_baskets)
 
         # Logging
         if indices:
@@ -118,7 +125,7 @@ class WECSquadProcessor(SquadProcessor):
             start_of_words_batch.append(_get_start_of_word_QA(e.words))
 
         for i_doc, d in enumerate(pre_baskets):
-            doc_coref_link = d["title"]
+            doc_coref_link = int(d["title"])
             document_text = d["context"]
             # # Tokenize questions one by one
             for i_q, q in enumerate(d["qas"]):
@@ -168,6 +175,87 @@ class WECSquadProcessor(SquadProcessor):
                 # TODO add only during debug mode (need to create debug mode)
 
                 baskets.append(SampleBasket(raw=raw, id_internal=internal_id, id_external=external_id, samples=None))
+        return baskets
+
+    def _convert_answers(self, baskets:List[SampleBasket]):
+        """
+        Converts answers that are pure strings into the token based representation with start and end token offset.
+        Can handle multiple answers per question document pair as is common for development/text sets
+        """
+        for basket in baskets:
+            error_in_answer = False
+            for num, sample in enumerate(basket.samples): # type: ignore
+                # Dealing with potentially multiple answers (e.g. Squad dev set)
+                # Initializing a numpy array of shape (max_answers, 2), filled with -1 for missing values
+                label_idxs = np.full((self.max_answers, 2), fill_value=-1)
+                passage_coref_chain = basket.raw['passage_coref_link']
+
+                if error_in_answer or (len(basket.raw["answers"]) == 0):
+                    # If there are no answers we set
+                    label_idxs[0, :] = 0
+                else:
+                    # For all other cases we use start and end token indices, that are relative to the passage
+                    for i, answer in enumerate(basket.raw["answers"]):
+                        # Calculate start and end relative to document
+                        answer_len_c = len(answer["text"])
+                        answer_start_c = answer["answer_start"]
+                        answer_end_c = answer_start_c + answer_len_c - 1
+
+                        # Convert character offsets to token offsets on document level
+                        answer_start_t = offset_to_token_idx_vecorized(basket.raw["document_offsets"], answer_start_c)
+                        answer_end_t = offset_to_token_idx_vecorized(basket.raw["document_offsets"], answer_end_c)
+
+                        # Adjust token offsets to be relative to the passage
+                        answer_start_t -= sample.tokenized["passage_start_t"] # type: ignore
+                        answer_end_t -= sample.tokenized["passage_start_t"] # type: ignore
+
+                        # Initialize some basic variables
+                        question_len_t = len(sample.tokenized["question_tokens"]) # type: ignore
+                        passage_len_t = len(sample.tokenized["passage_tokens"]) # type: ignore
+
+                        # Check that start and end are contained within this passage
+                        # answer_end_t is 0 if the first token is the answer
+                        # answer_end_t is passage_len_t if the last token is the answer
+                        if passage_len_t > answer_start_t >= 0 and passage_len_t >= answer_end_t >= 0:
+                            # Then adjust the start and end offsets by adding question and special token
+                            label_idxs[i][0] = self.sp_toks_start + question_len_t + self.sp_toks_mid + answer_start_t
+                            label_idxs[i][1] = self.sp_toks_start + question_len_t + self.sp_toks_mid + answer_end_t
+
+                        # If the start or end of the span answer is outside the passage, treat passage as no_answer
+                        else:
+                            label_idxs[i][0] = 0
+                            label_idxs[i][1] = 0
+                            passage_coref_chain = -1
+
+                        ########## answer checking ##############################
+                        # TODO, move this checking into input validation functions and delete wrong examples there
+                        # Cases where the answer is not within the current passage will be turned into no answers by the featurization fn
+                        if answer_start_t < 0 or answer_end_t >= passage_len_t:
+                            pass
+                        else:
+                            doc_text = basket.raw["document_text"]
+                            answer_indices = doc_text[answer_start_c: answer_end_c + 1]
+                            answer_text = answer["text"]
+                            # check if answer string can be found in context
+                            if answer_text not in doc_text:
+                                logger.warning(f"Answer '{answer['text']}' not contained in context.\n"
+                                               f"Example will not be converted for training/evaluation.")
+                                error_in_answer = True
+                                label_idxs[i][0] = -100  # TODO remove this hack also from featurization
+                                label_idxs[i][1] = -100
+                                break  # Break loop around answers, so the error message is not shown multiple times
+                            elif answer_indices.strip() != answer_text.strip():
+                                logger.warning(f"Answer using start/end indices is '{answer_indices}' while gold label text is '{answer_text}'.\n"
+                                               f"Example will not be converted for training/evaluation.")
+                                error_in_answer = True
+                                label_idxs[i][0] = -100 # TODO remove this hack also from featurization
+                                label_idxs[i][1] = -100
+                                break # Break loop around answers, so the error message is not shown multiple times
+                        ########## end of checking ####################
+
+                sample.tokenized["labels"] = label_idxs # type: ignore
+                sample.tokenized["passage_coref_chain"] = passage_coref_chain
+
         return baskets
 
     def tokenize_query(self, query_obj: Dict):
@@ -244,6 +332,27 @@ class WECSquadProcessor(SquadProcessor):
                 # To make the start index of passage tokens the start manually
                 seq_2_start_t = self.sp_toks_start + question_len_t + self.sp_toks_mid
 
+                # at inference this information is missing, need to fill with dummy value
+                if "passage_coref_chain" not in sample.tokenized:
+                    sample.tokenized["passage_coref_chain"] = -500
+
+                # Verify answer is aligned with label idxs (ugly need to move to function)
+                # Only at training, at inference the information is not available
+                if len(basket.raw['answers']) > 0:
+                    answer_text = basket.raw['answers'][0]["text"]
+                    answer_text = "".join(answer_text.split(" ")).lower()
+                    if answer_text != '' and sample.tokenized["labels"][0][0] != 0 and sample.tokenized["labels"][0][1] - 1 != 0:
+                        start_idx = sample.tokenized["labels"][0][0] - seq_2_start_t
+                        end_idx = sample.tokenized["labels"][0][1] + 1 - seq_2_start_t
+
+                        token_answer_lower = "".join(
+                            [s.strip('Ġ').lower() for s in
+                             self.tokenizer.convert_ids_to_tokens(passage_input_ids[start_idx:end_idx])])
+                        if answer_text != token_answer_lower:
+                            print(
+                                f"WARNING:Answer ({answer_text}) != tokenized answer ({token_answer_lower}), "
+                                f"ID={basket.raw['query_id']}")
+
                 start_of_word = [0] * self.sp_toks_start + \
                                 question_start_of_word + \
                                 [0] * self.sp_toks_mid + \
@@ -291,11 +400,12 @@ class WECSquadProcessor(SquadProcessor):
                                     "passage_start_t": passage_start_t,
                                     "start_of_word": start_of_word,
                                     "labels": sample.tokenized.get("labels",[]), # type: ignore
-                                    "passage_coref_link": basket.raw["passage_coref_link"],
+                                    "passage_coref_link": sample.tokenized["passage_coref_chain"],
                                     "query_coref_link": basket.raw["query_coref_link"],
                                     "id": sample_id,
                                     "seq_2_start_t": seq_2_start_t,
                                     "span_mask": span_mask,
+                                    "query_id": int(basket.raw["query_id"]),
                                     "query_ment_start": basket.raw["query_ment_start"] + 1,
                                     "query_ment_end": basket.raw["query_ment_end"] + 1}
 
@@ -307,6 +417,47 @@ class WECSquadProcessor(SquadProcessor):
                     self.problematic_sample_ids.add(sample.id)
                     sample.features = None
         return baskets
+
+    def create_dataset(self, samples: Union[List[Sample], List[SampleBasket]], return_baskets: bool):
+        """
+        Convert python features into pytorch dataset.
+        Also removes potential errors during preprocessing.
+        Flattens nested basket structure to create a flat list of features
+        """
+        if return_baskets:
+            return super()._create_dataset(samples)
+
+        features_flat: List[dict] = []
+        if self.check_sample_features(samples):
+            for sample in samples: # type: ignore
+                features_flat.extend(sample.features) # type: ignore
+        else:
+            # remove the entire basket
+            raise ValueError("Sample is thrown!")
+
+        dataset, tensor_names = convert_features_to_dataset(features=features_flat)
+        return dataset, tensor_names, samples
+
+    @staticmethod
+    def check_sample_features(basket: List[Sample]):
+        """
+        Check if all samples in the basket has computed its features.
+
+        :param basket: the basket containing the samples
+
+        :return: True if all the samples in the basket has computed its features, False otherwise
+        """
+        if basket is None:
+            return False
+        elif len(basket) == 0:
+            return False
+        if basket is None:
+            return False
+        else:
+            for sample in basket:
+                if sample.features is None:
+                    return False
+        return True
 
     def validate_query_toks(self, query_mention, query_id, query_feat, query_tokenized):
         if self.add_special_tokens:
@@ -343,18 +494,35 @@ class WECSquadProcessor(SquadProcessor):
         query_ctx.insert(end_index + 1, QUERY_SPAN_END)
         query_ctx.insert(start_index, QUERY_SPAN_START)
 
-    @staticmethod
-    def arrange_by_queries(baskets):
-        query_to_passage = dict()
+    def arrange_by_queries(self, baskets: List[SampleBasket]):
+        query_pos_to_passage = dict()
+        query_neg_to_passage = dict()
+        set_query_ids = set()
+        random.shuffle(baskets)
         for sample_bask in baskets:
             query_id = sample_bask.raw['query_id']
-            if query_id not in query_to_passage:
-                query_to_passage[query_id] = list()
+            set_query_ids.add(query_id)
+            if query_id not in query_pos_to_passage:
+                query_pos_to_passage[query_id] = list()
 
-            query_to_passage[query_id].append(sample_bask)
+            if query_id not in query_neg_to_passage:
+                query_neg_to_passage[query_id] = list()
+
+            for sample in sample_bask.samples:
+                if sample.features[0]['query_coref_link'] == sample.features[0]['passage_coref_link']:
+                    query_pos_to_passage[query_id].append(sample)
+                else:
+                    query_neg_to_passage[query_id].append(sample)
 
         ret_baskets = list()
-        for pass_list in query_to_passage.values():
-            ret_baskets.extend(pass_list)
+        for query_id in set_query_ids:
+            query_bask = list()
+            positive_len = len(query_pos_to_passage[query_id])
+            total_in_batch = self.num_positives + self.num_negatives
+            # assert positive_len >= self.num_positives
+            query_bask.extend(query_pos_to_passage[query_id])
+            query_bask.extend(query_neg_to_passage[query_id][:total_in_batch - positive_len])
+            # assert len(query_bask) % self.batch_size == 0
+            ret_baskets.extend(query_bask)
 
         return ret_baskets
