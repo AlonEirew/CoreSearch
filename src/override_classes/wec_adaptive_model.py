@@ -43,9 +43,9 @@ class WECAdaptiveModel(AdaptiveModel):
         # Run forward pass of language model
         all_logits = []
         start_passage_idx = kwargs['seq_2_start_t'][0]
-        # query_inputs = kwargs['input_ids'][:, :start_passage_idx]
-        # query_padding_mask = kwargs['padding_mask'][:, :start_passage_idx]
-        # query_segment_ids = kwargs['segment_ids'][:, :start_passage_idx]
+        query_inputs = kwargs['input_ids'][:, :start_passage_idx]
+        query_padding_mask = kwargs['padding_mask'][:, :start_passage_idx]
+        query_segment_ids = kwargs['segment_ids'][:, :start_passage_idx]
 
         cls_token = kwargs['input_ids'][:, 0].unsqueeze(1)
         padd_mask = torch.ones(cls_token.size(), dtype=torch.int64, device=kwargs['padding_mask'].device)
@@ -54,10 +54,9 @@ class WECAdaptiveModel(AdaptiveModel):
         pass_padding_mask = torch.cat((padd_mask, kwargs['padding_mask'][:, start_passage_idx:]), dim=1)
         pass_segment_ids = torch.cat((zeros, kwargs['segment_ids'][:, start_passage_idx:]), dim=1)
 
-        # output_query = self.language_model.forward(input_ids=query_inputs, padding_mask=query_padding_mask,
-        #                                            segment_ids=query_segment_ids, output_hidden_states=output_hidden_states,
-        #                                            output_attentions=output_attentions)
-        query_output = None
+        output_query = self.language_model.forward(input_ids=query_inputs, padding_mask=query_padding_mask,
+                                                   segment_ids=query_segment_ids, output_hidden_states=output_hidden_states,
+                                                   output_attentions=output_attentions)
         output_passage = self.language_model.forward(input_ids=pass_inputs, padding_mask=pass_padding_mask,
                                                      segment_ids=pass_segment_ids,
                                                      output_hidden_states=output_hidden_states,
@@ -73,7 +72,7 @@ class WECAdaptiveModel(AdaptiveModel):
                 sequence_output, pooled_output, attentions = output_tuple
             else:
                 sequence_output, pooled_output = output_tuple
-                # query_output, query_pooled_out = output_query
+                query_output, query_pooled_out = output_query
                 passage_output, passage_pooled_out = output_passage
         # Run forward pass of (multiple) prediction heads using the output from above
         if len(self.prediction_heads) > 0:
@@ -81,7 +80,7 @@ class WECAdaptiveModel(AdaptiveModel):
                 # Choose relevant vectors from LM as output and perform dropout
                 if lm_out == "per_token":
                     output = self.dropout(sequence_output)
-                    # query_output = self.dropout(query_output)
+                    query_output = self.dropout(query_output)
                     passage_output = self.dropout(passage_output)
                 elif lm_out == "per_sequence" or lm_out == "per_sequence_continuous":
                     output = self.dropout(pooled_output)

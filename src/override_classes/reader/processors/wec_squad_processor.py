@@ -519,10 +519,10 @@ class WECSquadProcessor(SquadProcessor):
             query_bask = list()
             positive_len = len(query_pos_to_passage[query_id])
             total_in_batch = self.num_positives + self.num_negatives
-            # assert positive_len >= self.num_positives
+            assert positive_len >= self.num_positives
             query_bask.extend(query_pos_to_passage[query_id])
             query_bask.extend(query_neg_to_passage[query_id][:total_in_batch - positive_len])
-            # assert len(query_bask) % self.batch_size == 0
+            assert len(query_bask) % self.batch_size == 0
             ret_baskets.extend(query_bask)
 
         return ret_baskets

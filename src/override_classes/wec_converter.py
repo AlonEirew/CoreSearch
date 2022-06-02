@@ -2,7 +2,7 @@ import logging
 from typing import Union
 
 from haystack.modeling.model.language_model import LanguageModel
-from src.override_classes.reader.qa_head import WECQuestionAnsweringHead
+from src.override_classes.reader.corefqa_head import CorefQuestionAnsweringHead
 from src.override_classes.wec_adaptive_model import WECAdaptiveModel
 
 logger = logging.getLogger(__name__)
@@ -46,7 +46,7 @@ class WECConverter:
                              "('question_answering' or 'embeddings')")
 
         if task_type == "question_answering":
-            ph = WECQuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
+            ph = CorefQuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
             adaptive_model = WECAdaptiveModel(language_model=lm, prediction_heads=[ph], embeds_dropout_prob=0.1,
                                               lm_output_types="per_token", device=device)
         elif task_type == "embeddings":

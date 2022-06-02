@@ -17,7 +17,7 @@ from transformers import AutoModelForQuestionAnswering
 logger = logging.getLogger(__name__)
 
 
-class WECQuestionAnsweringHead(PredictionHead):
+class CorefQuestionAnsweringHead(PredictionHead):
     """
     A question answering head predicts the start and end of the answer on token level.
 
@@ -57,7 +57,7 @@ class WECQuestionAnsweringHead(PredictionHead):
         :param temperature_for_confidence: The divisor that is used to scale logits to calibrate confidence scores
         :param use_confidence_scores_for_ranking: Whether to sort answers by confidence score (normalized between 0 and 1) or by standard score (unbounded)(default).
         """
-        super(WECQuestionAnsweringHead, self).__init__()
+        super(CorefQuestionAnsweringHead, self).__init__()
         if len(kwargs) > 0:
             logger.warning(f"Some unused parameters are passed to the QuestionAnsweringHead. "
                            f"Might not be a problem. Params: {json.dumps(kwargs)}")
@@ -117,7 +117,7 @@ class WECQuestionAnsweringHead(PredictionHead):
                 and "config.json" in str(pretrained_model_name_or_path) \
                 and "prediction_head" in str(pretrained_model_name_or_path):
             # a) Haystack style
-            super(WECQuestionAnsweringHead, cls).load(str(pretrained_model_name_or_path))
+            super(CorefQuestionAnsweringHead, cls).load(str(pretrained_model_name_or_path))
         else:
             # b) transformers style
             # load all weights from model
@@ -141,16 +141,20 @@ class WECQuestionAnsweringHead(PredictionHead):
         start_passage_idx = kwargs['seq_2_start_t'][0]
         # -1 exclude [SEP] token
         # Calculate query score
-        # query_ment_start_end_score = self.feed_forward(query_embed)
-        # query_ment_start_end_score = query_ment_start_end_score[indicies, query_ment_start]
+        query_ment_start_end_score = self.feed_forward(query_embed)
+        query_ment_sstart_end_score = query_ment_start_end_score[indicies, query_ment_start, 0].unsqueeze(-1)
+        query_ment_estart_end_score = query_ment_start_end_score[indicies, query_ment_end, 1].unsqueeze(-1)
 
         # Query (Start, End) score
-        # query_start_embed = query_embed[indicies, query_ment_start]
-        # query_end_embed = query_embed[indicies, query_ment_end]
-        # query_start_end_embed = torch.cat((query_start_embed, query_end_embed), dim=1)
-        # query_ment_start_concat_end_score = self.start_end_ff(query_start_end_embed)
-        # query_concat_scores = torch.cat((query_ment_start_end_score, query_ment_start_concat_end_score), dim=1)
-        # query_score = torch.sum(query_concat_scores, dim=1) / 3
+        query_start_embed = query_embed[indicies, query_ment_start]
+        query_end_embed = query_embed[indicies, query_ment_end]
+        query_start_end_embed = torch.cat((query_start_embed, query_end_embed), dim=1)
+        query_ment_start_concat_end_score = self.start_end_ff(query_start_end_embed)
+        query_concat_scores = torch.cat((query_ment_sstart_end_score,
+                                         query_ment_estart_end_score,
+                                         query_ment_start_concat_end_score), dim=1)
+
+        query_score = torch.sum(query_concat_scores, dim=1) / 3
 
         # Calculate passage score
         passage_ment_start_end_score = self.feed_forward(passage_embed)
@@ -164,11 +168,11 @@ class WECQuestionAnsweringHead(PredictionHead):
         passage_concat_scores = torch.cat((passage_ment_start_end_score_ext, passage_ment_start_concat_end_score), dim=3)
         passage_score = torch.sum(passage_concat_scores, dim=3) / 3
 
-        # # Again for query, this time from the concat embedding (query, passage)
-        # comb_query_start_embed = embedding[indicies, query_ment_start]
-        # comb_query_end_embed = embedding[indicies, query_ment_end]
-        # comb_query_start_end_embed = torch.cat((comb_query_start_embed, comb_query_end_embed), dim=1)
-        # query_pairwise_score = self.pairwize(comb_query_start_end_embed)
+        # Again for query, this time from the concat embedding (query, passage)
+        comb_query_start_embed = embedding[indicies, query_ment_start]
+        comb_query_end_embed = embedding[indicies, query_ment_end]
+        comb_query_start_end_embed = torch.cat((comb_query_start_embed, comb_query_end_embed), dim=1)
+        query_pairwise_score = self.pairwize(comb_query_start_end_embed)
 
         # pairwise mention/passage, calculate score on concat embedding
         comb_pass_embed = embedding[indicies, start_passage_idx:]
@@ -178,12 +182,19 @@ class WECQuestionAnsweringHead(PredictionHead):
 
         comb_pass_start_embed_ext = comb_pass_embed.unsqueeze(2).expand(-1, -1, comb_pass_embed.size(1), -1)
         comb_pass_start_end_embed_concat = torch.cat((comb_pass_start_embed_ext, comb_pass_start_embed_ext.transpose(1, 2)), dim=3)
-        pairwise_score = self.pairwize(comb_pass_start_end_embed_concat)
+        pass_pairwise_score = self.pairwize(comb_pass_start_end_embed_concat)
+
+        query_score = query_score.unsqueeze(-1).expand(-1, passage_score.size(1)).unsqueeze(-1).expand(-1, -1, passage_score.size(2))
+        query_passage_score = passage_score + query_score
+
+        query_pairwise_score = query_pairwise_score.expand(-1, pass_pairwise_score.size(1)).\
+            unsqueeze(-1).expand(-1, -1, pass_pairwise_score.size(2))
+        query_pass_pairwise_score = query_pairwise_score + pass_pairwise_score.squeeze(-1)
 
         lambda_ = 0.5
-        final_score = torch.mul(passage_score.unsqueeze(-1), lambda_) + torch.mul(pairwise_score, (1 - lambda_))
+        final_score = torch.mul(query_passage_score, lambda_) + torch.mul(query_pass_pairwise_score, (1 - lambda_))
 
-        return final_score.squeeze(-1)
+        return final_score
 
     def logits_to_loss(self, logits: torch.Tensor, labels: torch.Tensor, **kwargs):
         """
