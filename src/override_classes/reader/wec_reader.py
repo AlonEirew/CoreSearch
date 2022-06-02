@@ -222,5 +222,5 @@ class WECReader(FARMReader):
         )
 
         # 5. Let it grow!
-        self.inferencer.model = trainer.train()
-        self.save(Path(save_dir))
+        self.inferencer.model = trainer.train(self, save_dir)
+        # self.save(Path(save_dir))

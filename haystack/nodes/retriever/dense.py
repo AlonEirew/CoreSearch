@@ -417,11 +417,11 @@ class DensePassageRetriever(BaseRetriever):
         )
 
         # 7. Let it grow! Watch the tracked metrics live on the public mlflow server: https://public-mlflow.deepset.ai
-        trainer.train()
+        trainer.train(self, save_dir)
 
-        self.model.save(Path(save_dir), lm1_name=query_encoder_save_dir, lm2_name=passage_encoder_save_dir)
-        self.query_tokenizer.save_pretrained(f"{save_dir}/{query_encoder_save_dir}")
-        self.passage_tokenizer.save_pretrained(f"{save_dir}/{passage_encoder_save_dir}")
+        # self.model.save(Path(save_dir), lm1_name=query_encoder_save_dir, lm2_name=passage_encoder_save_dir)
+        # self.query_tokenizer.save_pretrained(f"{save_dir}/{query_encoder_save_dir}")
+        # self.passage_tokenizer.save_pretrained(f"{save_dir}/{passage_encoder_save_dir}")
 
         if len(self.devices) > 1 and not isinstance(self.model, DataParallel):
             self.model = DataParallel(self.model, device_ids=self.devices)

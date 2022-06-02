@@ -219,7 +219,7 @@ class Trainer:
         self.from_step = from_step
         self.global_step = global_step
 
-    def train(self):
+    def train(self, save_obj, save_dir):
         """
         Perform the training procedure.
 
@@ -324,6 +324,8 @@ class Trainer:
                     # Let other ranks wait until rank 0 has finished saving
                     if self.local_rank != -1:
                         torch.distributed.barrier()
+
+            save_obj.save(Path(save_dir + "/" + str(epoch)))
 
             if do_stopping:
                 break
