@@ -89,7 +89,7 @@ class WECSquadProcessor(SquadProcessor):
         if not return_baskets:
             return baskets, return_baskets, indices
 
-        return self.convert_features_to_dataset(baskets, return_baskets, indices)
+        return self.convert_to_final_dataset(baskets, return_baskets, indices)
 
     def convert_to_final_dataset(self, baskets: List[SampleBasket], return_baskets: bool = False,
                                  indices: Optional[List[int]] = None):
