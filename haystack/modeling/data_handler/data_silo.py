@@ -18,6 +18,9 @@ from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data.sampler import RandomSampler, SequentialSampler
 
 from typing import TYPE_CHECKING
+
+from src.override_classes.reader.processors.wec_squad_processor import WECSquadProcessor
+
 if TYPE_CHECKING:
     from haystack.nodes import FARMReader
 from haystack.modeling.data_handler.dataloader import NamedDataLoader
@@ -172,7 +175,16 @@ class DataSilo:
                 )
 
                 # temporary fix
-                results = map(partial(self._dataset_from_chunk, processor=self.processor), grouper(dicts, len(dicts)))  # type: ignore
+                results = map(partial(self._dataset_from_chunk, processor=self.processor), grouper(dicts, 1))  # type: ignore
+
+            if type(self.processor) is WECSquadProcessor:
+                merged_baskets = list()
+                merged_indices = list()
+                for baskets, return_baskets, indices in results:
+                    merged_baskets.extend(baskets)
+                    merged_indices.extend(indices)
+
+                results = self.processor.convert_to_final_dataset(baskets=merged_baskets, indices=merged_indices)
 
             datasets = []
             problematic_ids_all = set()
@@ -180,12 +192,12 @@ class DataSilo:
             desc = f"Preprocessing Dataset"
             if filename:
                 desc += f" {filename}"
-            with tqdm(total=len(dicts), unit=' Dicts', desc=desc) as pbar:
-                for dataset, tensor_names, problematic_samples in results:
-                    datasets.append(dataset)
-                    # update progress bar (last step can have less dicts than actual chunk_size)
-                    pbar.update(min(multiprocessing_chunk_size, pbar.total - pbar.n))
-                    problematic_ids_all.update(problematic_samples)
+            # with tqdm(total=len(dicts), unit=' Dicts', desc=desc) as pbar:
+            dataset, tensor_names, problematic_samples = results
+            datasets.append(dataset)
+            # update progress bar (last step can have less dicts than actual chunk_size)
+            # pbar.update(min(multiprocessing_chunk_size, pbar.total - pbar.n))
+            problematic_ids_all.update(problematic_samples)
 
             self.processor.log_problematic(problematic_ids_all)
             # _dataset_from_chunk can return a None in cases where downsampling has occurred
