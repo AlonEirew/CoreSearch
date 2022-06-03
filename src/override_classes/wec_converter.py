@@ -1,8 +1,11 @@
 import logging
 from typing import Union
 
+from haystack.modeling.model import adaptive_model as am
 from haystack.modeling.model.language_model import LanguageModel
+from haystack.modeling.model.prediction_head import QuestionAnsweringHead
 from src.override_classes.reader.corefqa_head import CorefQuestionAnsweringHead
+from src.override_classes.reader.kenton_head import KentonQuestionAnsweringHead
 from src.override_classes.wec_adaptive_model import WECAdaptiveModel
 
 logger = logging.getLogger(__name__)
@@ -11,7 +14,7 @@ logger = logging.getLogger(__name__)
 class WECConverter:
     @staticmethod
     def convert_from_transformers(model_name_or_path, device, revision=None, task_type=None, processor=None,
-                                  use_auth_token: Union[bool, str] = None, **kwargs):
+                                  use_auth_token: Union[bool, str] = None, prediction_head_str: str = "corefqa", **kwargs):
         """
         Load a (downstream) model from huggingface's transformers format. Use cases:
          - continue training in Haystack (e.g. take a squad QA model and fine-tune on your own data)
@@ -34,7 +37,6 @@ class WECConverter:
         :type processor: Processor
         :return: AdaptiveModel
         """
-
         lm = LanguageModel.load(model_name_or_path, revision=revision, use_auth_token=use_auth_token, **kwargs)
         if task_type is None:
             # Infer task type from config
@@ -46,9 +48,20 @@ class WECConverter:
                              "('question_answering' or 'embeddings')")
 
         if task_type == "question_answering":
-            ph = CorefQuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
-            adaptive_model = WECAdaptiveModel(language_model=lm, prediction_heads=[ph], embeds_dropout_prob=0.1,
-                                              lm_output_types="per_token", device=device)
+            if prediction_head_str == "corefqa":
+                ph = CorefQuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
+                adaptive_model = WECAdaptiveModel(language_model=lm, prediction_heads=[ph], embeds_dropout_prob=0.1,
+                                                  lm_output_types="per_token", device=device)
+            elif prediction_head_str == "kenton":
+                ph = KentonQuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
+                adaptive_model = WECAdaptiveModel(language_model=lm, prediction_heads=[ph], embeds_dropout_prob=0.1,
+                                                  lm_output_types="per_token", device=device)
+            elif prediction_head_str == "dpr":
+                ph = QuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
+                adaptive_model = am.AdaptiveModel(language_model=lm, prediction_heads=[ph], embeds_dropout_prob=0.1,
+                                                  lm_output_types="per_token", device=device)
+            else:
+                raise TypeError(f"Not a supported head-{prediction_head_str}")
         elif task_type == "embeddings":
             adaptive_model = WECAdaptiveModel(language_model=lm, prediction_heads=[], embeds_dropout_prob=0.1,
                                               lm_output_types=["per_token", "per_sequence"], device=device)

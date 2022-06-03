@@ -87,6 +87,13 @@ class WECSquadProcessor(SquadProcessor):
         baskets = self._passages_to_pytorch_features(baskets, return_baskets)
 
         if not return_baskets:
+            return baskets, return_baskets, indices
+
+        return self.convert_features_to_dataset(baskets, return_baskets, indices)
+
+    def convert_to_final_dataset(self, baskets: List[SampleBasket], return_baskets: bool = False,
+                                 indices: Optional[List[int]] = None):
+        if not return_baskets:
             baskets = self.arrange_by_queries(baskets)
 
         # Convert features into pytorch dataset, this step also removes potential errors during preprocessing
@@ -148,16 +155,30 @@ class WECSquadProcessor(SquadProcessor):
                         "query_coref_link": q['query_coref_link']
                     }
 
-                question_text = self.tokenize_query(query_obj)
+                question_text, start_ment_c, ment_len_c = self.tokenize_query(query_obj)
                 tokenized_q = self.tokenizer.encode_plus(question_text, return_offsets_mapping=True,
                                                          return_special_tokens_mask=True, add_special_tokens=False)
                 # Extract relevant data
                 question_tokenids = tokenized_q["input_ids"]
                 question_offsets = [x[0] for x in tokenized_q["offset_mapping"]]
-                question_sow = _get_start_of_word_QA(tokenized_q.encodings[0].words)
+                encoded_words = tokenized_q.encodings[0].words
+                question_sow = _get_start_of_word_QA(encoded_words)
 
-                query_ment_start = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[0])
-                query_ment_end = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[1])
+                if self.add_special_tokens:
+                    query_ment_start = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[0])
+                    query_ment_end = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[1])
+                else:
+                    # Calculate start and end relative to document
+                    ment_end_c = start_ment_c + ment_len_c - 1
+
+                    # Convert character offsets to token offsets on document level
+                    query_ment_start = offset_to_token_idx_vecorized(np.array(question_offsets), start_ment_c)
+                    query_ment_end = offset_to_token_idx_vecorized(np.array(question_offsets), ment_end_c)
+                    # in this case the mention will be on the SEP token
+                    if query_ment_end == len(tokenized_q.data['input_ids']):
+                        query_ment_end -= 1
+                    if query_ment_start == len(tokenized_q.data['input_ids']):
+                        query_ment_start -= 1
 
                 query_coref_link = query_obj['query_coref_link']
 
@@ -263,20 +284,22 @@ class WECSquadProcessor(SquadProcessor):
         query_ctx = query_obj["query_ctx"]
         query_ment_start = query_obj["query_ment_start"]
         query_ment_end = query_obj["query_ment_end"]
-        # query_event_start_ind = query_event_end_ind = 0
-        if self.add_special_tokens and QUERY_SPAN_END not in query_ctx and QUERY_SPAN_START not in query_ctx:
-            self.add_query_bound(query_ctx, query_ment_start, query_ment_end)
 
         pointer_start = query_ment_start
-        pointer_end = query_ment_end + 2
+        pointer_end = query_ment_end
+        if self.add_special_tokens and QUERY_SPAN_END not in query_ctx and QUERY_SPAN_START not in query_ctx:
+            self.add_query_bound(query_ctx, query_ment_start, query_ment_end)
+            pointer_end += 2
+
         query_tokenized_len = 0
         final_query_tokenized = query_ctx[pointer_start:pointer_end+1]
         query_tokenized_len += len(self.tokenizer.encode(" ".join(final_query_tokenized), add_special_tokens=False))
+        start_ment_idx = 0
+        ment_len_c = len(" ".join(final_query_tokenized))
         while query_tokenized_len < max_query_len and (pointer_start > 0 or pointer_end < len(query_ctx) - 1):
             if pointer_end < len(query_ctx) - 1:
                 pointer_end += 1
                 query_tokenized_len += len(self.tokenizer.encode(query_ctx[pointer_end], add_special_tokens=False))
-                # query_tokenized_len += len(self.tokenizer.tokenize(query_ctx[pointer_end]))
                 if query_tokenized_len < max_query_len:
                     final_query_tokenized.append(query_ctx[pointer_end])
                 else:
@@ -285,13 +308,14 @@ class WECSquadProcessor(SquadProcessor):
             if pointer_start > 0:
                 pointer_start -= 1
                 query_tokenized_len += len(self.tokenizer.encode(query_ctx[pointer_start], add_special_tokens=False))
-                # query_tokenized_len += len(self.tokenizer.tokenize(query_ctx[pointer_start]))
                 if query_tokenized_len < max_query_len:
                     final_query_tokenized.insert(0, query_ctx[pointer_start])
+                    start_ment_idx += 1
                 else:
                     break
 
-        return " ".join(final_query_tokenized)
+        start_ment_c = len(" ".join(final_query_tokenized[:start_ment_idx])) + 1
+        return " ".join(final_query_tokenized), start_ment_c, ment_len_c
 
     def _passages_to_pytorch_features(self, baskets:List[SampleBasket], return_baskets:bool):
         """
@@ -410,7 +434,7 @@ class WECSquadProcessor(SquadProcessor):
                                     "query_ment_end": basket.raw["query_ment_end"] + 1}
 
                     self.validate_query_toks(query_mention=basket.raw['query_mention'], query_id=basket.raw['query_id'],
-                                             query_feat=feature_dict, query_tokenized=basket.raw['question_tokens_strings'])
+                                             query_feat=feature_dict)
                     # other processor's features can be lists
                     sample.features = [feature_dict] # type: ignore
                 else:
@@ -459,35 +483,36 @@ class WECSquadProcessor(SquadProcessor):
                     return False
         return True
 
-    def validate_query_toks(self, query_mention, query_id, query_feat, query_tokenized):
+    def validate_query_toks(self, query_mention, query_id, query_feat):
+        ment_start = query_feat["query_ment_start"]
+        ment_end = query_feat["query_ment_end"]
         if self.add_special_tokens:
             if QUERY_SPAN_START in self.tokenizer.additional_special_tokens and QUERY_SPAN_END in self.tokenizer.additional_special_tokens:
-                if query_feat["input_ids"][query_feat["query_ment_start"]] != self.tokenizer.additional_special_tokens_ids[0] or \
-                        query_feat["input_ids"][query_feat["query_ment_end"]] != self.tokenizer.additional_special_tokens_ids[1]:
+                if query_feat["input_ids"][ment_start] != self.tokenizer.additional_special_tokens_ids[0] or \
+                        query_feat["input_ids"][ment_end] != self.tokenizer.additional_special_tokens_ids[1]:
                     raise AssertionError(f"Query ID={query_id} start/end tokens")
             else:
                 raise AssertionError("add_spatial_token=True and no spatial tokens in added_tokens_encoder list!")
             # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
             if query_mention:
                 query_lower = "".join(query_mention)
-                token_query_lower = "".join(
-                    [s.strip('Ġ') for s in
-                     query_tokenized[query_feat["query_ment_start"]:query_feat["query_ment_end"] - 1]])
+                token_query_lower = "".join([
+                    s.strip('Ġ') for s in self.tokenizer.convert_ids_to_tokens(
+                        query_feat["input_ids"][ment_start:ment_end + 1])
+                ]).lower()
                 if query_lower != token_query_lower:
                     print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
         else:
-            assert query_feat["input_ids"][
-                   query_feat["query_ment_start"]:query_feat["query_ment_end"] + 1] == self.tokenizer.convert_tokens_to_ids(
-                self.tokenizer.tokenize(" ".join(query_mention)))
             # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
             if query_mention:
                 query_lower = "".join(query_mention)
                 token_query_lower = "".join([
-                    s.strip('Ġ') for s in query_tokenized[query_feat["query_ment_start"]:query_feat["query_ment_end"] + 1]
-                ]).lower()
+                    s.strip('Ġ') for s in self.tokenizer.convert_ids_to_tokens(
+                        query_feat["input_ids"][ment_start:ment_end + 1])
+                ])
 
                 if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower})")
+                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
 
     @staticmethod
     def add_query_bound(query_ctx: List[str], start_index: int, end_index: int):
