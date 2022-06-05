@@ -165,8 +165,8 @@ class WECSquadProcessor(SquadProcessor):
                 question_sow = _get_start_of_word_QA(encoded_words)
 
                 if self.add_special_tokens:
-                    query_ment_start = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[0])
-                    query_ment_end = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[1])
+                    query_ment_start = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[0]) + 1
+                    query_ment_end = tokenized_q.data['input_ids'].index(self.tokenizer.additional_special_tokens_ids[1]) - 1
                 else:
                     # Calculate start and end relative to document
                     ment_end_c = start_ment_c + ment_len_c - 1
@@ -488,8 +488,8 @@ class WECSquadProcessor(SquadProcessor):
         ment_end = query_feat["query_ment_end"]
         if self.add_special_tokens:
             if QUERY_SPAN_START in self.tokenizer.additional_special_tokens and QUERY_SPAN_END in self.tokenizer.additional_special_tokens:
-                if query_feat["input_ids"][ment_start] != self.tokenizer.additional_special_tokens_ids[0] or \
-                        query_feat["input_ids"][ment_end] != self.tokenizer.additional_special_tokens_ids[1]:
+                if query_feat["input_ids"][ment_start - 1] != self.tokenizer.additional_special_tokens_ids[0] or \
+                        query_feat["input_ids"][ment_end + 1] != self.tokenizer.additional_special_tokens_ids[1]:
                     raise AssertionError(f"Query ID={query_id} start/end tokens")
             else:
                 raise AssertionError("add_spatial_token=True and no spatial tokens in added_tokens_encoder list!")
@@ -499,7 +499,7 @@ class WECSquadProcessor(SquadProcessor):
                 token_query_lower = "".join([
                     s.strip('Ġ') for s in self.tokenizer.convert_ids_to_tokens(
                         query_feat["input_ids"][ment_start:ment_end + 1])
-                ]).lower()
+                ])
                 if query_lower != token_query_lower:
                     print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
         else:

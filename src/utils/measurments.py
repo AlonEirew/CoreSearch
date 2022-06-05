@@ -46,7 +46,7 @@ def precision(query_predictions: List[Passage], query_golds: List[str], till_idx
 def precision_squad(query_predictions: List[Passage], query_golds: List[str], till_idx: int):
     true_pos = 0
     for index in range(till_idx):
-        if query_predictions[index].id in query_golds and is_span_overlap(query_predictions[index]):
+        if query_predictions[index].id in query_golds: #and is_span_overlap(query_predictions[index]):
             true_pos += 1
 
     return true_pos / till_idx
@@ -60,12 +60,12 @@ def mean_reciprocal_rank(predictions: List[QueryResult], golds: Dict[str, List[s
         for index in range(max_topk):
             pred_query_result = query_res.results[index]
             if pred_query_result.id in golds[query.id]:
-                if method == 'retriever':
-                    mrr_topk.append(1 / (index + 1))
-                    break
-                elif is_span_overlap(pred_query_result):
-                    mrr_topk.append(1 / (index + 1))
-                    break
+                # if method == 'retriever':
+                mrr_topk.append(1 / (index + 1))
+                break
+                # elif is_span_overlap(pred_query_result):
+                #     mrr_topk.append(1 / (index + 1))
+                #     break
 
     return sum(mrr_topk) / len(predictions)
 

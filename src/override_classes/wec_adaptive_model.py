@@ -43,9 +43,11 @@ class WECAdaptiveModel(AdaptiveModel):
         # Run forward pass of language model
         all_logits = []
         start_passage_idx = kwargs['seq_2_start_t'][0]
-        query_inputs = kwargs['input_ids'][:, :start_passage_idx]
-        query_padding_mask = kwargs['padding_mask'][:, :start_passage_idx]
-        query_segment_ids = kwargs['segment_ids'][:, :start_passage_idx]
+        # -1 as need to remove 1 </sep> token -- Hack (this will work for roberta but not BERT)
+        # need to adjust to support any model
+        query_inputs = kwargs['input_ids'][:, :start_passage_idx - 1]
+        query_padding_mask = kwargs['padding_mask'][:, :start_passage_idx - 1]
+        query_segment_ids = kwargs['segment_ids'][:, :start_passage_idx - 1]
 
         cls_token = kwargs['input_ids'][:, 0].unsqueeze(1)
         padd_mask = torch.ones(cls_token.size(), dtype=torch.int64, device=kwargs['padding_mask'].device)
