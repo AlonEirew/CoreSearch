@@ -29,19 +29,20 @@ def main():
     # resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
     # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
     # magnitude = all/cluster meaning if to use all queries (all) or just single clusters query (cluster)
-    experiment_name = "test_pairwise_corefqa_nosep_toks1"
+    experiment_name = "test_pairwise_dpr_selection2"
     magnitude = "all"
 
     replace_prediction_heads = True
-    query_method = "full_ctx"
+    prediction_head_str = "dpr"
+    query_method = "with_bounds"
 
     infer_tokenizer_classes = True
     ret_top_k = 500
     read_top_k = 50
     max_seq_len_query = 64
     max_seq_len_passage = 180
-    batch_size = 16
-    batch_size_qa = 12
+    batch_size = 24
+    batch_size_qa = 24
     num_processes = 1
 
     index_file = "file_indexes/" + SPLIT + "_Baseline4_spanbert_2it_top500.json"
@@ -50,7 +51,7 @@ def main():
     passage_encode = checkpoint_dir + "Baseline4_spanbert_2it/passage_encoder"
 
     # reader_model_file = "deepset/roberta-base-squad2"
-    reader_model_file = checkpoint_dir + "Reader-roberta_base_notoks_corefqa/1"
+    reader_model_file = checkpoint_dir + "Reader-roberta_base_dpr_selected/2"
 
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
     queries_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
@@ -101,7 +102,8 @@ def main():
                                                num_processes=num_processes,
                                                add_special_tokens=add_special_tokens,
                                                batch_size=batch_size_qa,
-                                               replace_prediction_heads=replace_prediction_heads),
+                                               replace_prediction_heads=replace_prediction_heads,
+                                               prediction_head_str=prediction_head_str),
                               ret_topk=ret_top_k,
                               read_topk=read_top_k)
     elif query_method == "bm25":

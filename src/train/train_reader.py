@@ -8,18 +8,18 @@ def main():
                 facebook/dpr-reader-single-nq-base,
                 facebook/dpr-reader-multiset-base,
                 roberta-base
-    replace_prediction_heads: Can be one of {corefqa, kenton, dpr}
+    replace_prediction_heads: Can be one of {corefqa, kenton, dpr (equivalent to replace_prediction_heads = False)}
     """
     qa_model = "roberta-base"
-    add_special_tokens = False
+    add_special_tokens = True
 
     replace_prediction_heads = True
-    prediction_head_str = "corefqa"
+    prediction_head_str = "dpr"
 
     num_processes = 10
-    evaluate_every = 2300
-    n_epochs = 2
-    batch_size = 12
+    evaluate_every = 750
+    n_epochs = 5
+    batch_size = 24
 
     reader = WECReader(model_name_or_path=qa_model, use_gpu=True,
                        num_processes=num_processes, add_special_tokens=add_special_tokens,
@@ -33,7 +33,7 @@ def main():
         n_epochs=n_epochs,
         batch_size=batch_size,
         num_processes=num_processes,
-        save_dir="data/checkpoints/Reader-roberta_base_notoks_corefqa"
+        save_dir="data/checkpoints/Reader-roberta_base_dpr_selected"
     )
 
     print("Done!")
