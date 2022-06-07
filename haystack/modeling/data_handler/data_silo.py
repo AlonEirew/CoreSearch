@@ -192,12 +192,17 @@ class DataSilo:
             desc = f"Preprocessing Dataset"
             if filename:
                 desc += f" {filename}"
-            # with tqdm(total=len(dicts), unit=' Dicts', desc=desc) as pbar:
-            dataset, tensor_names, problematic_samples = results
-            datasets.append(dataset)
-            # update progress bar (last step can have less dicts than actual chunk_size)
-            # pbar.update(min(multiprocessing_chunk_size, pbar.total - pbar.n))
-            problematic_ids_all.update(problematic_samples)
+            if type(self.processor) is WECSquadProcessor:
+                dataset, tensor_names, problematic_samples = results
+                datasets.append(dataset)
+                problematic_ids_all.update(problematic_samples)
+            else:
+                with tqdm(total=len(dicts), unit=' Dicts', desc=desc) as pbar:
+                    for dataset, tensor_names, problematic_samples in results:
+                        datasets.append(dataset)
+                        # update progress bar (last step can have less dicts than actual chunk_size)
+                        pbar.update(min(multiprocessing_chunk_size, pbar.total - pbar.n))
+                        problematic_ids_all.update(problematic_samples)
 
             self.processor.log_problematic(problematic_ids_all)
             # _dataset_from_chunk can return a None in cases where downsampling has occurred
@@ -357,8 +362,10 @@ class DataSilo:
             if self.distributed:
                 sampler_train = DistributedSampler(self.data["train"])
             else:
-                # sampler_train = RandomSampler(self.data["train"])
-                sampler_train = SequentialSampler(self.data["train"])
+                if type(self.processor) is WECSquadProcessor:
+                    sampler_train = SequentialSampler(self.data["train"])
+                else:
+                    sampler_train = RandomSampler(self.data["train"])
 
             data_loader_train = NamedDataLoader(
                 dataset=self.data["train"],

@@ -7,9 +7,9 @@ from haystack.modeling.data_handler.processor import InferenceProcessor, Process
 from haystack.modeling.infer import QAInferencer
 from haystack.modeling.model.adaptive_model import AdaptiveModel
 from haystack.modeling.utils import initialize_device_settings
+from src.override_classes.coref_adaptive_model import CorefAdaptiveModel
 from src.override_classes.dpr_adaptive_model import DPRAdaptiveModel
 from src.override_classes.reader.processors.wec_squad_processor import WECSquadProcessor
-from src.override_classes.wec_adaptive_model import CorefAdaptiveModel
 from src.override_classes.wec_converter import WECConverter
 
 
