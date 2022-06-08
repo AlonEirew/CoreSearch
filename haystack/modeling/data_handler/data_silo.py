@@ -19,6 +19,7 @@ from torch.utils.data.sampler import RandomSampler, SequentialSampler
 
 from typing import TYPE_CHECKING
 
+from src.override_classes.reader.processors.corefqa_squad_processor import CorefQASquadProcessor
 from src.override_classes.reader.processors.wec_squad_processor import WECSquadProcessor
 
 if TYPE_CHECKING:
@@ -177,7 +178,7 @@ class DataSilo:
                 # temporary fix
                 results = map(partial(self._dataset_from_chunk, processor=self.processor), grouper(dicts, 1))  # type: ignore
 
-            if type(self.processor) is WECSquadProcessor:
+            if type(self.processor) in [WECSquadProcessor, CorefQASquadProcessor]:
                 merged_baskets = list()
                 merged_indices = list()
                 for baskets, return_baskets, indices in results:
@@ -192,7 +193,7 @@ class DataSilo:
             desc = f"Preprocessing Dataset"
             if filename:
                 desc += f" {filename}"
-            if type(self.processor) is WECSquadProcessor:
+            if type(self.processor) in [WECSquadProcessor, CorefQASquadProcessor]:
                 dataset, tensor_names, problematic_samples = results
                 datasets.append(dataset)
                 problematic_ids_all.update(problematic_samples)

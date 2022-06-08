@@ -29,11 +29,11 @@ def main():
     # resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
     # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
     # magnitude = all/cluster meaning if to use all queries (all) or just single clusters query (cluster)
-    experiment_name = "test_pairwise_dpr_selection2"
+    experiment_name = "test_pairwise_kenton2"
     magnitude = "all"
 
     replace_prediction_heads = True
-    prediction_head_str = "dpr"
+    prediction_head_str = "kenton"
     query_method = "with_bounds"
 
     infer_tokenizer_classes = True
@@ -51,7 +51,7 @@ def main():
     passage_encode = checkpoint_dir + "Baseline4_spanbert_2it/passage_encoder"
 
     # reader_model_file = "deepset/roberta-base-squad2"
-    reader_model_file = checkpoint_dir + "Reader-roberta_base_dpr_selected/2"
+    reader_model_file = checkpoint_dir + "Reader-roberta_base_kenton/2"
 
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
     queries_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"

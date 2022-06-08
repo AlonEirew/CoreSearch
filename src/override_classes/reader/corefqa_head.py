@@ -131,7 +131,7 @@ class CorefQuestionAnsweringHead(PredictionHead):
 
         return head
 
-    def forward(self, query_embed, passage_embed, embedding: torch.Tensor,
+    def forward(self, query_embed, passage_embed, alt_embedding: torch.Tensor, embedding: torch.Tensor,
                 query_ment_start: torch.Tensor, query_ment_end: torch.Tensor, **kwargs):
         """
         One forward pass through the prediction head model, starting with language model output on token level.
@@ -183,6 +183,12 @@ class CorefQuestionAnsweringHead(PredictionHead):
         comb_pass_start_embed_ext = comb_pass_embed.unsqueeze(2).expand(-1, -1, comb_pass_embed.size(1), -1)
         comb_pass_start_end_embed_concat = torch.cat((comb_pass_start_embed_ext, comb_pass_start_embed_ext.transpose(1, 2)), dim=3)
         pass_pairwise_score = self.pairwize(comb_pass_start_end_embed_concat)
+
+        # Calculate the alternation of query/passage
+        alt_comb_query_start_embed = alt_embedding[indicies, query_ment_start]
+        comb_query_end_embed = embedding[indicies, query_ment_end]
+        comb_query_start_end_embed = torch.cat((comb_query_start_embed, comb_query_end_embed), dim=1)
+        query_pairwise_score = self.pairwize(comb_query_start_end_embed)
 
         query_score = query_score.unsqueeze(-1).expand(-1, passage_score.size(1)).unsqueeze(-1).expand(-1, -1, passage_score.size(2))
         query_passage_score = passage_score + query_score

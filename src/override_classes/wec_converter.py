@@ -1,14 +1,12 @@
 import logging
 from typing import Union
 
-from haystack.modeling.model import adaptive_model as am
+from src.override_classes.reader.kenton_head import KentonQuestionAnsweringHead
+
 from haystack.modeling.model.language_model import LanguageModel
-from haystack.modeling.model.prediction_head import QuestionAnsweringHead
+from src.override_classes.coref_adaptive_model import CorefAdaptiveModel
 from src.override_classes.dpr_adaptive_model import DPRAdaptiveModel
 from src.override_classes.reader.corefqa_head import CorefQuestionAnsweringHead
-from src.override_classes.reader.kenton_head import KentonQuestionAnsweringHead
-from src.override_classes.wec_adaptive_model import CorefAdaptiveModel
-
 from src.override_classes.reader.dpr_head import DPRQuestionAnsweringHead
 
 logger = logging.getLogger(__name__)
@@ -55,12 +53,12 @@ class WECConverter:
                 ph = CorefQuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
                 adaptive_model = CorefAdaptiveModel(language_model=lm, prediction_heads=[ph], embeds_dropout_prob=0.1,
                                                     lm_output_types="per_token", device=device)
-            elif prediction_head_str == "kenton":
-                ph = KentonQuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
-                adaptive_model = CorefAdaptiveModel(language_model=lm, prediction_heads=[ph], embeds_dropout_prob=0.1,
-                                                    lm_output_types="per_token", device=device)
             elif prediction_head_str == "dpr":
                 ph = DPRQuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
+                adaptive_model = DPRAdaptiveModel(language_model=lm, prediction_heads=[ph], embeds_dropout_prob=0.1,
+                                                  lm_output_types="per_token", device=device)
+            elif prediction_head_str == "kenton":
+                ph = KentonQuestionAnsweringHead.load(model_name_or_path, revision=revision, **kwargs)
                 adaptive_model = DPRAdaptiveModel(language_model=lm, prediction_heads=[ph], embeds_dropout_prob=0.1,
                                                   lm_output_types="per_token", device=device)
             else:

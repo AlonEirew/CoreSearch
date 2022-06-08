@@ -20,23 +20,23 @@ def train():
                            Then this will indicate to the encoder to extract the QUERY_START/QUERY_END tokens
     """
     parameters = dict()
-    parameters["note"] = "Baseline3-Train facebook multiset model, query surrounding context *with* <span> tokens"
+    parameters["note"] = "Retriever-Train SpanBERT model, query surrounding context *with* <span> tokens"
 
     parameters["doc_dir"] = "data/resources/dpr/context/"
     parameters["train_filename"] = "Train.json"
     parameters["dev_filename"] = "Dev.json"
 
-    parameters["model_str"] = "Baseline3_facebook_multiset"
+    parameters["model_str"] = "Retriever_SpanBERT"
 
     parameters["query_style"] = "context"
-    parameters["n_epochs"] = 2
+    parameters["n_epochs"] = 5
     parameters["max_seq_len_query"] = 64
     parameters["max_seq_len_passage"] = 180
-    parameters["batch_size"] = 16
+    parameters["batch_size"] = 64
 
     parameters["infer_tokenizer_classes"] = True
-    parameters["query_model"] = "facebook/dpr-question_encoder-multiset-base"
-    parameters["passage_model"] = "facebook/dpr-ctx_encoder-multiset-base"
+    parameters["query_model"] = "SpanBERT/spanbert-base-cased"
+    parameters["passage_model"] = "SpanBERT/spanbert-base-cased"
 
     parameters["out_model_name"] = parameters["model_str"] + "_" + str(parameters["n_epochs"]) + "it"
 

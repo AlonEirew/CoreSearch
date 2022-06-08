@@ -1,13 +1,16 @@
+import math
 from typing import List, Optional
 
 import torch
+from torch import nn
+
 from haystack.modeling.model.predictions import QACandidate
 from torch.nn import CrossEntropyLoss
 
 from haystack.modeling.model.prediction_head import QuestionAnsweringHead, FeedForwardBlock
 
 
-class DPRQuestionAnsweringHead(QuestionAnsweringHead):
+class KentonQuestionAnsweringHead(QuestionAnsweringHead):
     def __init__(self, layer_dims: List[int] = [768, 2],
                  task_name: str = "question_answering",
                  no_ans_boost: float = 0.0,
@@ -18,22 +21,63 @@ class DPRQuestionAnsweringHead(QuestionAnsweringHead):
                  temperature_for_confidence: float = 1.0,
                  use_confidence_scores_for_ranking: bool = False,
                  **kwargs):
-        super(DPRQuestionAnsweringHead, self).__init__(layer_dims,
-                                                       task_name,
-                                                       no_ans_boost,
-                                                       context_window_size,
-                                                       n_best,
-                                                       n_best_per_sample,
-                                                       duplicate_filtering,
-                                                       temperature_for_confidence,
-                                                       use_confidence_scores_for_ranking,
-                                                       **kwargs)
-        self.pass_selection = FeedForwardBlock([self.layer_dims[0], 1])
+        super(KentonQuestionAnsweringHead, self).__init__(layer_dims,
+                                                          task_name,
+                                                          no_ans_boost,
+                                                          context_window_size,
+                                                          n_best,
+                                                          n_best_per_sample,
+                                                          duplicate_filtering,
+                                                          temperature_for_confidence,
+                                                          use_confidence_scores_for_ranking,
+                                                          **kwargs)
 
-    def forward(self, X: torch.Tensor, **kwargs):
-        start_end_logits = self.feed_forward(X)
-        cls_tokens = X[:, 0, :]
-        passage_logits = self.pass_selection(cls_tokens)
+        self.mention_score = self.get_sequential(2 * layer_dims[0], 128, 1)
+        self.pairwise_score = self.get_sequential(6 * layer_dims[0], 128, 1)
+
+    @staticmethod
+    def get_sequential(ind, hid, out):
+        return nn.Sequential(
+            nn.Linear(ind, hid),
+            nn.ReLU(),
+            nn.Linear(hid, out)
+        )
+
+    def forward(self, embedding: torch.Tensor, **kwargs):
+        indicies = torch.arange(embedding.size(0))
+        start_passage_idx = kwargs['seq_2_start_t'][0]
+        query_ment_start = kwargs['query_ment_start'][0]
+        query_ment_end = kwargs['query_ment_end'][0]
+
+        # Query score, this time from the concat embedding (query, passage)
+        query_start_embed = embedding[indicies, query_ment_start]
+        query_end_embed = embedding[indicies, query_ment_end]
+        g_query = torch.cat((query_start_embed, query_end_embed), dim=1)
+        query_score = self.mention_score(g_query)
+
+        # logits is of shape [batch_size, max_seq_len, 2]. Like above, the final dimension corresponds to [start, end]
+        start_end_logits = self.feed_forward(embedding)
+        start_logits, end_logits = start_end_logits.split(1, dim=-1)
+
+        start_logits_clone = torch.clone(start_logits).squeeze(-1)
+        end_logits_clone = torch.clone(end_logits).squeeze(-1)
+        # remove query logits and leaving the [CLS] within the probability destirbution
+        start_logits_clone[indicies, 1:start_passage_idx] = -math.inf
+        end_logits_clone[indicies, 1:start_passage_idx] = -math.inf
+
+        _, pass_start_idxs = torch.max(start_logits_clone, dim=1)
+        _, pass_end_idxs = torch.max(end_logits_clone, dim=1)
+        pass_start_embed = embedding[indicies, pass_start_idxs]
+        pass_end_embed = embedding[indicies, pass_end_idxs]
+        g_pass = torch.cat((pass_start_embed, pass_end_embed), dim=1)
+        passage_score = self.mention_score(g_pass)
+
+        g_query_pass = g_query * g_pass
+        pairwise_feat = torch.cat((g_query, g_pass, g_query_pass), dim=-1)
+        antecedent_score = self.pairwise_score(pairwise_feat)
+        passage_logits = query_score + passage_score + antecedent_score
+
+        # passage_logits = self.pass_selection(scores)
 
         return start_end_logits, passage_logits
 

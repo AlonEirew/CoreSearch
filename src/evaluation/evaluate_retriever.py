@@ -21,7 +21,7 @@ from src.utils import dpr_utils, io_utils, data_utils
 from src.utils.data_utils import generate_index_batches
 from src.utils.io_utils import save_query_results
 
-SPLIT = "Train"
+SPLIT = "Dev"
 
 
 def main():
@@ -29,9 +29,9 @@ def main():
     examples_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
     passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
-    model_file = "data/checkpoints/Baseline4_spanbert_2it"
+    model_file = "data/checkpoints/Retriever_SpanBERT_5it/2"
 
-    index_name = "file_indexes/" + SPLIT + "_Baseline4_spanbert_2it_top500_results.txt"
+    index_name = "file_indexes/" + SPLIT + "_Retriever_spanbert_5it2_top500"
     out_index_file = index_name + ".json"
     out_result_file = index_name + "_results.txt"
 

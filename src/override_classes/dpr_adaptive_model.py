@@ -70,7 +70,7 @@ class DPRAdaptiveModel(AdaptiveModel):
                     )
 
                 # Do the actual forward pass of a single head
-                all_logits.append(head(output))
+                all_logits.append(head(output, **kwargs))
         else:
             # just return LM output (e.g. useful for extracting embeddings at inference time)
             all_logits.append((sequence_output, pooled_output))

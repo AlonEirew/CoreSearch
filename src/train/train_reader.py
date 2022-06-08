@@ -14,7 +14,7 @@ def main():
     add_special_tokens = True
 
     replace_prediction_heads = True
-    prediction_head_str = "dpr"
+    prediction_head_str = "kenton"
 
     num_processes = 10
     evaluate_every = 750
@@ -33,7 +33,7 @@ def main():
         n_epochs=n_epochs,
         batch_size=batch_size,
         num_processes=num_processes,
-        save_dir="data/checkpoints/Reader-roberta_base_dpr_selected"
+        save_dir="data/checkpoints/Reader-roberta_base_kenton"
     )
 
     print("Done!")

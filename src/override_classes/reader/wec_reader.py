@@ -10,7 +10,6 @@ from haystack.modeling.training import Trainer
 from haystack.modeling.utils import initialize_device_settings, set_all_seeds
 from haystack.nodes import FARMReader, BaseReader
 from haystack.schema import Document, MultiLabel
-from src.override_classes.reader.processors.wec_squad_processor import WECSquadProcessor
 
 from src.override_classes.reader.wec_qa_inferencer import WECQAInferencer
 from src.override_classes.retriever.wec_processor import QUERY_SPAN_START, QUERY_SPAN_END
@@ -174,23 +173,30 @@ class WECReader(FARMReader):
                 save_dir += "_tinybert_stage_1"
 
         # 1. Create a DataProcessor that handles all the conversion from raw text into a pytorch Dataset
-        label_list = ["start_token", "end_token"]
-        metric = "squad"
-        processor = WECSquadProcessor(
-            tokenizer=self.inferencer.processor.tokenizer,
-            max_seq_len=max_seq_len,
-            label_list=label_list,
-            metric=metric,
-            train_filename=train_filename,
-            dev_filename=dev_filename,
-            dev_split=dev_split,
-            test_filename=test_filename,
-            data_dir=Path(data_dir),
-            add_special_tokens=self.add_special_tokens
-        )
+        # label_list = ["start_token", "end_token"]
+        # metric = "squad"
+        # processor = WECSquadProcessor(
+        #     tokenizer=self.inferencer.processor.tokenizer,
+        #     max_seq_len=max_seq_len,
+        #     label_list=label_list,
+        #     metric=metric,
+        #     train_filename=train_filename,
+        #     dev_filename=dev_filename,
+        #     dev_split=dev_split,
+        #     test_filename=test_filename,
+        #     data_dir=Path(data_dir),
+        #     add_special_tokens=self.add_special_tokens
+        # )
         data_silo: DataSilo
 
-        data_silo = DataSilo(processor=processor, batch_size=batch_size, distributed=False, max_processes=num_processes, caching=caching, cache_path=cache_path)
+        self.inferencer.processor.data_dir = Path(data_dir)
+        self.inferencer.processor.train_filename = train_filename
+        self.inferencer.processor.dev_filename = dev_filename
+        self.inferencer.processor.dev_split = dev_split
+        self.inferencer.processor.test_filename = test_filename
+
+        data_silo = DataSilo(processor=self.inferencer.processor, batch_size=batch_size,
+                             distributed=False, max_processes=num_processes, caching=caching, cache_path=cache_path)
 
         # 3. Create an optimizer and pass the already initialized model
         model, optimizer, lr_schedule = initialize_optimizer(

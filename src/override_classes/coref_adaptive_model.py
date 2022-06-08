@@ -43,27 +43,55 @@ class CorefAdaptiveModel(AdaptiveModel):
         # Run forward pass of language model
         all_logits = []
         start_passage_idx = kwargs['seq_2_start_t'][0]
+        alt_start_passage_idx = kwargs['alt_seq_2_start_t'][0]
         # -1 as need to remove 1 </sep> token -- Hack (this will work for roberta but not BERT)
         # need to adjust to support any model
         query_inputs = kwargs['input_ids'][:, :start_passage_idx - 1]
         query_padding_mask = kwargs['padding_mask'][:, :start_passage_idx - 1]
         query_segment_ids = kwargs['segment_ids'][:, :start_passage_idx - 1]
 
+        # Passage inputs without CLS token
+        pass_inputs = kwargs['alt_input_ids'][:, :start_passage_idx - 1]
+        pass_padding_mask = kwargs['alt_padding_mask'][:, :start_passage_idx - 1]
+        pass_segment_ids = kwargs['alt_segment_ids'][:, :start_passage_idx - 1]
+
+        # Extract CLS and [SEP] and append to query and passage
         cls_token = kwargs['input_ids'][:, 0].unsqueeze(1)
         padd_mask = torch.ones(cls_token.size(), dtype=torch.int64, device=kwargs['padding_mask'].device)
         zeros = torch.zeros(cls_token.size(), dtype=torch.int64, device=kwargs['segment_ids'].device)
-        pass_inputs = torch.cat((cls_token, kwargs['input_ids'][:, start_passage_idx:]), dim=1)
-        pass_padding_mask = torch.cat((padd_mask, kwargs['padding_mask'][:, start_passage_idx:]), dim=1)
-        pass_segment_ids = torch.cat((zeros, kwargs['segment_ids'][:, start_passage_idx:]), dim=1)
+        sep_token = kwargs['input_ids'][:, -1].unsqueeze(1)
+        # To Passage
+        pass_inputs = torch.cat((cls_token, pass_inputs), dim=1)
+        pass_padding_mask = torch.cat((padd_mask, pass_padding_mask), dim=1)
+        pass_segment_ids = torch.cat((zeros, pass_segment_ids), dim=1)
+        # To Query
+        query_inputs = torch.cat((cls_token, query_inputs), dim=1)
+        query_padding_mask = torch.cat((padd_mask, query_padding_mask), dim=1)
+        query_segment_ids = torch.cat((zeros, query_segment_ids), dim=1)
+
+        # Alternate query/passage (CLS + Passage_size
+        kwargs["start_query_idx"] = 1 + pass_inputs.size(1)
+        alt_input = torch.cat((cls_token, pass_inputs, query_inputs), dim=1)
+        alt_padding = torch.cat((padd_mask, pass_padding_mask, query_padding_mask), dim=1)
+        alt_segment = torch.cat((zeros, pass_segment_ids, query_segment_ids), dim=1)
 
         output_query = self.language_model.forward(input_ids=query_inputs, padding_mask=query_padding_mask,
                                                    segment_ids=query_segment_ids, output_hidden_states=output_hidden_states,
                                                    output_attentions=output_attentions)
+
         output_passage = self.language_model.forward(input_ids=pass_inputs, padding_mask=pass_padding_mask,
                                                      segment_ids=pass_segment_ids,
                                                      output_hidden_states=output_hidden_states,
                                                      output_attentions=output_attentions)
-        output_tuple = self.language_model.forward(**kwargs, output_hidden_states=output_hidden_states, output_attentions=output_attentions)
+
+        output_tuple = self.language_model.forward(**kwargs, output_hidden_states=output_hidden_states,
+                                                   output_attentions=output_attentions)
+
+        alt_output_tuple = self.language_model.forward(input_ids=alt_input, padding_mask=alt_padding,
+                                                       segment_ids=alt_segment,
+                                                       output_hidden_states=output_hidden_states,
+                                                       output_attentions=output_attentions)
+
         if output_hidden_states:
             if output_attentions:
                 sequence_output, pooled_output, hidden_states, attentions = output_tuple
@@ -74,6 +102,7 @@ class CorefAdaptiveModel(AdaptiveModel):
                 sequence_output, pooled_output, attentions = output_tuple
             else:
                 sequence_output, pooled_output = output_tuple
+                alt_output, alt_pooled_out = alt_output_tuple
                 query_output, query_pooled_out = output_query
                 passage_output, passage_pooled_out = output_passage
         # Run forward pass of (multiple) prediction heads using the output from above
@@ -82,6 +111,7 @@ class CorefAdaptiveModel(AdaptiveModel):
                 # Choose relevant vectors from LM as output and perform dropout
                 if lm_out == "per_token":
                     output = self.dropout(sequence_output)
+                    alt_output = self.dropout(alt_output)
                     query_output = self.dropout(query_output)
                     passage_output = self.dropout(passage_output)
                 elif lm_out == "per_sequence" or lm_out == "per_sequence_continuous":
@@ -96,7 +126,7 @@ class CorefAdaptiveModel(AdaptiveModel):
                     )
 
                 # Do the actual forward pass of a single head
-                all_logits.append(head(query_output, passage_output, output, **kwargs))
+                all_logits.append(head(query_output, passage_output, alt_output, output, **kwargs))
                 torch.cuda.empty_cache()
         else:
             # just return LM output (e.g. useful for extracting embeddings at inference time)

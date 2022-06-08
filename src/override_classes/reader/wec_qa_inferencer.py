@@ -9,6 +9,7 @@ from haystack.modeling.model.adaptive_model import AdaptiveModel
 from haystack.modeling.utils import initialize_device_settings
 from src.override_classes.coref_adaptive_model import CorefAdaptiveModel
 from src.override_classes.dpr_adaptive_model import DPRAdaptiveModel
+from src.override_classes.reader.processors.corefqa_squad_processor import CorefQASquadProcessor
 from src.override_classes.reader.processors.wec_squad_processor import WECSquadProcessor
 from src.override_classes.wec_converter import WECConverter
 
@@ -76,11 +77,14 @@ class WECQAInferencer(QAInferencer):
 
         name = os.path.basename(model_name_or_path)
 
+        prediction_head_str = None
+        if "prediction_head_str" in kwargs:
+            prediction_head_str = kwargs["prediction_head_str"]
+
         # a) either from local dir
         if os.path.exists(model_name_or_path):
-            if "prediction_head_str" in kwargs:
-                prediction_head_str = kwargs["prediction_head_str"]
-                if prediction_head_str == "dpr":
+            if prediction_head_str:
+                if prediction_head_str in ["dpr", "kenton"]:
                     model = DPRAdaptiveModel.load(load_dir=model_name_or_path, device=devices[0], strict=strict,
                                                   replace_prediction_heads=replace_prediction_heads)
                 elif prediction_head_str == "corefqa":
@@ -118,16 +122,29 @@ class WECQAInferencer(QAInferencer):
                                                                 use_auth_token=use_auth_token,
                                                                 **kwargs)
 
-            processor = WECSquadProcessor.convert_from_transformers(model_name_or_path,
-                                                                    revision=revision,
-                                                                    task_type=task_type,
-                                                                    max_seq_len=max_seq_len,
-                                                                    doc_stride=doc_stride,
-                                                                    tokenizer_class=tokenizer_class,
-                                                                    tokenizer_args=tokenizer_args,
-                                                                    use_fast=use_fast,
-                                                                    add_special_tokens=add_special_tokens,
-                                                                    **kwargs)
+            if prediction_head_str:
+                if prediction_head_str in ["dpr", "kenton"]:
+                    processor = WECSquadProcessor.convert_from_transformers(model_name_or_path,
+                                                                            revision=revision,
+                                                                            task_type=task_type,
+                                                                            max_seq_len=max_seq_len,
+                                                                            doc_stride=doc_stride,
+                                                                            tokenizer_class=tokenizer_class,
+                                                                            tokenizer_args=tokenizer_args,
+                                                                            use_fast=use_fast,
+                                                                            add_special_tokens=add_special_tokens,
+                                                                            **kwargs)
+                elif prediction_head_str == "corefqa":
+                    processor = CorefQASquadProcessor.convert_from_transformers(model_name_or_path,
+                                                                                revision=revision,
+                                                                                task_type=task_type,
+                                                                                max_seq_len=max_seq_len,
+                                                                                doc_stride=doc_stride,
+                                                                                tokenizer_class=tokenizer_class,
+                                                                                tokenizer_args=tokenizer_args,
+                                                                                use_fast=use_fast,
+                                                                                add_special_tokens=add_special_tokens,
+                                                                                **kwargs)
 
         # override processor attributes loaded from config or HF with inferencer params
         processor.max_seq_len = max_seq_len
