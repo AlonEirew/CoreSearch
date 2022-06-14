@@ -6,6 +6,6 @@ event_search.egg-info
 **/__pycache__/
 file_indexes
 results/Train_spanbert_hidden_cls_spatial_ctx_2it_top500.json
-**/bkp/*
+file_indexes/bkp_v1/*
 **/bkp_old/*
 old_code

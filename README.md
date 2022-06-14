@@ -23,7 +23,21 @@ Options:
     --index=<IndexName>         The index name to create in ElasticSearch
 ```
 
-### faiss_index.py
+### Running End-To-End
+1) Generate DPR Files using script:
+   `#>scripts/to_dpr_format.py`
+2) Run **retriever** training:
+   `#>src/train/train_retriever.py`
+3) Run Evaluation and Index script on DEV to generate results and passage index:
+   `#>src/evaluation/evaluate_retriever.py`
+4) Take the best model and generate TRAIN and TEST index
+5) Generate Squad files using script:
+   `#>scripts/to_squad_format.py`
+6) Run **reader** training
+   `#>src/train/train_reader.py`
+7) Run full pipeline on DEV set of retriever/reader
+   `#>src/pipeline/run_haystack_pipeline.py`
+8) Run full pipeline with best model on TEST set
 
 ### training env params
 CUDA_VISIBLE_DEVICES=0,1 TOKENIZERS_PARALLELISM=true python src/index/faiss_index.py

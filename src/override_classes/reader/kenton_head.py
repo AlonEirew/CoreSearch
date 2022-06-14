@@ -59,14 +59,14 @@ class KentonQuestionAnsweringHead(QuestionAnsweringHead):
         start_end_logits = self.feed_forward(embedding)
         start_logits, end_logits = start_end_logits.split(1, dim=-1)
 
-        start_logits_clone = torch.clone(start_logits).squeeze(-1)
-        end_logits_clone = torch.clone(end_logits).squeeze(-1)
+        # start_logits_clone = torch.clone(start_logits).squeeze(-1)
+        # end_logits_clone = torch.clone(end_logits).squeeze(-1)
         # remove query logits and leaving the [CLS] within the probability destirbution
-        start_logits_clone[indicies, 1:start_passage_idx] = -math.inf
-        end_logits_clone[indicies, 1:start_passage_idx] = -math.inf
+        # start_logits_clone[indicies, 1:start_passage_idx] = -math.inf
+        # end_logits_clone[indicies, 1:start_passage_idx] = -math.inf
 
-        _, pass_start_idxs = torch.max(start_logits_clone, dim=1)
-        _, pass_end_idxs = torch.max(end_logits_clone, dim=1)
+        _, pass_start_idxs = torch.max(start_logits.squeeze(-1), dim=1)
+        _, pass_end_idxs = torch.max(end_logits.squeeze(-1), dim=1)
         pass_start_embed = embedding[indicies, pass_start_idxs]
         pass_end_embed = embedding[indicies, pass_end_idxs]
         g_pass = torch.cat((pass_start_embed, pass_end_embed), dim=1)

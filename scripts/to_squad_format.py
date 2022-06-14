@@ -6,7 +6,7 @@ from src.data_obj import TrainExample, Cluster, Passage
 from src.utils import io_utils
 from src.utils.io_utils import load_json_file, read_passages_file
 
-SPLIT = "Dev"
+SPLIT = "Train"
 
 
 def main():
@@ -16,7 +16,7 @@ def main():
     passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
     passage_dict: Dict[str, Passage] = {obj.id: obj for obj in read_passages_file(passages_file)}
 
-    retriver_file = "file_indexes/" + SPLIT + "_Baseline4_spanbert_2it_top500.json"
+    retriver_file = "file_indexes/" + SPLIT + "_Retriever_spanbert_5it1_top500.json"
     retriever_results = load_json_file(retriver_file)
 
     assert train_queries
@@ -28,7 +28,7 @@ def main():
     if query_style == "bm25":
         squad_out = "data/resources/squad/bm25/" + SPLIT + "_squad_format.json"
     elif query_style == "context":
-        squad_out = "data/resources/squad/context/" + SPLIT + "_squad_format_1pos_24neg.json"
+        squad_out = "data/resources/squad/context/" + SPLIT + "_squad_format_1pos_23neg.json"
     else:
         raise ValueError(f"Not a supported query_style-{query_style}")
 

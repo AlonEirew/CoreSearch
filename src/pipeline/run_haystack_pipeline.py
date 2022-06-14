@@ -1,19 +1,17 @@
 import json
 import logging
-import os
 from typing import List, Dict
 
-os.environ["MILVUS2_ENABLED"] = "false"
+from haystack.modeling.utils import set_all_seeds
 
 from haystack.nodes import FARMReader
 
 from src.data_obj import Cluster, TrainExample, Passage, QueryResult
 from src.override_classes.reader.wec_reader import WECReader
-from src.override_classes.retriever.wec_bm25_processor import WECBM25Processor
 from src.override_classes.retriever.wec_context_processor import WECContextProcessor
 from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
-from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
-from src.utils import io_utils, measurments, data_utils, dpr_utils, measure_squad
+from src.pipeline.pipelines import QAPipeline
+from src.utils import io_utils, measurments, data_utils, measure_squad
 from src.utils.dpr_utils import create_file_doc_store
 from src.utils.measurments import precision, precision_squad
 
@@ -22,21 +20,28 @@ logger = logging.getLogger("run_haystack_pipeline")
 logger.setLevel(logging.DEBUG)
 
 
-SPLIT = "Dev"
+SPLIT = "Test"
 
 
 def main():
     # resource.setrlimit(resource.RLIMIT_CORE, (resource.RLIM_INFINITY, resource.RLIM_INFINITY))
-    # Query methods can be one of {bm25, ment_only, with_bounds, full_ctx}
+    # experiment can be one of {bm25, dpr, kenton}
+    experiment = "Kenton"
+    prediction_head_str = experiment.lower()
+    experiment_name = f"End_to_end_{experiment}_2"
     # magnitude = all/cluster meaning if to use all queries (all) or just single clusters query (cluster)
-    experiment_name = "test_pairwise_kenton2"
     magnitude = "all"
 
-    replace_prediction_heads = True
-    prediction_head_str = "kenton"
-    query_method = "with_bounds"
+    if experiment.lower() == "kenton":
+        add_special_tokens = True
+    elif experiment.lower() == "dpr":
+        add_special_tokens = False
+    # elif query_method == "bm25":
+    #     processor_type = WECBM25Processor
+    #     add_special_tokens = False
+    else:
+        raise ValueError(f"no such query method-{experiment}")
 
-    infer_tokenizer_classes = True
     ret_top_k = 500
     read_top_k = 50
     max_seq_len_query = 64
@@ -45,13 +50,13 @@ def main():
     batch_size_qa = 24
     num_processes = 1
 
-    index_file = "file_indexes/" + SPLIT + "_Baseline4_spanbert_2it_top500.json"
+    index_file = "file_indexes/" + SPLIT + "_Retriever_spanbert_5it1_top500.json"
     checkpoint_dir = "data/checkpoints/"
-    query_encode = checkpoint_dir + "Baseline4_spanbert_2it/query_encoder"
-    passage_encode = checkpoint_dir + "Baseline4_spanbert_2it/passage_encoder"
+    query_encode = checkpoint_dir + "Retriever_SpanBERT_5it/1/query_encoder"
+    passage_encode = checkpoint_dir + "Retriever_SpanBERT_5it/1/passage_encoder"
 
     # reader_model_file = "deepset/roberta-base-squad2"
-    reader_model_file = checkpoint_dir + "Reader-roberta_base_kenton/2"
+    reader_model_file = checkpoint_dir + f"Reader-RoBERTa_base_{experiment}/2"
 
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
     queries_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
@@ -61,17 +66,7 @@ def main():
 
     result_out_file = "results/" + SPLIT + "_" + experiment_name + ".txt"
 
-    if query_method == "full_ctx":
-        processor_type = WECContextProcessor
-        add_special_tokens = False
-    elif query_method == "with_bounds":
-        processor_type = WECContextProcessor
-        add_special_tokens = True
-    elif query_method == "bm25":
-        processor_type = WECBM25Processor
-        add_special_tokens = False
-    else:
-        raise ValueError(f"no such query method-{query_method}")
+    set_all_seeds(seed=42)
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
     query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)
@@ -79,34 +74,34 @@ def main():
     passage_dict = document_store.passages
     retriever = WECDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                          passage_embedding_model=passage_encode,
-                                         infer_tokenizer_classes=infer_tokenizer_classes,
+                                         infer_tokenizer_classes=True,
                                          max_seq_len_query=max_seq_len_query,
                                          max_seq_len_passage=max_seq_len_passage,
                                          batch_size=batch_size, use_gpu=True, embed_title=False,
-                                         use_fast_tokenizers=False, processor_type=processor_type,
+                                         use_fast_tokenizers=False, processor_type=WECContextProcessor,
                                          add_special_tokens=add_special_tokens)
 
     if not passage_dict:
         passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
         passage_dict: Dict[str, Passage] = {obj.id: obj for obj in passage_examples}
 
-    query_examples = generate_query_text(passage_dict, query_examples, query_method, magnitude)
+    query_examples = generate_query_text(passage_dict, query_examples, None, magnitude)
 
     logger.info("Faiss Document store and retriever objects created..")
     logger.info("Total indexed documents to be searched=" + str(document_store.get_document_count()))
 
-    if query_method == "full_ctx" or query_method == "with_bounds":
+    if experiment.lower() in ["dpr", "kenton"]:
         pipeline = QAPipeline(document_store=document_store,
                               retriever=retriever,
                               reader=WECReader(model_name_or_path=reader_model_file, use_gpu=True,
                                                num_processes=num_processes,
                                                add_special_tokens=add_special_tokens,
                                                batch_size=batch_size_qa,
-                                               replace_prediction_heads=replace_prediction_heads,
+                                               replace_prediction_heads=True,
                                                prediction_head_str=prediction_head_str),
                               ret_topk=ret_top_k,
                               read_topk=read_top_k)
-    elif query_method == "bm25":
+    elif experiment.lower() == "bm25":
         pipeline = QAPipeline(document_store=document_store,
                               retriever=retriever,
                               reader=FARMReader(model_name_or_path=reader_model_file, use_gpu=True,
@@ -114,7 +109,7 @@ def main():
                               ret_topk=ret_top_k,
                               read_topk=read_top_k)
     else:
-        raise ValueError(f"Not supported query_method-{query_method}")
+        raise ValueError(f"Experiment not supported!:{experiment}")
 
     logger.info("Running QA pipeline..")
     predict_and_eval(pipeline, golds, query_examples, "qa", result_out_file)
@@ -128,8 +123,7 @@ def predict_and_eval(pipeline, golds, query_examples, run_pipe_str, result_out_f
     print_results(predictions, golds_arranged, run_pipe_str, result_out_file)
 
 
-def generate_query_text(passage_dict: Dict[str, Passage], query_examples: List[TrainExample], query_method: str, magnitude="all"):
-    logger.info("Using query style-" + query_method)
+def generate_query_text(passage_dict: Dict[str, Passage], query_examples: List[TrainExample], query_method: str = None, magnitude="all"):
     used_clusters = set()
     ret_queries = list()
     for query in query_examples:
@@ -138,14 +132,16 @@ def generate_query_text(passage_dict: Dict[str, Passage], query_examples: List[T
 
         used_clusters.add(query.goldChain)
         ret_queries.append(query)
-        if query_method == "bm25":
-            query.context = query.bm25_query.split(" ")
-        elif query_method == "ment_only":
-            query.context = query.mention
-        elif query_method == "with_bounds":
-            pass
-        elif query_method == "full_ctx":
-            pass
+        if query_method:
+            logger.info("Using query style-" + query_method)
+            if query_method == "bm25":
+                query.context = query.bm25_query.split(" ")
+            elif query_method == "ment_only":
+                query.context = query.mention
+            elif query_method == "with_bounds":
+                pass
+            elif query_method == "full_ctx":
+                pass
 
         if passage_dict:
             for pass_id in query.positive_examples:
@@ -198,6 +194,8 @@ def print_measurements(predictions, golds_arranged, run_pipe_str=None):
         to_print.append(json.dumps(measure_squad.eval_qa(predictions)))
         to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(
             predictions=predictions, golds=golds_arranged, topk=10, method=run_pipe_str)))
+        to_print.append("mAP@5=" + str(measurments.mean_average_precision(
+            predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=5)))
         to_print.append("mAP@10=" + str(measurments.mean_average_precision(
             predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=10)))
         to_print.append("mAP@25=" + str(measurments.mean_average_precision(
@@ -208,6 +206,8 @@ def print_measurements(predictions, golds_arranged, run_pipe_str=None):
     precision_method = precision
     to_print.append("MRR@10=" + str(measurments.mean_reciprocal_rank(
         predictions=predictions, golds=golds_arranged, topk=10, method=run_pipe_str)))
+    to_print.append("mAP@5=" + str(measurments.mean_average_precision(
+        predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=5)))
     to_print.append("mAP@10=" + str(measurments.mean_average_precision(
         predictions=predictions, golds=golds_arranged, precision_method=precision_method, topk=10)))
     to_print.append("mAP@25=" + str(measurments.mean_average_precision(
