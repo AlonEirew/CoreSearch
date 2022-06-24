@@ -13,16 +13,23 @@ Options:
 from typing import List
 
 from docopt import docopt
+
 from haystack import Document
 from haystack.nodes import ElasticsearchRetriever
-
 from src.index.wec_elasticsearch import WECElasticsearchDocumentStore
+from src.override_classes.retriever.wec_sparse import WECElasticsearchRetriever
 from src.utils import io_utils
 
 
 def load_elastic_bm25(index):
     document_store = WECElasticsearchDocumentStore(index=index)
     retriever = ElasticsearchRetriever(document_store)
+    return document_store, retriever
+
+
+def load_wec_elastic_bm25(index):
+    document_store = WECElasticsearchDocumentStore(index=index)
+    retriever = WECElasticsearchRetriever(document_store)
     return document_store, retriever
 
 

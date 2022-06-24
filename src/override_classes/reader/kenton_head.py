@@ -57,7 +57,6 @@ class KentonQuestionAnsweringHead(QuestionAnsweringHead):
 
         # logits is of shape [batch_size, max_seq_len, 2]. Like above, the final dimension corresponds to [start, end]
         start_end_logits = self.feed_forward(embedding)
-        start_logits, end_logits = start_end_logits.split(1, dim=-1)
 
         # start_logits_clone = torch.clone(start_logits).squeeze(-1)
         # end_logits_clone = torch.clone(end_logits).squeeze(-1)
@@ -65,10 +64,35 @@ class KentonQuestionAnsweringHead(QuestionAnsweringHead):
         # start_logits_clone[indicies, 1:start_passage_idx] = -math.inf
         # end_logits_clone[indicies, 1:start_passage_idx] = -math.inf
 
-        _, pass_start_idxs = torch.max(start_logits.squeeze(-1), dim=1)
-        _, pass_end_idxs = torch.max(end_logits.squeeze(-1), dim=1)
-        pass_start_embed = embedding[indicies, pass_start_idxs]
-        pass_end_embed = embedding[indicies, pass_end_idxs]
+        if 'labels' in kwargs and kwargs['labels'].size(1) != 0:
+            # If at training
+            pass_start_idxs = kwargs['labels'][:, 0, 0].contiguous()
+            pass_end_idxs = kwargs['labels'][:, 0, 1].contiguous()
+        else:
+            # if at inference
+            start_logits, end_logits = start_end_logits.split(1, dim=-1)
+            start_logits = start_logits.squeeze(-1)
+            end_logits = end_logits.squeeze(-1)
+            batch_size = start_logits.size()[0]
+            max_seq_len = start_logits.shape[1]
+
+            start_matrix = start_logits.unsqueeze(2).expand(-1, -1, max_seq_len)
+            end_matrix = end_logits.unsqueeze(1).expand(-1, max_seq_len, -1)
+            start_end_matrix = start_matrix + end_matrix
+
+            flat_sorted_indices = self.filter_nonrel(batch_size, 10, max_seq_len, kwargs['span_mask'], start_end_matrix)
+
+            pass_start_indecies = flat_sorted_indices // max_seq_len
+            pass_end_indecies = flat_sorted_indices % max_seq_len
+
+            pass_start_idxs = pass_start_indecies[indicies, 0]
+            pass_end_idxs = pass_end_indecies[indicies, 0]
+
+            # _, pass_start_idxs = torch.max(start_logits.squeeze(-1), dim=1)
+            # _, pass_end_idxs = torch.max(end_logits.squeeze(-1), dim=1)
+
+        pass_start_embed = embedding[indicies, pass_start_idxs.squeeze(-1)]
+        pass_end_embed = embedding[indicies, pass_end_idxs.squeeze(-1)]
         g_pass = torch.cat((pass_start_embed, pass_end_embed), dim=1)
         passage_score = self.mention_score(g_pass)
 
@@ -76,8 +100,6 @@ class KentonQuestionAnsweringHead(QuestionAnsweringHead):
         pairwise_feat = torch.cat((g_query, g_pass, g_query_pass), dim=-1)
         antecedent_score = self.pairwise_score(pairwise_feat)
         passage_logits = query_score + passage_score + antecedent_score
-
-        # passage_logits = self.pass_selection(scores)
 
         return start_end_logits, passage_logits
 
@@ -131,7 +153,7 @@ class KentonQuestionAnsweringHead(QuestionAnsweringHead):
         return per_sample_loss
 
     def logits_to_preds(self, logits: torch.Tensor, span_mask: torch.Tensor, start_of_word: torch.Tensor,
-                        seq_2_start_t: torch.Tensor, max_answer_length: int = 1000, **kwargs):
+                        seq_2_start_t: torch.Tensor, max_answer_length: int = 10, **kwargs):
         """
         Get the predicted index of start and end token of the answer. Note that the output is at token level
         and not word level. Note also that these logits correspond to the tokens of a sample
@@ -159,38 +181,7 @@ class KentonQuestionAnsweringHead(QuestionAnsweringHead):
         end_matrix = end_logits.unsqueeze(1).expand(-1, max_seq_len, -1)
         start_end_matrix = start_matrix + end_matrix
 
-        # disqualify answers where end < start
-        # (set the lower triangular matrix to low value, excluding diagonal)
-        indices = torch.tril_indices(max_seq_len, max_seq_len, offset=-1, device=start_end_matrix.device)
-        start_end_matrix[:, indices[0][:], indices[1][:]] = -888
-
-        # disqualify answers where answer span is greater than max_answer_length
-        # (set the upper triangular matrix to low value, excluding diagonal)
-        indices_long_span = torch.triu_indices(max_seq_len, max_seq_len, offset=max_answer_length, device=start_end_matrix.device)
-        start_end_matrix[:, indices_long_span[0][:], indices_long_span[1][:]] = -777
-
-        # disqualify answers where start=0, but end != 0
-        start_end_matrix[:, 0, 1:] = -666
-
-        # Turn 1d span_mask vectors into 2d span_mask along 2 different axes
-        # span mask has:
-        #   0 for every position that is never a valid start or end index (question tokens, mid and end special tokens, padding)
-        #   1 everywhere else
-        span_mask_start = span_mask.unsqueeze(2).expand(-1, -1, max_seq_len)
-        span_mask_end = span_mask.unsqueeze(1).expand(-1, max_seq_len, -1)
-        span_mask_2d = span_mask_start + span_mask_end
-        # disqualify spans where either start or end is on an invalid token
-        invalid_indices = torch.nonzero((span_mask_2d != 2), as_tuple=True)
-        start_end_matrix[invalid_indices[0][:], invalid_indices[1][:], invalid_indices[2][:]] = -999
-
-        # Sort the candidate answers by their score. Sorting happens on the flattened matrix.
-        # flat_sorted_indices.shape: (batch_size, max_seq_len^2, 1)
-        flat_scores = start_end_matrix.view(batch_size, -1)
-        flat_sorted_indices_2d = flat_scores.sort(descending=True)[1]
-        flat_sorted_indices = flat_sorted_indices_2d.unsqueeze(2)
-
-        # The returned indices are then converted back to the original dimensionality of the matrix.
-        # sorted_candidates.shape : (batch_size, max_seq_len^2, 2)
+        flat_sorted_indices = self.filter_nonrel(batch_size, max_answer_length, max_seq_len, span_mask, start_end_matrix)
         start_indices = flat_sorted_indices // max_seq_len
         end_indices = flat_sorted_indices % max_seq_len
         sorted_candidates = torch.cat((start_indices, end_indices), dim=2)
@@ -206,6 +197,44 @@ class KentonQuestionAnsweringHead(QuestionAnsweringHead):
             all_top_n.append(sample_top_n)
 
         return all_top_n
+
+    def filter_nonrel(self, batch_size, max_answer_length, max_seq_len, span_mask, start_end_matrix):
+        # disqualify answers where end < start
+        # (set the lower triangular matrix to low value, excluding diagonal)
+        indices = torch.tril_indices(max_seq_len, max_seq_len, offset=-1, device=start_end_matrix.device)
+        start_end_matrix[:, indices[0][:], indices[1][:]] = -888
+
+        # disqualify answers where answer span is greater than max_answer_length
+        # (set the upper triangular matrix to low value, excluding diagonal)
+        indices_long_span = torch.triu_indices(max_seq_len, max_seq_len, offset=max_answer_length,
+                                               device=start_end_matrix.device)
+        start_end_matrix[:, indices_long_span[0][:], indices_long_span[1][:]] = -777
+
+        # disqualify answers where start=0, but end != 0
+
+        start_end_matrix[:, 0, 1:] = -666
+
+        # Turn 1d span_mask vectors into 2d span_mask along 2 different axes
+        # span mask has:
+        #   0 for every position that is never a valid start or end index (question tokens, mid and end special tokens, padding)
+        #   1 everywhere else
+        span_mask_start = span_mask.unsqueeze(2).expand(-1, -1, max_seq_len)
+        span_mask_end = span_mask.unsqueeze(1).expand(-1, max_seq_len, -1)
+        span_mask_2d = span_mask_start + span_mask_end
+
+        # disqualify spans where either start or end is on an invalid token
+        invalid_indices = torch.nonzero((span_mask_2d != 2), as_tuple=True)
+        start_end_matrix[invalid_indices[0][:], invalid_indices[1][:], invalid_indices[2][:]] = -999
+
+        # Sort the candidate answers by their score. Sorting happens on the flattened matrix.
+        # flat_sorted_indices.shape: (batch_size, max_seq_len^2, 1)
+        flat_scores = start_end_matrix.view(batch_size, -1)
+        flat_sorted_indices_2d = flat_scores.sort(descending=True)[1]
+        flat_sorted_indices = flat_sorted_indices_2d.unsqueeze(2)
+
+        # The returned indices are then converted back to the original dimensionality of the matrix.
+        # sorted_candidates.shape : (batch_size, max_seq_len^2, 2)
+        return flat_sorted_indices
 
     def get_top_candidates(self, sorted_candidates, start_end_matrix, sample_idx: int,
                            start_matrix, end_matrix, passage_selection):

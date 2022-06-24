@@ -1,4 +1,4 @@
-import os
+import copy
 import copy
 import itertools
 import math
@@ -9,15 +9,13 @@ from typing import List, Dict, Tuple
 
 import torch
 from tqdm import tqdm
-os.environ["MILVUS2_ENABLED"] = "false"
 
 from src.data_obj import Passage, Feat, Cluster, QueryResult, TrainExample
 from src.override_classes.retriever.wec_bm25_processor import WECBM25Processor
 from src.override_classes.retriever.wec_context_processor import WECContextProcessor
 from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
-
 from src.pipeline.run_haystack_pipeline import print_measurements, generate_query_text
-from src.utils import dpr_utils, io_utils, data_utils
+from src.utils import io_utils, data_utils
 from src.utils.data_utils import generate_index_batches
 from src.utils.io_utils import save_query_results
 
@@ -29,9 +27,9 @@ def main():
     examples_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
     passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
     gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
-    model_file = "data/checkpoints/Retriever_SpanBERT_5it/2"
+    model_file = "data/checkpoints/Retriever_SpanBERT_notoks_5it/0"
 
-    index_name = "file_indexes/" + SPLIT + "_Retriever_spanbert_5it2_top500"
+    index_name = "file_indexes/" + SPLIT + "_Retriever_spanbert_notoks_5it0_top500"
     out_index_file = index_name + ".json"
     out_result_file = index_name + "_results.txt"
 
@@ -39,7 +37,7 @@ def main():
     max_pass_len = 180
     topk = 500
     batch_size = 240
-    query_style = "context"
+    query_style = "context_no_toks"
 
     process_num = multiprocessing.cpu_count()
 
