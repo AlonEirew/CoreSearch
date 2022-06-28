@@ -1,0 +1,17 @@
+{
+  "note": "Reader-Train RoBERTa model, query surrounding context *with* <span> tokens",
+  "doc_dir": "data/resources/squad/context",
+  "train_filename": "Train_squad_format_1pos_23neg.json",
+  "dev_filename": "Dev_squad_format_1pos_23neg.json",
+  "checkpoint_dir": "data/checkpoints/",
+  "output_model": "Reader-RoBERTa_base_Kenton",
+  "predicting_head": "kenton",
+  "num_processes": 10,
+  "add_special_tokens": true,
+  "n_epochs": 5,
+  "max_seq_len": 256,
+  "max_seq_len_query": 64,
+  "batch_size": 64,
+  "reader_model": "roberta-base",
+  "evaluate_every": 750
+}

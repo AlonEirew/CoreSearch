@@ -1,0 +1,20 @@
+{
+  "note": "Retriever-Train SpanBERT model, query surrounding context *with* <span> tokens",
+  "predicting_head": "kenton",
+  "max_seq_len_query": 64,
+  "max_seq_len_passage": 180,
+  "add_special_tokens": true,
+  "batch_size_retriever": 24,
+  "batch_size_reader": 24,
+  "top_k_retriever": 500,
+  "top_k_reader": 50,
+  "query_model": "data/checkpoints/Retriever_SpanBERT_5it/1/query_encoder",
+  "passage_model": "data/checkpoints/Retriever_SpanBERT_5it/1/passage_encoder",
+  "reader_model": "data/checkpoints/Reader-RoBERTa_base_Kenton_special/1",
+  "query_filename": "data/resources/WEC-ES/train/Dev_queries.json",
+  "passages_filename": "data/resources/WEC-ES/clean/Dev_all_passages.json",
+  "gold_cluster_filename": "data/resources/WEC-ES/clean/Dev_gold_clusters.json",
+  "index_file": "file_indexes/Dev_Retriever_spanbert_5it1_top500.json",
+  "out_results_file": "results/Dev_Retriever_spanbert_5it1.txt",
+  "magnitude": "all"
+}

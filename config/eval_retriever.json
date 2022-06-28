@@ -1,0 +1,16 @@
+{
+  "note": "Reader-Train RoBERTa model, query surrounding context *with* <span> tokens",
+  "query_filename": "data/resources/WEC-ES/train/Dev_queries.json",
+  "passages_filename": "data/resources/WEC-ES/clean/Dev_all_passages.json",
+  "gold_cluster_filename": "data/resources/WEC-ES/clean/Dev_gold_clusters.json",
+  "query_model": "data/checkpoints/Retriever_SpanBERT_notoks_5it/0/query_encoder",
+  "passage_model": "data/checkpoints/Retriever_SpanBERT_notoks_5it/0/passage_encoder",
+  "out_index_file": "file_indexes/Dev_Retriever_spanbert_notoks_5it0_top500.json",
+  "out_results_file": "file_indexes/Dev_Retriever_spanbert_notoks_5it0_top500_results.txt",
+  "num_processes": 10,
+  "add_special_tokens": true,
+  "max_seq_len_query": 64,
+  "max_seq_len_passage": 180,
+  "top_k": 500,
+  "batch_size": 240
+}

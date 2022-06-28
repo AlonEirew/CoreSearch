@@ -1,7 +1,7 @@
 from typing import List, Dict
 
 from src.data_obj import TrainExample, Passage, QueryResult, Query, Cluster
-from src.pipeline.run_haystack_pipeline import print_measurements
+from src.pipeline.run_e2e_pipeline import print_measurements
 from src.utils import io_utils, data_utils
 from src.utils.dpr_utils import create_file_doc_store
 

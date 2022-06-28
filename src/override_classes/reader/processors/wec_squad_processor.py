@@ -15,16 +15,17 @@ logger = logging.getLogger(__name__)
 
 
 class WECSquadProcessor(SquadProcessor):
-    def __init__(self, tokenizer, max_seq_len: int, data_dir: Optional[Union[Path, str]], add_special_tokens=False,
-                 num_positives: int = 1, num_negatives: int = 23, batch_size: int = 12, **kwargs):
-        super(WECSquadProcessor, self).__init__(tokenizer, max_seq_len, data_dir, **kwargs)
+    def __init__(self, tokenizer, max_seq_len: int, max_query_length: int, data_dir: Optional[Union[Path, str]],
+                 add_special_tokens=False, num_positives: int = 1, num_negatives: int = 23, batch_size: int = 12, **kwargs):
+        super(WECSquadProcessor, self).__init__(tokenizer=tokenizer, max_seq_len=max_seq_len,
+                                                max_query_length=max_query_length, data_dir=data_dir, **kwargs)
         self.add_special_tokens = add_special_tokens
         self.num_positives = num_positives
         self.num_negatives = num_negatives
         self.batch_size = batch_size
 
     @classmethod
-    def convert_from_transformers(cls, tokenizer_name_or_path, task_type, max_seq_len, doc_stride,
+    def convert_from_transformers(cls, tokenizer_name_or_path, task_type, max_seq_len, doc_stride, max_query_length,
                                   revision=None, tokenizer_class=None, tokenizer_args=None, use_fast=True,
                                   add_special_tokens=False, **kwargs):
         tokenizer_args = tokenizer_args or {}
@@ -41,6 +42,7 @@ class WECSquadProcessor(SquadProcessor):
             processor = WECSquadProcessor(
                 tokenizer=tokenizer,
                 max_seq_len=max_seq_len,
+                max_query_length=max_query_length,
                 label_list=["start_token", "end_token"],
                 metric="squad",
                 data_dir="data",

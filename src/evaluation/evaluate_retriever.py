@@ -1,4 +1,27 @@
-import copy
+"""
+Evaluate retriever script
+
+Usage:
+    evaluate_retriever.py [--note=<ExperimentSummary>] --query_filename=<QueryFile> --passages_filename=<PassagesFile> --gold_cluster_filename=<GoldClusterFile> --query_model=<QueryModel> --passage_model=<PassageModel> --out_index_file=<OutIndexFile> --out_results_file=<OutResultsFile> --num_processes=<NumProcesses> --add_special_tokens=<AddBoundToks> --max_seq_len_query=<MaxQuery> --max_seq_len_passage=<MaxPassage> --batch_size=<BatchSize> --top_k=<TopK>
+
+Options:
+    -h --help                                   Show this screen.
+    --note=<ExperimentSummary>                  Brief note about the experiment
+    --query_filename=<QueryFile>                CoreSearch query file
+    --passages_filename=<PassagesFile>          CoreSearch passage file
+    --gold_cluster_filename=<GoldClusterFile>   CoreSearch gold cluster file
+    --query_model=<QueryModel>                  Query model to evaluate
+    --passage_model=<PassageModel>              Passage model to evaluate
+    --out_index_file=<OutIndexFile>             Where to save top-k passages index
+    --out_results_file=<OutResultsFile>         Evaluation report
+    --num_processes=<NumProcesses>              Number of processes to use for reading files
+    --add_special_tokens=<AddBoundToks>         (true/false) whether to add span boundary tokens
+    --max_seq_len_query=<MaxQuery>              Max query size
+    --max_seq_len_passage=<MaxPassage>          Max passage size
+    --batch_size=<BatchSize>                    Batch size
+    --top_k=<TopK>                              The Top-K threshold for number of passages to return
+"""
+
 import copy
 import itertools
 import math
@@ -8,74 +31,63 @@ from multiprocessing import Pool
 from typing import List, Dict, Tuple
 
 import torch
+from docopt import docopt
+from haystack.modeling.utils import set_all_seeds
 from tqdm import tqdm
 
 from src.data_obj import Passage, Feat, Cluster, QueryResult, TrainExample
-from src.override_classes.retriever.wec_bm25_processor import WECBM25Processor
 from src.override_classes.retriever.wec_context_processor import WECContextProcessor
 from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
-from src.pipeline.run_haystack_pipeline import print_measurements, generate_query_text
+from src.pipeline.run_e2e_pipeline import generate_query_text, print_measurements
 from src.utils import io_utils, data_utils
 from src.utils.data_utils import generate_index_batches
 from src.utils.io_utils import save_query_results
 
-SPLIT = "Dev"
-
 
 def main():
-    random.seed(1234)
-    examples_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
-    passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
-    gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
-    model_file = "data/checkpoints/Retriever_SpanBERT_notoks_5it/0"
+    set_all_seeds(seed=42)
+    query_filename = _arguments.get("--query_filename")
+    passages_filename = _arguments.get("--passages_filename")
+    gold_cluster_filename = _arguments.get("--gold_cluster_filename")
+    query_model = _arguments.get("--query_model")
+    passage_model = _arguments.get("--passage_model")
+    out_index_file = _arguments.get("--out_index_file")
+    out_results_file = _arguments.get("--out_results_file")
 
-    index_name = "file_indexes/" + SPLIT + "_Retriever_spanbert_notoks_5it0_top500"
-    out_index_file = index_name + ".json"
-    out_result_file = index_name + "_results.txt"
+    add_special_tokens = True if _arguments.get("--add_special_tokens").lower() == 'true' else False
+    max_seq_len_query = int(_arguments.get("--max_seq_len_query"))
+    max_seq_len_passage = int(_arguments.get("--max_seq_len_passage"))
+    top_k = int(_arguments.get("--top_k"))
+    batch_size = int(_arguments.get("--batch_size"))
+    num_processes = int(_arguments.get("--num_processes"))
 
-    max_query_len = 64
-    max_pass_len = 180
-    topk = 500
-    batch_size = 240
-    query_style = "context_no_toks"
+    if not torch.cuda.is_available():
+        raise EnvironmentError("Evaluation script require at least 1 GPU to run")
 
-    process_num = multiprocessing.cpu_count()
+    if num_processes <= 0:
+        num_processes = multiprocessing.cpu_count()
 
-    if query_style == "bm25":
-        processor_type = WECBM25Processor
-        add_qbound = False
-    elif query_style == "context":
-        processor_type = WECContextProcessor
-        add_qbound = True
-    elif query_style == "context_no_toks":
-        processor_type = WECContextProcessor
-        add_qbound = False
-    else:
-        raise TypeError(f"No processor that support {query_style}")
-
-    model = WECDensePassageRetriever(document_store=None, query_embedding_model=model_file + "/query_encoder",
-                                     passage_embedding_model=model_file + "/passage_encoder",
+    model = WECDensePassageRetriever(document_store=None, query_embedding_model=query_model,
+                                     passage_embedding_model=passage_model,
                                      infer_tokenizer_classes=True,
-                                     max_seq_len_query=max_query_len, max_seq_len_passage=max_pass_len,
+                                     max_seq_len_query=max_seq_len_query, max_seq_len_passage=max_seq_len_passage,
                                      batch_size=16, use_gpu=True, embed_title=False,
-                                     use_fast_tokenizers=False, processor_type=processor_type,
-                                     add_special_tokens=add_qbound)
+                                     use_fast_tokenizers=False, processor_type=WECContextProcessor,
+                                     add_special_tokens=add_special_tokens)
 
-    print(f"Experiment using model={model_file}, query_file={examples_file}, passage_file={passages_file}")
-
-    golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_file)
+    golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_filename)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
 
-    query_examples: List[TrainExample] = io_utils.read_train_example_file(examples_file)
-    passage_examples: List[Passage] = io_utils.read_passages_file(passages_file)
+    query_examples: List[TrainExample] = io_utils.read_train_example_file(query_filename)
+    passage_examples: List[Passage] = io_utils.read_passages_file(passages_filename)
     passage_dict: Dict[str, Passage] = {passage.id: passage for passage in passage_examples}
-    generate_query_text(passage_dict, query_examples=query_examples, query_method=query_style)
+    generate_query_text(passage_dict, query_examples=query_examples)
     dev_queries_feats = model.processor.generate_query_feats(query_examples)
 
-    print(f"Reading passages using {process_num} cpu's")
-    chunk_size = math.ceil(len(passage_examples) / process_num)
+    print(f"Reading passages using {num_processes} cpu's")
+    chunk_size = math.ceil(len(passage_examples) / num_processes)
     passage_examples_chunks = [passage_examples[x:x + chunk_size] for x in range(0, len(passage_examples), chunk_size)]
-    with Pool(process_num) as pool:
+    with Pool(num_processes) as pool:
         dev_passages_feats = pool.map(model.processor.generate_passage_feats, iterable=passage_examples_chunks)
         dev_passages_feats = list(itertools.chain.from_iterable(dev_passages_feats))
 
@@ -84,12 +96,12 @@ def main():
     total_passages = len(dev_passages_feats)
 
     dev_passages_ids, dev_passages_batches = generate_index_batches(list(dev_passages_feats), batch_size)
-    net = torch.nn.DataParallel(model.passage_encoder, device_ids=[0, 1, 2, 3])
+    net = torch.nn.DataParallel(model.passage_encoder, device_ids=[torch.cuda.device(i).idx for i in range(torch.cuda.device_count())])
     all_dev_passages_encode = extract_batch_list_embed(net, dev_passages_batches)
 
     all_queries_pred = list()
     for query_index, query in enumerate(tqdm(dev_queries_feats, "Evaluate Queries")):
-        query_predictions = run_top_pass(model.query_encoder, query, dev_passages_ids, all_dev_passages_encode, topk)
+        query_predictions = run_top_pass(model.query_encoder, query, dev_passages_ids, all_dev_passages_encode, top_k)
         results = list()
         for pass_id, pred in query_predictions:
             res_pass = copy.deepcopy(passage_dict[pass_id])
@@ -114,14 +126,11 @@ def main():
     to_print.extend(print_measurements(all_queries_pred, golds_arranged, "retriever"))
 
     to_print.append(f"Measured from total of {total_queries} queries and {total_passages} passages")
-    to_print.append(f"Using model-{model_file}")
-    to_print.append(f"File: dev_queries={examples_file}, dev_passages={passages_file}, golds={gold_cluster_file}")
-    to_print.append(f"Parameters: max_query_len={str(max_query_len)}, max_pass_len={str(max_pass_len)}, "
-          f"topk={str(topk)}, add_qbound={str(add_qbound)}, query_style={query_style}")
+    to_print.append(f"File: dev_queries={query_filename}, dev_passages={passages_filename}, golds={gold_cluster_filename}")
 
     join_result = "\n".join(to_print)
-    print("Saving report to-" + out_result_file)
-    with open(out_result_file, 'w') as f:
+    print("Saving report to-" + out_results_file)
+    with open(out_results_file, 'w') as f:
         f.write(join_result)
 
     print("Done!")
@@ -165,4 +174,6 @@ def get_passage_embed(model, passage_batch):
 
 
 if __name__ == "__main__":
+    _arguments = docopt(__doc__, argv=None, help=True, version=None, options_first=False)
+    print(_arguments)
     main()

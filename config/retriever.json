@@ -1,0 +1,16 @@
+{
+  "note": "Retriever-Train SpanBERT model, query surrounding context *with* <span> tokens",
+  "doc_dir": "data/resources/dpr/context/",
+  "train_filename": "Train.json",
+  "dev_filename": "Dev.json",
+  "checkpoint_dir": "data/checkpoints/",
+  "output_model": "Retriever_SpanBERT",
+  "add_special_tokens": true,
+  "n_epochs": 5,
+  "max_seq_len_query": 64,
+  "max_seq_len_passage": 180,
+  "batch_size": 64,
+  "query_model": "SpanBERT/spanbert-base-cased",
+  "passage_model": "SpanBERT/spanbert-base-cased",
+  "evaluate_every": 500
+}

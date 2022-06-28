@@ -1,12 +1,12 @@
 import logging
 from typing import List, Dict
 
-from src.pipeline.run_haystack_pipeline import generate_query_text, print_results
 
 from src.data_obj import Passage, Cluster, TrainExample, QueryResult
 from src.pipeline.pipelines import RetrievalOnlyPipeline
 
 from src.index import elastic_index
+from src.pipeline.run_e2e_pipeline import generate_query_text, print_results
 from src.utils import io_utils, data_utils
 
 SPLIT = "Dev"

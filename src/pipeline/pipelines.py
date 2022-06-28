@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from src.data_obj import QueryResult, Passage, BasicMent
 
-logger = logging.getLogger("run_haystack_pipeline")
+logger = logging.getLogger(__name__)
 
 
 class WECPipeline(object):

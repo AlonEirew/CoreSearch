@@ -32,6 +32,7 @@ class WECReader(FARMReader):
             top_k_per_sample: int = 1,
             num_processes: Optional[int] = None,
             max_seq_len: int = 256,
+            max_query_length: int = 64,
             doc_stride: int = 128,
             progress_bar: bool = True,
             duplicate_filtering: int = 0,
@@ -63,6 +64,7 @@ class WECReader(FARMReader):
         self.top_k_per_candidate = top_k_per_candidate
         self.inferencer = WECQAInferencer.load(model_name_or_path, batch_size=batch_size, gpu=use_gpu,
                                                task_type="question_answering", max_seq_len=max_seq_len,
+                                               max_query_length=max_query_length,
                                                doc_stride=doc_stride, num_processes=num_processes,
                                                revision=model_version,
                                                disable_tqdm=not progress_bar,
