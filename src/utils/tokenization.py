@@ -6,8 +6,8 @@ from transformers import BertTokenizer
 
 from src.data_obj import TrainExample, Passage, SearchFeat
 
-QUERY_SPAN_START = "[QSPAN_START]"
-QUERY_SPAN_END = "[QSPAN_END]"
+# QUERY_SPAN_START = "[QSPAN_START]"
+# QUERY_SPAN_END = "[QSPAN_END]"
 
 logger = logging.getLogger("event-search")
 

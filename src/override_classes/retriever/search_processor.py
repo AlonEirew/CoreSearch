@@ -16,7 +16,7 @@ QUERY_SPAN_START = "[QSPAN_START]"
 QUERY_SPAN_END = "[QSPAN_END]"
 
 
-class WECSimilarityProcessor(TextSimilarityProcessor):
+class CoreSearchSimilarityProcessor(TextSimilarityProcessor):
     def __init__(
         self,
         query_tokenizer,
@@ -39,7 +39,7 @@ class WECSimilarityProcessor(TextSimilarityProcessor):
         label_list=None,
         add_special_tokens=False
     ):
-        super(WECSimilarityProcessor, self).__init__(
+        super(CoreSearchSimilarityProcessor, self).__init__(
             query_tokenizer,
             passage_tokenizer,
             max_seq_len_query,

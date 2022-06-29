@@ -12,7 +12,7 @@ from src.override_classes.reader.dpr_head import DPRQuestionAnsweringHead
 logger = logging.getLogger(__name__)
 
 
-class WECConverter:
+class CoreSearchConverter:
     @staticmethod
     def convert_from_transformers(model_name_or_path, device, revision=None, task_type=None, processor=None,
                                   use_auth_token: Union[bool, str] = None, prediction_head_str: str = "corefqa", **kwargs):

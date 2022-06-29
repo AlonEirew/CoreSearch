@@ -30,23 +30,20 @@ import json
 import logging
 import os
 import pickle
-from pathlib import Path
 from typing import List, Dict
 
 from docopt import docopt
 
 from haystack.modeling.utils import set_all_seeds
-
 from src.data_obj import Cluster, TrainExample, Passage, QueryResult
 from src.index import elastic_index
-from src.override_classes.reader.wec_reader import WECReader
-from src.override_classes.retriever.wec_context_processor import WECContextProcessor
-from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
+from src.override_classes.reader.search_reader import CoreSearchReader
+from src.override_classes.retriever.search_context_processor import CoreSearchContextProcessor
+from src.override_classes.retriever.search_dense import CoreSearchDensePassageRetriever
 from src.pipeline.pipelines import QAPipeline, RetrievalOnlyPipeline
 from src.utils import io_utils, measurments, data_utils, measure_squad
 from src.utils.dpr_utils import create_file_doc_store
 from src.utils.measurments import precision, precision_squad
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -90,23 +87,24 @@ def main():
         document_store = create_file_doc_store(index_file, passages_filename)
         logger.info("Total indexed documents to be searched=" + str(document_store.get_document_count()))
         passage_dict = document_store.passages
-        retriever = WECDensePassageRetriever(document_store=document_store, query_embedding_model=query_model,
-                                             passage_embedding_model=passage_model,
-                                             infer_tokenizer_classes=True,
-                                             max_seq_len_query=max_seq_len_query,
-                                             max_seq_len_passage=max_seq_len_passage,
-                                             batch_size=batch_size_retriever, use_gpu=True, embed_title=False,
-                                             use_fast_tokenizers=False, processor_type=WECContextProcessor,
-                                             add_special_tokens=add_special_tokens)
+        retriever = CoreSearchDensePassageRetriever(document_store=document_store, query_embedding_model=query_model,
+                                                    passage_embedding_model=passage_model,
+                                                    infer_tokenizer_classes=True,
+                                                    max_seq_len_query=max_seq_len_query,
+                                                    max_seq_len_passage=max_seq_len_passage,
+                                                    batch_size=batch_size_retriever, use_gpu=True, embed_title=False,
+                                                    use_fast_tokenizers=False,
+                                                    processor_type=CoreSearchContextProcessor,
+                                                    add_special_tokens=add_special_tokens)
 
         pipeline = QAPipeline(document_store=document_store,
                               retriever=retriever,
-                              reader=WECReader(model_name_or_path=reader_model, use_gpu=True,
-                                               num_processes=num_processes,
-                                               add_special_tokens=add_special_tokens,
-                                               batch_size=batch_size_reader,
-                                               replace_prediction_heads=True,
-                                               prediction_head_str=predicting_head),
+                              reader=CoreSearchReader(model_name_or_path=reader_model, use_gpu=True,
+                                                      num_processes=num_processes,
+                                                      add_special_tokens=add_special_tokens,
+                                                      batch_size=batch_size_reader,
+                                                      replace_prediction_heads=True,
+                                                      prediction_head_str=predicting_head),
                               ret_topk=top_k_retriever,
                               read_topk=top_k_reader)
     elif predicting_head == "bm25":

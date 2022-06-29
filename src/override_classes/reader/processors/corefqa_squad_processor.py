@@ -9,7 +9,7 @@ from haystack.modeling.data_handler.dataset import convert_features_to_dataset
 from haystack.modeling.data_handler.processor import SquadProcessor, InferenceProcessor
 from haystack.modeling.data_handler.samples import SampleBasket, offset_to_token_idx_vecorized, Sample
 from haystack.modeling.model.tokenization import Tokenizer, _get_start_of_word_QA
-from src.override_classes.retriever.wec_processor import QUERY_SPAN_END, QUERY_SPAN_START
+from src.override_classes.retriever.search_processor import QUERY_SPAN_END, QUERY_SPAN_START
 
 logger = logging.getLogger(__name__)
 

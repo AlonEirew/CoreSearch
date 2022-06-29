@@ -1,7 +1,6 @@
 from typing import List, Dict
 
 from src.data_obj import QueryResult, Passage
-from src.utils.measure_squad import is_span_overlap
 
 
 def hit_rate(predictions: Dict[str, List[str]], golds: Dict[str, List[str]], topk: int):

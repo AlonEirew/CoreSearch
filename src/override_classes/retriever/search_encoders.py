@@ -5,9 +5,9 @@ import transformers
 from haystack.modeling.model.language_model import DPRContextEncoder, DPRQuestionEncoder
 
 
-class WECContextEncoder(DPRContextEncoder):
+class CoreSearchContextEncoder(DPRContextEncoder):
     def __init__(self):
-        super(WECContextEncoder, self).__init__()
+        super(CoreSearchContextEncoder, self).__init__()
 
     def forward(self, passage_input_ids: torch.Tensor, passage_segment_ids: torch.Tensor,
                 passage_attention_mask: torch.Tensor, **kwargs):
@@ -49,9 +49,9 @@ class WECContextEncoder(DPRContextEncoder):
         pass
 
 
-class WECQuestionEncoder(DPRQuestionEncoder):
+class CoreSearchQuestionEncoder(DPRQuestionEncoder):
     def __init__(self):
-        super(WECQuestionEncoder, self).__init__()
+        super(CoreSearchQuestionEncoder, self).__init__()
         # self.dropout = nn.Dropout(0.1)
 
     def forward(self, query_input_ids: torch.Tensor, query_segment_ids: torch.Tensor,

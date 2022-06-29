@@ -24,7 +24,7 @@ Options:
 """
 from docopt import docopt
 
-from src.override_classes.reader.wec_reader import WECReader
+from src.override_classes.reader.search_reader import CoreSearchReader
 
 
 def main():
@@ -48,10 +48,10 @@ def main():
 
     save_dir = checkpoint_dir + output_model
 
-    reader = WECReader(model_name_or_path=reader_model, use_gpu=True, max_seq_len=max_seq_len,
-                       max_query_length=max_seq_len_query, num_processes=num_processes,
-                       add_special_tokens=add_special_tokens, replace_prediction_heads=True,
-                       prediction_head_str=predicting_head)
+    reader = CoreSearchReader(model_name_or_path=reader_model, use_gpu=True, max_seq_len=max_seq_len,
+                              max_query_length=max_seq_len_query, num_processes=num_processes,
+                              add_special_tokens=add_special_tokens, replace_prediction_heads=True,
+                              prediction_head_str=predicting_head)
     reader.train(
         data_dir=doc_dir,
         train_filename=train_filename,

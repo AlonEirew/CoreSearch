@@ -11,9 +11,9 @@
   "query_model": "data/checkpoints/Retriever_SpanBERT_5it/1/query_encoder",
   "passage_model": "data/checkpoints/Retriever_SpanBERT_5it/1/passage_encoder",
   "reader_model": "data/checkpoints/Reader-RoBERTa_base_Kenton_special/1",
-  "query_filename": "data/resources/WEC-ES/train/Dev_queries.json",
-  "passages_filename": "data/resources/WEC-ES/clean/Dev_all_passages.json",
-  "gold_cluster_filename": "data/resources/WEC-ES/clean/Dev_gold_clusters.json",
+  "query_filename": "data/resources/CoreSearch/train/Dev_queries.json",
+  "passages_filename": "data/resources/CoreSearch/clean/Dev_all_passages.json",
+  "gold_cluster_filename": "data/resources/CoreSearch/clean/Dev_gold_clusters.json",
   "index_file": "file_indexes/Dev_Retriever_spanbert_5it1_top500.json",
   "out_results_file": "results/Dev_Retriever_spanbert_5it1.txt",
   "magnitude": "all"

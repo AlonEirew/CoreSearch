@@ -9,16 +9,16 @@ from haystack.modeling.data_handler.dataset import convert_features_to_dataset
 from haystack.modeling.data_handler.processor import SquadProcessor, InferenceProcessor
 from haystack.modeling.data_handler.samples import SampleBasket, offset_to_token_idx_vecorized, Sample
 from haystack.modeling.model.tokenization import Tokenizer, _get_start_of_word_QA
-from src.override_classes.retriever.wec_processor import QUERY_SPAN_END, QUERY_SPAN_START
+from src.override_classes.retriever.search_processor import QUERY_SPAN_END, QUERY_SPAN_START
 
 logger = logging.getLogger(__name__)
 
 
-class WECSquadProcessor(SquadProcessor):
+class CoreSearchSquadProcessor(SquadProcessor):
     def __init__(self, tokenizer, max_seq_len: int, max_query_length: int, data_dir: Optional[Union[Path, str]],
                  add_special_tokens=False, num_positives: int = 1, num_negatives: int = 23, batch_size: int = 12, **kwargs):
-        super(WECSquadProcessor, self).__init__(tokenizer=tokenizer, max_seq_len=max_seq_len,
-                                                max_query_length=max_query_length, data_dir=data_dir, **kwargs)
+        super(CoreSearchSquadProcessor, self).__init__(tokenizer=tokenizer, max_seq_len=max_seq_len,
+                                                       max_query_length=max_query_length, data_dir=data_dir, **kwargs)
         self.add_special_tokens = add_special_tokens
         self.num_positives = num_positives
         self.num_negatives = num_negatives
@@ -39,7 +39,7 @@ class WECSquadProcessor(SquadProcessor):
 
         # TODO infer task_type automatically from config (if possible)
         if task_type == "question_answering":
-            processor = WECSquadProcessor(
+            processor = CoreSearchSquadProcessor(
                 tokenizer=tokenizer,
                 max_seq_len=max_seq_len,
                 max_query_length=max_query_length,

@@ -10,11 +10,11 @@ from haystack.modeling.utils import initialize_device_settings
 from src.override_classes.coref_adaptive_model import CorefAdaptiveModel
 from src.override_classes.dpr_adaptive_model import DPRAdaptiveModel
 from src.override_classes.reader.processors.corefqa_squad_processor import CorefQASquadProcessor
-from src.override_classes.reader.processors.wec_squad_processor import WECSquadProcessor
-from src.override_classes.wec_converter import WECConverter
+from src.override_classes.reader.processors.search_squad_processor import CoreSearchSquadProcessor
+from src.override_classes.search_converter import CoreSearchConverter
 
 
-class WECQAInferencer(QAInferencer):
+class CoreSearchQAInferencer(QAInferencer):
     def __init__(
             self,
             model: AdaptiveModel,
@@ -29,7 +29,7 @@ class WECQAInferencer(QAInferencer):
             num_processes: Optional[int] = None,
             disable_tqdm: bool = False
     ):
-        super(WECQAInferencer, self).__init__(
+        super(CoreSearchQAInferencer, self).__init__(
             model,
             processor,
             task_type,
@@ -96,7 +96,7 @@ class WECQAInferencer(QAInferencer):
             else:
                 processor = Processor.load_from_dir(model_name_or_path)
 
-            if isinstance(processor, WECSquadProcessor):
+            if isinstance(processor, CoreSearchSquadProcessor):
                 processor.add_special_tokens = add_special_tokens
 
         # b) or from remote transformers model hub
@@ -108,7 +108,7 @@ class WECQAInferencer(QAInferencer):
 
             # override model predicting_head with pairwise head
             if replace_prediction_heads:
-                model = WECConverter.convert_from_transformers(model_name_or_path,
+                model = CoreSearchConverter.convert_from_transformers(model_name_or_path,
                                                                revision=revision,
                                                                device=devices[0],
                                                                task_type=task_type,
@@ -125,7 +125,7 @@ class WECQAInferencer(QAInferencer):
 
             if prediction_head_str:
                 if prediction_head_str in ["dpr", "kenton"]:
-                    processor = WECSquadProcessor.convert_from_transformers(model_name_or_path,
+                    processor = CoreSearchSquadProcessor.convert_from_transformers(model_name_or_path,
                                                                             revision=revision,
                                                                             task_type=task_type,
                                                                             max_seq_len=max_seq_len,

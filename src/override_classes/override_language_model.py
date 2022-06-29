@@ -6,8 +6,7 @@ from pathlib import Path
 from typing import Union
 
 from haystack.modeling.model.language_model import LanguageModel
-
-from src.override_classes.retriever.wec_encoders import WECContextEncoder, WECQuestionEncoder
+from src.override_classes.retriever.search_encoders import CoreSearchContextEncoder, CoreSearchQuestionEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -36,10 +35,10 @@ class OverrideLanguageModel(LanguageModel, ABC):
             logger.info(f"Looking on Transformers Model Hub (in local cache and online)...")
 
             if language_model_class == "WECContextEncoder":
-                language_model = WECContextEncoder.load(pretrained_model_name_or_path,
+                language_model = CoreSearchContextEncoder.load(pretrained_model_name_or_path,
                                                         use_auth_token=use_auth_token, **kwargs)
             elif language_model_class == "WECQuestionEncoder":
-                language_model = WECQuestionEncoder.load(pretrained_model_name_or_path,
+                language_model = CoreSearchQuestionEncoder.load(pretrained_model_name_or_path,
                                                          use_auth_token=use_auth_token, **kwargs)
             else:
                 language_model = None

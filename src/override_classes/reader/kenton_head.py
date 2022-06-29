@@ -1,13 +1,11 @@
-import math
 from typing import List, Optional
 
 import torch
 from torch import nn
-
-from haystack.modeling.model.predictions import QACandidate
 from torch.nn import CrossEntropyLoss
 
-from haystack.modeling.model.prediction_head import QuestionAnsweringHead, FeedForwardBlock
+from haystack.modeling.model.prediction_head import QuestionAnsweringHead
+from haystack.modeling.model.predictions import QACandidate
 
 
 class KentonQuestionAnsweringHead(QuestionAnsweringHead):

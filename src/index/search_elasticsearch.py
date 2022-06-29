@@ -7,7 +7,7 @@ from haystack.document_stores import ElasticsearchDocumentStore
 from tqdm import tqdm
 
 
-class WECElasticsearchDocumentStore(ElasticsearchDocumentStore):
+class CoreSearchElasticsearchDocumentStore(ElasticsearchDocumentStore):
     def __init__(
             self,
             host: Union[str, List[str]] = "localhost",
@@ -42,7 +42,7 @@ class WECElasticsearchDocumentStore(ElasticsearchDocumentStore):
             synonyms: Optional[List] = None,
             synonym_type: str = "synonym"
     ):
-        super(WECElasticsearchDocumentStore, self).__init__(
+        super(CoreSearchElasticsearchDocumentStore, self).__init__(
             host,
             port,
             username,

@@ -26,8 +26,8 @@ from os import path
 
 from docopt import docopt
 
-from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
-from src.override_classes.retriever.wec_context_processor import WECContextProcessor
+from src.override_classes.retriever.search_context_processor import CoreSearchContextProcessor
+from src.override_classes.retriever.search_dense import CoreSearchDensePassageRetriever
 from src.utils.io_utils import write_json
 
 
@@ -46,15 +46,15 @@ def train():
     passage_model = _arguments.get("--passage_model")
     evaluate_every = int(_arguments.get("--evaluate_every"))
 
-    retriever = WECDensePassageRetriever(document_store=None,
-                                         query_embedding_model=query_model,
-                                         passage_embedding_model=passage_model,
-                                         infer_tokenizer_classes=True,
-                                         max_seq_len_query=max_seq_len_query,
-                                         max_seq_len_passage=max_seq_len_passage,
-                                         batch_size=batch_size, use_gpu=True, embed_title=False,
-                                         use_fast_tokenizers=False, processor_type=WECContextProcessor,
-                                         add_special_tokens=add_special_tokens)
+    retriever = CoreSearchDensePassageRetriever(document_store=None,
+                                                query_embedding_model=query_model,
+                                                passage_embedding_model=passage_model,
+                                                infer_tokenizer_classes=True,
+                                                max_seq_len_query=max_seq_len_query,
+                                                max_seq_len_passage=max_seq_len_passage,
+                                                batch_size=batch_size, use_gpu=True, embed_title=False,
+                                                use_fast_tokenizers=False, processor_type=CoreSearchContextProcessor,
+                                                add_special_tokens=add_special_tokens)
 
     retriever.train(data_dir=doc_dir,
                     train_filename=train_filename,

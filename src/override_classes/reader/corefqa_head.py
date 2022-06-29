@@ -1,18 +1,18 @@
 import json
 import logging
-import math
 import os
 from pathlib import Path
-from typing import List, Optional, Union, Dict, Tuple
+from typing import List, Optional, Union, Dict
 
 import torch
+from torch import nn, optim
+from torch.nn import CrossEntropyLoss
+from transformers import AutoModelForQuestionAnswering
+
 from haystack.modeling.data_handler.samples import SampleBasket
 from haystack.modeling.model.prediction_head import PredictionHead, FeedForwardBlock
 from haystack.modeling.model.predictions import QACandidate, QAPred
 from haystack.modeling.utils import try_get
-from torch import nn, optim
-from torch.nn import CrossEntropyLoss, NLLLoss
-from transformers import AutoModelForQuestionAnswering
 
 logger = logging.getLogger(__name__)
 

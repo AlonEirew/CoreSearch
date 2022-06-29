@@ -14,13 +14,13 @@ from haystack.nodes import DensePassageRetriever
 from torch.nn import DataParallel
 
 from src.override_classes.override_language_model import OverrideLanguageModel
-from src.override_classes.retriever.wec_processor import WECSimilarityProcessor
+from src.override_classes.retriever.search_processor import CoreSearchSimilarityProcessor
 
 logger = logging.getLogger(__name__)
 logger.setLevel(level=logging.DEBUG)
 
 
-class WECDensePassageRetriever(DensePassageRetriever):
+class CoreSearchDensePassageRetriever(DensePassageRetriever):
     """
         Retriever that uses a bi-encoder (one transformer for query, one transformer for passage).
         See the original paper for more details:
@@ -46,7 +46,7 @@ class WECDensePassageRetriever(DensePassageRetriever):
                  progress_bar: bool = True,
                  devices: Optional[List[Union[int, str, torch.device]]] = None,
                  use_auth_token: Optional[Union[str, bool]] = None,
-                 processor_type: Type[WECSimilarityProcessor] = None,
+                 processor_type: Type[CoreSearchSimilarityProcessor] = None,
                  add_special_tokens: bool = False
                  ):
 

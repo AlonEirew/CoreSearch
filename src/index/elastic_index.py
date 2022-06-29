@@ -16,25 +16,25 @@ from docopt import docopt
 
 from haystack import Document
 from haystack.nodes import ElasticsearchRetriever
-from src.index.wec_elasticsearch import WECElasticsearchDocumentStore
-from src.override_classes.retriever.wec_sparse import WECElasticsearchRetriever
+from src.index.search_elasticsearch import CoreSearchElasticsearchDocumentStore
+from src.override_classes.retriever.search_sparse import CoreSearchElasticsearchRetriever
 from src.utils import io_utils
 
 
 def load_elastic_bm25(index):
-    document_store = WECElasticsearchDocumentStore(index=index)
+    document_store = CoreSearchElasticsearchDocumentStore(index=index)
     retriever = ElasticsearchRetriever(document_store)
     return document_store, retriever
 
 
 def load_wec_elastic_bm25(index):
-    document_store = WECElasticsearchDocumentStore(index=index)
-    retriever = WECElasticsearchRetriever(document_store)
+    document_store = CoreSearchElasticsearchDocumentStore(index=index)
+    retriever = CoreSearchElasticsearchRetriever(document_store)
     return document_store, retriever
 
 
 def elastic_index(index: str, documents: List[Document]):
-    document_store = WECElasticsearchDocumentStore(host="localhost", username="", password="", index=index)
+    document_store = CoreSearchElasticsearchDocumentStore(host="localhost", username="", password="", index=index)
     document_store.delete_documents()
     print("Writing document to Elastic...")
     document_store.write_documents(documents)

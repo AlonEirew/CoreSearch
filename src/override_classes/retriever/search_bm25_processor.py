@@ -4,12 +4,12 @@ from typing import List, Tuple
 from haystack.modeling.data_handler.samples import SampleBasket, Sample
 
 from src.data_obj import TrainExample, QueryFeat
-from src.override_classes.retriever.wec_processor import WECSimilarityProcessor
+from src.override_classes.retriever.search_processor import CoreSearchSimilarityProcessor
 
 logger = logging.getLogger(__name__)
 
 
-class WECBM25Processor(WECSimilarityProcessor):
+class CoreSearchBM25Processor(CoreSearchSimilarityProcessor):
     def __init__(
         self,
         query_tokenizer,
@@ -32,7 +32,7 @@ class WECBM25Processor(WECSimilarityProcessor):
         label_list=None,
         add_special_tokens=None
     ):
-        super(WECBM25Processor, self).__init__(
+        super(CoreSearchBM25Processor, self).__init__(
             query_tokenizer,
             passage_tokenizer,
             max_seq_len_query,

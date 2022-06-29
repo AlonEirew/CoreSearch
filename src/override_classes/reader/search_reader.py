@@ -10,14 +10,13 @@ from haystack.modeling.training import Trainer
 from haystack.modeling.utils import initialize_device_settings, set_all_seeds
 from haystack.nodes import FARMReader, BaseReader
 from haystack.schema import Document, MultiLabel
-
-from src.override_classes.reader.wec_qa_inferencer import WECQAInferencer
-from src.override_classes.retriever.wec_processor import QUERY_SPAN_START, QUERY_SPAN_END
+from src.override_classes.reader.search_qa_inferencer import CoreSearchQAInferencer
+from src.override_classes.retriever.search_processor import QUERY_SPAN_START, QUERY_SPAN_END
 
 logger = logging.getLogger(__name__)
 
 
-class WECReader(FARMReader):
+class CoreSearchReader(FARMReader):
     def __init__(
             self,
             model_name_or_path: str,
@@ -62,7 +61,7 @@ class WECReader(FARMReader):
         self.return_no_answers = return_no_answer
         self.top_k = top_k
         self.top_k_per_candidate = top_k_per_candidate
-        self.inferencer = WECQAInferencer.load(model_name_or_path, batch_size=batch_size, gpu=use_gpu,
+        self.inferencer = CoreSearchQAInferencer.load(model_name_or_path, batch_size=batch_size, gpu=use_gpu,
                                                task_type="question_answering", max_seq_len=max_seq_len,
                                                max_query_length=max_query_length,
                                                doc_stride=doc_stride, num_processes=num_processes,

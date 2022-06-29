@@ -6,10 +6,10 @@ from haystack.document_stores import ElasticsearchDocumentStore
 from haystack.nodes import ElasticsearchRetriever
 
 
-class WECElasticsearchRetriever(ElasticsearchRetriever):
+class CoreSearchElasticsearchRetriever(ElasticsearchRetriever):
     def __init__(self, document_store: ElasticsearchDocumentStore, top_k: int = 10, custom_query: str = None):
-        super(WECElasticsearchRetriever, self).__init__(document_store=document_store, top_k=top_k,
-                                                        custom_query=custom_query)
+        super(CoreSearchElasticsearchRetriever, self).__init__(document_store=document_store, top_k=top_k,
+                                                               custom_query=custom_query)
     
     def retrieve(
             self,
