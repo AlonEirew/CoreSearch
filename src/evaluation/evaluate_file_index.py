@@ -8,9 +8,9 @@ from src.utils.dpr_utils import create_file_doc_store
 
 def main():
     index_file = "file_indexes/dev_spanbert_pooler_full_bm25_2it_top500.json"
-    passages_file = "data/resources/WEC-ES/Dev_all_passages.json"
-    queries_file = "data/resources/train/Dev_training_queries.json"
-    gold_cluster_file = "data/resources/WEC-ES/" + SPLIT + "_gold_clusters.json"
+    passages_file = "data/resources/CoreSearch/clean/Dev_all_passages.json"
+    queries_file = "data/resources/CoreSearch/train/Dev_queries.json"
+    gold_cluster_file = "data/resources/CoreSearch/clean/" + SPLIT + "_gold_clusters.json"
     top_k = 500
 
     query_examples: List[TrainExample] = io_utils.read_train_example_file(queries_file)

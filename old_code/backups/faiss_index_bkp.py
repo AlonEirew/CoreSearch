@@ -38,7 +38,7 @@ def faiss_orig_index(passages_file,
     document_store.delete_documents()
     print("Writing document to FAISS index (may take a while)..")
 
-    documents: List[Document] = io_utils.read_wec_to_haystack_doc_list(passages_file)
+    documents: List[Document] = io_utils.read_coresearch_to_haystack_doc_list(passages_file)
     document_store.write_documents(documents=documents)
     document_store.update_embeddings(retriever=retriever)
 
@@ -55,7 +55,7 @@ def faiss_mymodel_index(passages_file, sql_url, passage_model_file, max_seq_len_
 
     passage_tokenizer = BertTokenizer.from_pretrained(passage_model_file)
 
-    documents: List[Document] = io_utils.read_wec_to_haystack_doc_list(passages_file)
+    documents: List[Document] = io_utils.read_coresearch_to_haystack_doc_list(passages_file)
     doc_dict: Dict[str, Document] = {
         doc.id: doc for doc in documents
     }

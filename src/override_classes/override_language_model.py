@@ -34,10 +34,10 @@ class OverrideLanguageModel(LanguageModel, ABC):
             logger.info(f"Could not find {pretrained_model_name_or_path} locally.")
             logger.info(f"Looking on Transformers Model Hub (in local cache and online)...")
 
-            if language_model_class == "WECContextEncoder":
+            if language_model_class == "CoreSearchContextEncoder":
                 language_model = CoreSearchContextEncoder.load(pretrained_model_name_or_path,
                                                         use_auth_token=use_auth_token, **kwargs)
-            elif language_model_class == "WECQuestionEncoder":
+            elif language_model_class == "CoreSearchQuestionEncoder":
                 language_model = CoreSearchQuestionEncoder.load(pretrained_model_name_or_path,
                                                          use_auth_token=use_auth_token, **kwargs)
             else:

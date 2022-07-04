@@ -27,7 +27,7 @@ def load_elastic_bm25(index):
     return document_store, retriever
 
 
-def load_wec_elastic_bm25(index):
+def load_coresearch_elastic_bm25(index):
     document_store = CoreSearchElasticsearchDocumentStore(index=index)
     retriever = CoreSearchElasticsearchRetriever(document_store)
     return document_store, retriever
@@ -44,7 +44,7 @@ def elastic_index(index: str, documents: List[Document]):
 
 def main(input_file, index):
     print("Reading input file and converting to haystack documents class..")
-    documents = io_utils.read_wec_to_haystack_doc_list(input_file)
+    documents = io_utils.read_coresearch_to_haystack_doc_list(input_file)
     elastic_index(index, documents)
 
 

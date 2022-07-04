@@ -10,7 +10,7 @@ from src.data_obj import QueryResult, Passage, BasicMent
 logger = logging.getLogger(__name__)
 
 
-class WECPipeline(object):
+class CoreSearchPipeline(object):
     def __init__(self, document_store, retriever):
         self.document_store = document_store
         self.retriever = retriever
@@ -48,7 +48,7 @@ class WECPipeline(object):
         return predictions
 
 
-class RetrievalOnlyPipeline(WECPipeline):
+class RetrievalOnlyPipeline(CoreSearchPipeline):
     def __init__(self, document_store, retriever, ret_topk):
         super().__init__(document_store, retriever)
         self.ret_topk = ret_topk
@@ -72,7 +72,7 @@ class RetrievalOnlyPipeline(WECPipeline):
         return QueryResult(query, converted_list)
 
 
-class QAPipeline(WECPipeline):
+class QAPipeline(CoreSearchPipeline):
     def __init__(self, document_store, retriever, reader, ret_topk, read_topk):
         self.reader = reader
         self.ret_topk = ret_topk

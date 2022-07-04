@@ -13,6 +13,7 @@ Installation from the source. Python's virtual or Conda environments are recomme
 ```bash
 git clone https://github.com/AlonEirew/CoreSearch.git
 cd CoreSearch
+pip install -r requirements.txt
 pip install -e .
 ```
 
@@ -63,9 +64,9 @@ Information on parameters can be found in the top of `evaluate_retriever.py` scr
 
 ```bash
 python src/evaluation/evaluate_retriever.py \
-    --query_filename data/resources/WEC-ES/train/Dev_queries.json \
-    --passages_filename data/resources/WEC-ES/clean/Dev_all_passages.json \
-    --gold_cluster_filename=data/resources/WEC-ES/clean/Dev_gold_clusters.json \
+    --query_filename data/resources/CoreSearch/train/Dev_queries.json \
+    --passages_filename data/resources/CoreSearch/clean/Dev_all_passages.json \
+    --gold_cluster_filename=data/resources/CoreSearch/clean/Dev_gold_clusters.json \
     --query_model data/checkpoints/Retriever_SpanBERT_notoks_5it/0/query_encoder \
     --passage_model data/checkpoints/Retriever_SpanBERT_notoks_5it/0/passage_encoder \
     --out_index_file file_indexes/Dev_Retriever_spanbert_notoks_5it0_top500.json \
@@ -96,8 +97,8 @@ python src/pipeline/run_e2e_pipeline.py \
   --query_model data/checkpoints/Retriever_SpanBERT_5it/1/query_encoder \
   --passage_model data/checkpoints/Retriever_SpanBERT_5it/1/passage_encoder \
   --reader_model data/checkpoints/Reader-RoBERTa_base_Kenton_special/1 \
-  --query_filename data/resources/WEC-ES/train/Dev_queries.json \
-  --passages_filename data/resources/WEC-ES/clean/Dev_all_passages.json --gold_cluster_filename data/resources/WEC-ES/clean/Dev_gold_clusters.json --index_file file_indexes/Dev_Retriever_spanbert_5it1_top500.json --out_results_file results/Dev_Retriever_spanbert_5it1.txt --magnitude all
+  --query_filename data/resources/CoreSearch/train/Dev_queries.json \
+  --passages_filename data/resources/CoreSearch/clean/Dev_all_passages.json --gold_cluster_filename data/resources/WEC-ES/clean/Dev_gold_clusters.json --index_file file_indexes/Dev_Retriever_spanbert_5it1_top500.json --out_results_file results/Dev_Retriever_spanbert_5it1.txt --magnitude all
 ```
 
 ## Elastic Index for BM25 Retriever
@@ -115,7 +116,7 @@ docker run -d -p 9200:9200 -e "discovery.type=single-node" elasticsearch:7.9.2
 **After Index is up and running:**
 ```bash
 python src/index/elastic_index.py \
-  --input=data/resources/WEC-ES/clean/Train_all_passages.json \
+  --input=data/resources/CoreSearch/clean/Train_all_passages.json \
   --index=train
 ```
 
@@ -134,6 +135,6 @@ Generate SQuAD Files from CoreSearch files:<br/>
 3) Take the best model and generate TRAIN and TEST index (using above `evaluate_retriever.py` script)
 4) Generate Squad files using script -- `scripts/to_squad_format.py`
 5) Run **reader** training -- `src/train/train_reader.py`
-6) Run full pipeline on DEV set of retriever/reader -- `src/pipeline/run_haystack_pipeline.py`
+6) Run full pipeline on DEV set of retriever/reader -- `src/pipeline/run_e2e_pipeline.py`
 7) Run full pipeline with best model on TEST set
 

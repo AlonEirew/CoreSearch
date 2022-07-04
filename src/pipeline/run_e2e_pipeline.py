@@ -108,7 +108,7 @@ def main():
                               ret_topk=top_k_retriever,
                               read_topk=top_k_reader)
     elif predicting_head == "bm25":
-        document_store, retriever = elastic_index.load_wec_elastic_bm25(SPLIT.lower())
+        document_store, retriever = elastic_index.load_coresearch_elastic_bm25(SPLIT.lower())
         pipeline = RetrievalOnlyPipeline(document_store=document_store,
                                          retriever=retriever,
                                          ret_topk=top_k_retriever)
@@ -137,7 +137,6 @@ def predict_and_eval(pipeline, golds, query_examples, run_pipe_str, result_out_f
 def generate_query_text(passage_dict: Dict[str, Passage], query_examples: List[TrainExample], query_method: str = None, magnitude="all"):
     used_clusters = set()
     ret_queries = list()
-    logger.info("Using query style-" + query_method)
     for query in query_examples:
         if magnitude == "cluster" and query.goldChain in used_clusters:
             continue
@@ -145,6 +144,7 @@ def generate_query_text(passage_dict: Dict[str, Passage], query_examples: List[T
         used_clusters.add(query.goldChain)
         ret_queries.append(query)
         if query_method:
+            # logger.info("Using query style-" + query_method)
             if query_method == "bm25":
                 query.context = query.bm25_query.split(" ")
             else:

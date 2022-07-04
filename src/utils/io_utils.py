@@ -141,7 +141,7 @@ def load_checkpoint(path):
     return model, query_tokenizer, passage_tokenizer
 
 
-def read_wec_to_haystack_doc_list(passages_file: str) -> List[Document]:
+def read_coresearch_to_haystack_doc_list(passages_file: str) -> List[Document]:
     passage_dict = read_passages_file(passages_file)
     documents: List[Document] = []
     for passage in tqdm(passage_dict, desc="Converting passages"):

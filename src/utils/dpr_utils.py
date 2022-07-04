@@ -46,9 +46,9 @@ def create_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_clas
     return document_store, retriever
 
 
-def create_wec_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_classes,
-                         max_seq_len_query, max_seq_len_passage, batch_size, similarity, processor_type,
-                         add_special_tokens, faiss_index_factory_str):
+def create_coresearch_faiss_dpr(sql_rul, query_encode, passage_encode, infer_tokenizer_classes,
+                                max_seq_len_query, max_seq_len_passage, batch_size, similarity, processor_type,
+                                add_special_tokens, faiss_index_factory_str):
     document_store = create_default_faiss_doc_store(sql_rul, similarity, faiss_index_factory_str)
     retriever = CoreSearchDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                                 passage_embedding_model=passage_encode,
@@ -74,9 +74,9 @@ def load_faiss_dpr(faiss_file_path, faiss_config_file, query_encode, passage_enc
     return document_store, retriever
 
 
-def load_wec_faiss_dpr(result_file, passage_file, query_encode, passage_encode,
-                       infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size,
-                       processor_type, add_special_tokens):
+def load_coresearch_faiss_dpr(result_file, passage_file, query_encode, passage_encode,
+                              infer_tokenizer_classes, max_seq_len_query, max_seq_len_passage, batch_size,
+                              processor_type, add_special_tokens):
     document_store = create_file_doc_store(result_file, passage_file)
     retriever = CoreSearchDensePassageRetriever(document_store=document_store, query_embedding_model=query_encode,
                                                 passage_embedding_model=passage_encode,

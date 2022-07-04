@@ -37,7 +37,7 @@ class CoreSearchContextEncoder(DPRContextEncoder):
             setattr(self.model.config, "language", self.language)
             # For DPR models, transformers overwrites the model_type with the one set in DPRConfig
             # Therefore, we copy the model_type from the model config to DPRConfig
-            if self.__class__.__name__ == "WECQuestionEncoder" or self.__class__.__name__ == "WECContextEncoder":
+            if self.__class__.__name__ == "CoreSearchQuestionEncoder" or self.__class__.__name__ == "CoreSearchContextEncoder":
                 setattr(transformers.DPRConfig, "model_type", self.model.config.model_type)
             string = self.model.config.to_json_string()
             file.write(string)
@@ -94,7 +94,7 @@ class CoreSearchQuestionEncoder(DPRQuestionEncoder):
             setattr(self.model.config, "language", self.language)
             # For DPR models, transformers overwrites the model_type with the one set in DPRConfig
             # Therefore, we copy the model_type from the model config to DPRConfig
-            if self.__class__.__name__ == "WECQuestionEncoder" or self.__class__.__name__ == "WECContextEncoder":
+            if self.__class__.__name__ == "CoreSearchQuestionEncoder" or self.__class__.__name__ == "CoreSearchContextEncoder":
                 setattr(transformers.DPRConfig, "model_type", self.model.config.model_type)
             string = self.model.config.to_json_string()
             file.write(string)

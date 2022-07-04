@@ -36,8 +36,8 @@ from haystack.modeling.utils import set_all_seeds
 from tqdm import tqdm
 
 from src.data_obj import Passage, Feat, Cluster, QueryResult, TrainExample
-from src.override_classes.retriever.wec_context_processor import WECContextProcessor
-from src.override_classes.retriever.wec_dense import WECDensePassageRetriever
+from src.override_classes.retriever.search_context_processor import CoreSearchContextProcessor
+from src.override_classes.retriever.search_dense import CoreSearchDensePassageRetriever
 from src.pipeline.run_e2e_pipeline import generate_query_text, print_measurements
 from src.utils import io_utils, data_utils
 from src.utils.data_utils import generate_index_batches
@@ -67,13 +67,14 @@ def main():
     if num_processes <= 0:
         num_processes = multiprocessing.cpu_count()
 
-    model = WECDensePassageRetriever(document_store=None, query_embedding_model=query_model,
-                                     passage_embedding_model=passage_model,
-                                     infer_tokenizer_classes=True,
-                                     max_seq_len_query=max_seq_len_query, max_seq_len_passage=max_seq_len_passage,
-                                     batch_size=16, use_gpu=True, embed_title=False,
-                                     use_fast_tokenizers=False, processor_type=WECContextProcessor,
-                                     add_special_tokens=add_special_tokens)
+    model = CoreSearchDensePassageRetriever(document_store=None, query_embedding_model=query_model,
+                                            passage_embedding_model=passage_model,
+                                            infer_tokenizer_classes=True,
+                                            max_seq_len_query=max_seq_len_query,
+                                            max_seq_len_passage=max_seq_len_passage,
+                                            batch_size=16, use_gpu=True, embed_title=False,
+                                            use_fast_tokenizers=False, processor_type=CoreSearchContextProcessor,
+                                            add_special_tokens=add_special_tokens)
 
     golds: List[Cluster] = io_utils.read_gold_file(gold_cluster_filename)
     golds_arranged = data_utils.clusters_to_ids_list(gold_clusters=golds)
@@ -148,7 +149,7 @@ def run_top_pass(model, query: Feat, dev_passages_ids, all_dev_passages_encode, 
     all_predictions: List[Tuple[str, float]] = list()
     for batch_idx, pass_batch_encoded in enumerate(all_dev_passages_encode):
         batch_passage_ides = dev_passages_ids[batch_idx]
-        predictions = WECDensePassageRetriever.predict_pairwise_dot_product(query_encoded, pass_batch_encoded.cuda()).detach().cpu()
+        predictions = CoreSearchDensePassageRetriever.predict_pairwise_dot_product(query_encoded, pass_batch_encoded.cuda()).detach().cpu()
         for index in range(len(batch_passage_ides)):
             if batch_passage_ides[index] != query.feat_ref.id:
                 all_predictions.append((batch_passage_ides[index], predictions[index].item()))

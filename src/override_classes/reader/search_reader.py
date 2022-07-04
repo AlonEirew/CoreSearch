@@ -176,7 +176,7 @@ class CoreSearchReader(FARMReader):
         # 1. Create a DataProcessor that handles all the conversion from raw text into a pytorch Dataset
         # label_list = ["start_token", "end_token"]
         # metric = "squad"
-        # processor = WECSquadProcessor(
+        # processor = CoreSearchSquadProcessor(
         #     tokenizer=self.inferencer.processor.tokenizer,
         #     max_seq_len=max_seq_len,
         #     label_list=label_list,

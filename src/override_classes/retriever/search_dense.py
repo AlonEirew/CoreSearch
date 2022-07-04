@@ -94,7 +94,7 @@ class CoreSearchDensePassageRetriever(DensePassageRetriever):
             tokenizers_default_classes["passage"] = None  # type: ignore
 
         self.query_encoder = OverrideLanguageModel.load(pretrained_model_name_or_path=query_embedding_model,
-                                                        language_model_class="WECQuestionEncoder")
+                                                        language_model_class="CoreSearchQuestionEncoder")
 
         self.query_tokenizer = Tokenizer.load(pretrained_model_name_or_path=query_embedding_model,
                                               revision=model_version,
@@ -104,7 +104,7 @@ class CoreSearchDensePassageRetriever(DensePassageRetriever):
                                               use_auth_token=use_auth_token)
 
         self.passage_encoder = OverrideLanguageModel.load(pretrained_model_name_or_path=passage_embedding_model,
-                                                          language_model_class="WECContextEncoder")
+                                                          language_model_class="CoreSearchContextEncoder")
 
         self.passage_tokenizer = Tokenizer.load(pretrained_model_name_or_path=passage_embedding_model,
                                                 revision=model_version,

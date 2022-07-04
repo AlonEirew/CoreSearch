@@ -19,9 +19,9 @@ def main():
     es_index = SPLIT.lower()
     ret_top_k = 500
 
-    gold_cluster_file = "data/resources/WEC-ES/clean/" + SPLIT + "_gold_clusters.json"
-    queries_file = "data/resources/WEC-ES/train/" + SPLIT + "_queries.json"
-    # passages_file = "data/resources/WEC-ES/clean/" + SPLIT + "_all_passages.json"
+    gold_cluster_file = "data/resources/CoreSearch/clean/" + SPLIT + "_gold_clusters.json"
+    queries_file = "data/resources/CoreSearch/train/" + SPLIT + "_queries.json"
+    # passages_file = "data/resources/CoreSearch/clean/" + SPLIT + "_all_passages.json"
 
     result_out_file = "results/" + es_index + "_elastic_query_bm25.txt"
 
