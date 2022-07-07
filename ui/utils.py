@@ -7,14 +7,25 @@ from time import sleep
 
 import requests
 import streamlit as st
+from tqdm import tqdm
 
 
-API_ENDPOINT = os.getenv("API_ENDPOINT", "http://localhost:8081")
+API_ENDPOINT = os.getenv("API_ENDPOINT", "http://143.185.131.229:8081")
 STATUS = "initialized"
 HS_VERSION = "hs_version"
 DOC_REQUEST = "query"
 DOC_FEEDBACK = "feedback"
 DOC_UPLOAD = "file-upload"
+
+
+class Query(object):
+    def __init__(self, json_obj: Dict):
+        self.id = json_obj["id"]
+        self.goldChain = str(json_obj["goldChain"])
+        self.mention = json_obj["mention"]
+        self.startIndex = json_obj["startIndex"]
+        self.endIndex = json_obj["endIndex"]
+        self.context = json_obj["context"]
 
 
 def haystack_is_ready():
@@ -46,12 +57,18 @@ def query(query, filters={}, top_k_reader=5, top_k_retriever=5) -> Tuple[List[Di
     Returns both a ready-to-use representation of the results and the raw JSON.
     """
 
+    query_dict = dict()
+    query_dict["query"] = " ".join(query.context)
+    query_dict["query_mention"] = query.mention
+    query_dict["query_id"] = query.id
+    query_dict["start_index"] = query.startIndex
+    query_dict["end_index"] = query.endIndex
+    query_dict["query_coref_link"] = -1
+
     url = f"{API_ENDPOINT}/{DOC_REQUEST}"
-    print(query)
-    query_obj = json.loads(query)
-    print(json.dumps(query_obj))
-    params = {"filters": query_obj, "Retriever": {"top_k": top_k_retriever}, "Reader": {"top_k": top_k_reader}}
-    req = {"query": query, "params": params}
+    print(query_dict)
+    params = {"Retriever": {"top_k": top_k_retriever}, "Reader": {"top_k": top_k_reader}}
+    req = {"query": query_dict, "params": params}
     print(req)
 
     response_raw = requests.post(url, json=req)
@@ -67,12 +84,13 @@ def query(query, filters={}, top_k_reader=5, top_k_retriever=5) -> Tuple[List[Di
     results = []
     answers = response["answers"]
     for answer in answers:
+        ans_document = [doc for doc in response["documents"] if doc["id"] == answer["document_id"]][0]
         if answer.get("answer", None):
             results.append(
                 {
-                    "context": "..." + answer["context"] + "...",
+                    "context": ans_document["content"],
                     "answer": answer.get("answer", None),
-                    "source": answer["meta"]["name"],
+                    "source": answer["meta"]["goldChain"],
                     "relevance": round(answer["score"] * 100, 2),
                     "document": [doc for doc in response["documents"] if doc["id"] == answer["document_id"]][0],
                     "offset_start_in_doc": answer["offsets_in_document"][0]["start"],
@@ -126,3 +144,17 @@ def get_backlink(result) -> Tuple[Optional[str], Optional[str]]:
                     if doc["meta"].get("url", None) and doc["meta"].get("title", None):
                         return doc["meta"]["url"], doc["meta"]["title"]
     return None, None
+
+
+def load_json_file(json_file: str):
+    assert json_file
+    with open(json_file, "r") as fis:
+        return json.load(fis)
+
+
+def read_query_file(queries_file: str) -> List[Query]:
+    queries_json = load_json_file(queries_file)
+    queries = list()
+    for query_obj in tqdm(queries_json, desc="Reading queries"):
+        queries.append(Query(query_obj))
+    return queries

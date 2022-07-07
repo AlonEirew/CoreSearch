@@ -1,23 +1,24 @@
 import os
+import random
 import sys
 import logging
 from pathlib import Path
 from json import JSONDecodeError
+from typing import List
 
-import pandas as pd
 import streamlit as st
 from annotated_text import annotation
 from markdown import markdown
 
-from ui.utils import haystack_is_ready, query, send_feedback, upload_doc, haystack_version, get_backlink
+from ui.utils import haystack_is_ready, query, send_feedback, upload_doc, haystack_version, get_backlink, Query, read_query_file
 
 
 # Adjust to a question that you would like users to see in the search bar when they load the UI:
-DEFAULT_QUESTION_AT_STARTUP = os.getenv("DEFAULT_QUESTION_AT_STARTUP", "What's the capital of France?")
-DEFAULT_ANSWER_AT_STARTUP = os.getenv("DEFAULT_ANSWER_AT_STARTUP", "Paris")
+DEFAULT_QUESTION_AT_STARTUP = os.getenv("DEFAULT_QUESTION_AT_STARTUP", "")
+DEFAULT_ANSWER_AT_STARTUP = os.getenv("DEFAULT_ANSWER_AT_STARTUP", "")
 
 # Sliders
-DEFAULT_DOCS_FROM_RETRIEVER = int(os.getenv("DEFAULT_DOCS_FROM_RETRIEVER", "3"))
+DEFAULT_DOCS_FROM_RETRIEVER = int(os.getenv("DEFAULT_DOCS_FROM_RETRIEVER", "5"))
 DEFAULT_NUMBER_OF_ANSWERS = int(os.getenv("DEFAULT_NUMBER_OF_ANSWERS", "3"))
 
 # Labels for the evaluation
@@ -25,6 +26,8 @@ EVAL_LABELS = os.getenv("EVAL_FILE", str(Path(__file__).parent / "eval_labels_ex
 
 # Whether the file upload should be enabled or not
 DISABLE_FILE_UPLOAD = bool(os.getenv("DISABLE_FILE_UPLOAD"))
+
+QUERY_EXAMPLES: List[Query] = read_query_file("data/Dev_queries.json")
 
 
 def set_state_if_absent(key, value):
@@ -37,7 +40,7 @@ def main():
     st.set_page_config(page_title="Haystack Demo", page_icon="https://haystack.deepset.ai/img/HaystackIcon.png")
 
     # Persistent state
-    set_state_if_absent("question", DEFAULT_QUESTION_AT_STARTUP)
+    set_state_if_absent("question", QUERY_EXAMPLES[0])
     set_state_if_absent("answer", DEFAULT_ANSWER_AT_STARTUP)
     set_state_if_absent("results", None)
     set_state_if_absent("raw_json", None)
@@ -50,22 +53,19 @@ def main():
         st.session_state.raw_json = None
 
     # Title
-    st.write("# Haystack Demo - Explore the world")
-    st.markdown(
-        """
-This demo takes its data from a selection of Wikipedia pages crawled in November 2021 on the topic of
-
-<h3 style='text-align:center;padding: 0 0 1rem;'>Countries and capital cities</h3>
-
-Ask any question on this topic and see if Haystack can find the correct answer to your query!
-
-*Note: do not use keywords, but full-fledged questions.* The demo is not optimized to deal with keyword queries and might misunderstand you.
-""",
-        unsafe_allow_html=True,
-    )
+    st.write("# CoreSearch Demo")
+    st.write("## Search Wikipedia Events ")
 
     # Sidebar
     st.sidebar.header("Options")
+    top_k_retriever = st.sidebar.slider(
+        "Max. number of documents from retriever",
+        min_value=5,
+        max_value=50,
+        value=DEFAULT_DOCS_FROM_RETRIEVER,
+        step=1,
+        on_change=reset_results,
+    )
     top_k_reader = st.sidebar.slider(
         "Max. number of answers",
         min_value=1,
@@ -74,76 +74,21 @@ Ask any question on this topic and see if Haystack can find the correct answer t
         step=1,
         on_change=reset_results,
     )
-    top_k_retriever = st.sidebar.slider(
-        "Max. number of documents from retriever",
-        min_value=1,
-        max_value=10,
-        value=DEFAULT_DOCS_FROM_RETRIEVER,
-        step=1,
-        on_change=reset_results,
-    )
     eval_mode = st.sidebar.checkbox("Evaluation mode")
     debug = st.sidebar.checkbox("Show debug info")
 
-    # File upload block
-    if not DISABLE_FILE_UPLOAD:
-        st.sidebar.write("## File Upload:")
-        data_files = st.sidebar.file_uploader("", type=["pdf", "txt", "docx"], accept_multiple_files=True)
-        for data_file in data_files:
-            # Upload file
-            if data_file:
-                raw_json = upload_doc(data_file)
-                st.sidebar.write(str(data_file.name) + " &nbsp;&nbsp; ✅ ")
-                if debug:
-                    st.subheader("REST API JSON response")
-                    st.sidebar.write(raw_json)
-
-    hs_version = ""
-    try:
-        hs_version = f" <small>(v{haystack_version()})</small>"
-    except Exception:
-        pass
-
-    st.sidebar.markdown(
-        f"""
-    <style>
-        a {{
-            text-decoration: none;
-        }}
-        .haystack-footer {{
-            text-align: center;
-        }}
-        .haystack-footer h4 {{
-            margin: 0.1rem;
-            padding:0;
-        }}
-        footer {{
-            opacity: 0;
-        }}
-    </style>
-    <div class="haystack-footer">
-        <hr />
-        <h4>Built with <a href="https://www.deepset.ai/haystack">Haystack</a>{hs_version}</h4>
-        <p>Get it on <a href="https://github.com/deepset-ai/haystack/">GitHub</a> &nbsp;&nbsp; - &nbsp;&nbsp; Read the <a href="https://haystack.deepset.ai/overview/intro">Docs</a></p>
-        <small>Data crawled from <a href="https://en.wikipedia.org/wiki/Category:Lists_of_countries_by_continent">Wikipedia</a> in November 2021.<br />See the <a href="https://creativecommons.org/licenses/by-sa/3.0/">License</a> (CC BY-SA 3.0).</small>
-    </div>
-    """,
-        unsafe_allow_html=True,
-    )
-
-    # Load csv into pandas dataframe
-    try:
-        df = pd.read_csv(EVAL_LABELS, sep=";")
-    except Exception:
-        st.error(
-            f"The eval file was not found. Please check the demo's [README](https://github.com/deepset-ai/haystack/tree/master/ui/README.md) for more information."
-        )
-        sys.exit(
-            f"The eval file was not found under `{EVAL_LABELS}`. Please check the README (https://github.com/deepset-ai/haystack/tree/master/ui/README.md) for more information."
-        )
+    # Load queries
 
     # Search bar
-    question = st.text_input("", value=st.session_state.question, max_chars=100, on_change=reset_results)
+    query_obj = st.session_state.question
+    query_ment = " ".join(query_obj.mention)
+    # question = st.text_area("", value=query_text, on_change=reset_results)
+    st.write(f"**_Search Query (Coreference ID={str(query_obj.goldChain)}):_**")
+    st.write(
+        markdown(" ".join(query_obj.context[:query_obj.startIndex]) +
+                 str(annotation(query_ment, "MENT", "#808080")) + " ".join(query_obj.context[query_obj.endIndex + 1:])),
+        unsafe_allow_html=True,
+    )
     col1, col2 = st.columns(2)
     col1.markdown("<style>.stButton button {width:100%;}</style>", unsafe_allow_html=True)
     col2.markdown("<style>.stButton button {width:100%;}</style>", unsafe_allow_html=True)
@@ -151,46 +96,40 @@ Ask any question on this topic and see if Haystack can find the correct answer t
     # Run button
     run_pressed = col1.button("Run")
 
+    query_text = " ".join(query_obj.context)
     # Get next random question from the CSV
     if col2.button("Random question"):
         reset_results()
-        new_row = df.sample(1)
-        while (
-            new_row["Question Text"].values[0] == st.session_state.question
-        ):  # Avoid picking the same question twice (the change is not visible on the UI)
-            new_row = df.sample(1)
-        st.session_state.question = new_row["Question Text"].values[0]
-        st.session_state.answer = new_row["Answer"].values[0]
+        # new_row = df.sample(1)
+        st.session_state.question = random.choice(QUERY_EXAMPLES)
+        # st.session_state.answer = new_row["Answer"].values[0]
         st.session_state.random_question_requested = True
         # Re-runs the script setting the random question as the textbox value
         # Unfortunately necessary as the Random Question button is _below_ the textbox
-        raise st.script_runner.RerunException(st.script_request_queue.RerunData(None))
+        # raise st.scriptrunner.script_runner.RerunException(st.script_request_queue.RerunData(None))
+        st.experimental_rerun()
     st.session_state.random_question_requested = False
 
-    run_query = (
-        run_pressed or question != st.session_state.question
-    ) and not st.session_state.random_question_requested
+    run_query = run_pressed and not st.session_state.random_question_requested
 
     # Check the connection
-    with st.spinner("⌛️ &nbsp;&nbsp; Haystack is starting..."):
+    with st.spinner("⌛️ &nbsp;&nbsp; Starting..."):
         if not haystack_is_ready():
-            st.error("🚫 &nbsp;&nbsp; Connection Error. Is Haystack running?")
+            st.error("🚫 &nbsp;&nbsp; Connection Error.")
             run_query = False
             reset_results()
 
     # Get results for query
-    if run_query and question:
+    if run_query and query_obj:
         reset_results()
-        st.session_state.question = question
+        # st.session_state.question = question
 
         with st.spinner(
-            "🧠 &nbsp;&nbsp; Performing neural search on documents... \n "
-            "Do you want to optimize speed or accuracy? \n"
-            "Check out the docs: https://haystack.deepset.ai/usage/optimization "
+            "🧠 &nbsp;&nbsp; Performing neural search on documents..."
         ):
             try:
                 st.session_state.results, st.session_state.raw_json = query(
-                    question, top_k_reader=top_k_reader, top_k_retriever=top_k_retriever
+                    st.session_state.question, top_k_reader=top_k_reader, top_k_retriever=top_k_retriever
                 )
             except JSONDecodeError as je:
                 st.error("👓 &nbsp;&nbsp; An error occurred reading the results. Is the document store working?")
@@ -219,7 +158,7 @@ Ask any question on this topic and see if Haystack can find the correct answer t
                 end_idx = start_idx + len(answer)
                 # Hack due to this bug: https://github.com/streamlit/streamlit/issues/3190
                 st.write(
-                    markdown(context[:start_idx] + str(annotation(answer, "ANSWER", "#8ef")) + context[end_idx:]),
+                    markdown(context[:start_idx] + str(annotation(answer, "ANSWER", "#6a0dad")) + context[end_idx:]),
                     unsafe_allow_html=True,
                 )
                 source = ""
@@ -232,7 +171,7 @@ Ask any question on this topic and see if Haystack can find the correct answer t
 
             else:
                 st.info(
-                    "🤔 &nbsp;&nbsp; Haystack is unsure whether any of the documents contain an answer to your question. Try to reformulate it!"
+                    "🤔 &nbsp;&nbsp; No answer found"
                 )
                 st.write("**Relevance:** ", result["relevance"])
 

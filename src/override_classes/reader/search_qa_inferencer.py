@@ -109,12 +109,12 @@ class CoreSearchQAInferencer(QAInferencer):
             # override model predicting_head with pairwise head
             if replace_prediction_heads:
                 model = CoreSearchConverter.convert_from_transformers(model_name_or_path,
-                                                               revision=revision,
-                                                               device=devices[0],
-                                                               task_type=task_type,
-                                                               processor=None,
-                                                               use_auth_token=use_auth_token,
-                                                               **kwargs)
+                                                                      revision=revision,
+                                                                      device=devices[0],
+                                                                      task_type=task_type,
+                                                                      processor=None,
+                                                                      use_auth_token=use_auth_token,
+                                                                      **kwargs)
             else:
                 model = AdaptiveModel.convert_from_transformers(model_name_or_path,
                                                                 revision=revision,
@@ -126,16 +126,16 @@ class CoreSearchQAInferencer(QAInferencer):
             if prediction_head_str:
                 if prediction_head_str in ["dpr", "kenton"]:
                     processor = CoreSearchSquadProcessor.convert_from_transformers(model_name_or_path,
-                                                                            revision=revision,
-                                                                            task_type=task_type,
-                                                                            max_seq_len=max_seq_len,
-                                                                            max_query_length=max_query_length,
-                                                                            doc_stride=doc_stride,
-                                                                            tokenizer_class=tokenizer_class,
-                                                                            tokenizer_args=tokenizer_args,
-                                                                            use_fast=use_fast,
-                                                                            add_special_tokens=add_special_tokens,
-                                                                            **kwargs)
+                                                                                   revision=revision,
+                                                                                   task_type=task_type,
+                                                                                   max_seq_len=max_seq_len,
+                                                                                   max_query_length=max_query_length,
+                                                                                   doc_stride=doc_stride,
+                                                                                   tokenizer_class=tokenizer_class,
+                                                                                   tokenizer_args=tokenizer_args,
+                                                                                   use_fast=use_fast,
+                                                                                   add_special_tokens=add_special_tokens,
+                                                                                   **kwargs)
                 elif prediction_head_str == "corefqa":
                     processor = CorefQASquadProcessor.convert_from_transformers(model_name_or_path,
                                                                                 revision=revision,

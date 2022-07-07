@@ -87,6 +87,11 @@ class QAPipeline(CoreSearchPipeline):
             query=query_text, params={"Retriever": {"top_k": self.ret_topk}, "Reader": {"top_k": self.read_topk}}
         )
 
+    def run(self, query, params, debug):
+        return self.pipeline.run(
+            query=query, params=params, debug=debug
+        )
+
     def extract_results(self, query: BasicMent, results: Dict) -> QueryResult:
         converted_list = list()
         for result in results["answers"]:
