@@ -23,8 +23,7 @@ from haystack.modeling.data_handler.data_silo import DataSilo
 from haystack.modeling.data_handler.dataloader import NamedDataLoader
 from haystack.modeling.model.optimization import initialize_optimizer
 from haystack.modeling.training.base import Trainer
-from haystack.modeling.utils import initialize_device_settings
-
+from haystack.modeling.utils import initialize_device_settings, set_all_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -232,6 +231,7 @@ class DensePassageRetriever(BaseRetriever):
                     "external_id": '19930582'}, ...]
         :return: dictionary of embeddings for "passages" and "query"
         """
+        logger.info(f"Converting data using processor-{type(self.processor).__name__}")
         dataset, tensor_names, _, baskets = self.processor.dataset_from_dicts(
             dicts, indices=[i for i in range(len(dicts))], return_baskets=True
         )
@@ -415,6 +415,8 @@ class DensePassageRetriever(BaseRetriever):
             device=self.devices[0], # Only use first device while multi-gpu training is not implemented
             use_amp=use_amp
         )
+
+        set_all_seeds(42)
 
         # 7. Let it grow! Watch the tracked metrics live on the public mlflow server: https://public-mlflow.deepset.ai
         trainer.train(self, save_dir)

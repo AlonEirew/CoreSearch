@@ -11,6 +11,9 @@ from rest_api.controller.errors.http_error import http_error_handler
 app = None
 pipelines = None
 
+# Retriever models types
+DENSE = "Dense (DPR)"
+SPARSE = "Sparse (MB25)"
 
 def get_app() -> FastAPI:
     """

@@ -203,7 +203,7 @@ class FAISSDocumentStore(SQLDocumentStore):
         return index
 
     def write_documents(self, documents: Union[List[dict], List[Document]], index: Optional[str] = None,
-                        batch_size: int = 10_000, duplicate_documents: Optional[str] = None,
+                        batch_size: int = 100_000, duplicate_documents: Optional[str] = None,
                         headers: Optional[Dict[str, str]] = None) -> None:
         """
         Add new documents to the DocumentStore.
@@ -273,6 +273,7 @@ class FAISSDocumentStore(SQLDocumentStore):
                                                                 duplicate_documents=duplicate_documents)
                     progress_bar.update(batch_size)
             progress_bar.close()
+
     def _create_document_field_map(self) -> Dict:
         return {
             self.index: self.embedding_field,

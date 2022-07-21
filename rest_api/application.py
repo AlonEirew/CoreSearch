@@ -1,14 +1,24 @@
+import uvicorn
+
+from fastapi.logger import logger as fastapi_logger
+from rest_api.utils import get_app, get_pipelines
 import logging
 
-import uvicorn
-from rest_api.utils import get_app, get_pipelines
+gunicorn_error_logger = logging.getLogger("gunicorn.error")
+gunicorn_logger = logging.getLogger("gunicorn")
+uvicorn_access_logger = logging.getLogger("uvicorn.access")
+uvicorn_access_logger.handlers = gunicorn_error_logger.handlers
 
+fastapi_logger.handlers = gunicorn_error_logger.handlers
+logging.handlers = gunicorn_error_logger.handlers
 
-logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+if __name__ != "__main__":
+    fastapi_logger.setLevel(gunicorn_logger.level)
+else:
+    fastapi_logger.setLevel(logging.DEBUG)
+
 logger = logging.getLogger(__name__)
-logging.getLogger("elasticsearch").setLevel(logging.WARNING)
-logging.getLogger("haystack").setLevel(logging.INFO)
-
+logger.setLevel(logging.DEBUG)
 
 app = get_app()
 pipelines = get_pipelines()  # Unused here, called to init the pipelines early
@@ -24,4 +34,8 @@ logger.info(
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8081)
+    # logging.basicConfig(format="%(asctime)s %(message)s", datefmt="%m/%d/%Y %I:%M:%S %p")
+    # gunicorn_logger = logging.getLogger('gunicorn.error')
+    # logger.handlers = gunicorn_logger.handlers
+    # logger.setLevel(gunicorn_logger.level)
+    uvicorn.run(app, host="0.0.0.0", port=8081, debug=True)

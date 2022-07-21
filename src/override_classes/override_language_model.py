@@ -9,6 +9,7 @@ from haystack.modeling.model.language_model import LanguageModel
 from src.override_classes.retriever.search_encoders import CoreSearchContextEncoder, CoreSearchQuestionEncoder
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class OverrideLanguageModel(LanguageModel, ABC):

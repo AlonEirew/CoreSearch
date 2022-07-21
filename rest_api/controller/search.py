@@ -10,21 +10,22 @@ from fastapi import FastAPI, APIRouter
 import haystack
 from haystack import Pipeline
 
-from rest_api.utils import get_app, get_pipelines
-from rest_api.config import LOG_LEVEL
+from rest_api.utils import get_app, get_pipelines, DENSE, SPARSE
 from rest_api.schema import QueryRequest, QueryResponse
 
 
-logging.getLogger("haystack").setLevel(LOG_LEVEL)
-logger = logging.getLogger("haystack")
-
+#logging.getLogger("haystack")
+# logging.getLogger(__name__).setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 BaseConfig.arbitrary_types_allowed = True
 
 
 router = APIRouter()
 app: FastAPI = get_app()
-query_pipeline: Pipeline = get_pipelines().get("query_pipeline", None)
+dense_pipeline: Pipeline = get_pipelines().get("dense_pipeline", None)
+sparse_pipeline: Pipeline = get_pipelines().get("sparse_pipeline", None)
 concurrency_limiter = get_pipelines().get("concurrency_limiter", None)
 
 
@@ -45,7 +46,8 @@ def haystack_version():
     """
     Get the running Haystack version.
     """
-    return {"hs_version": haystack.__version__}
+    docs_count = sparse_pipeline.get_document_store().get_document_count()
+    return {"hs_version": haystack.__version__, "total_docs": docs_count}
 
 
 @router.post("/query", response_model=QueryResponse, response_model_exclude_none=True)
@@ -54,8 +56,18 @@ def query(request: QueryRequest):
     This endpoint receives the question as a string and allows the requester to set
     additional parameters that will be passed on to the Haystack pipeline.
     """
+    logger.info(f"Got query to process-{request.query}")
+    req_query = request.query
+    ret_model = req_query["model"]
+    if ret_model == DENSE:
+        pipeline = dense_pipeline
+    elif ret_model == SPARSE:
+        pipeline = sparse_pipeline
+    else:
+        raise ValueError(f"No supported retriever model for {ret_model}")
+
     with concurrency_limiter.run():
-        result = _process_request(query_pipeline, request)
+        result = _process_request(pipeline, request)
         return result
 
 

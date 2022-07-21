@@ -707,10 +707,18 @@ class FARMReader(BaseReader):
         # convert input to FARM format
         inputs = []
         for doc in documents:
-            cur = QAInput(doc_text=doc.content,
-                          questions=Question(text=query,
-                                             uid=doc.id),
-                          title=doc.meta['goldChain'])
+            if 'goldChain' in doc.meta:
+                cur = QAInput(doc_text=doc.content,
+                              questions=Question(text=query, uid=doc.id),
+                              title=doc.meta['goldChain'])
+            elif 'title' in doc.meta:
+                cur = QAInput(doc_text=doc.content,
+                              questions=Question(text=query, uid=doc.id),
+                              title=doc.meta['title'])
+            else:
+                cur = QAInput(doc_text=doc.content,
+                              questions=Question(text=query, uid=doc.id),
+                              title="NA")
             inputs.append(cur)
 
         # get answers from QA model

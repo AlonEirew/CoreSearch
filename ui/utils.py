@@ -9,7 +9,6 @@ import requests
 import streamlit as st
 from tqdm import tqdm
 
-
 API_ENDPOINT = os.getenv("API_ENDPOINT", "http://143.185.131.229:8081")
 STATUS = "initialized"
 HS_VERSION = "hs_version"
@@ -17,15 +16,20 @@ DOC_REQUEST = "query"
 DOC_FEEDBACK = "feedback"
 DOC_UPLOAD = "file-upload"
 
+# Retriever models types
+DENSE = "Dense (DPR)"
+SPARSE = "Sparse (MB25)"
+
 
 class Query(object):
-    def __init__(self, json_obj: Dict):
-        self.id = json_obj["id"]
-        self.goldChain = str(json_obj["goldChain"])
-        self.mention = json_obj["mention"]
-        self.startIndex = json_obj["startIndex"]
-        self.endIndex = json_obj["endIndex"]
-        self.context = json_obj["context"]
+    def __init__(self, json_obj: Dict = None):
+        if json_obj:
+            self.id = json_obj["id"]
+            self.goldChain = str(json_obj["goldChain"])
+            self.mention = json_obj["mention"]
+            self.startIndex = json_obj["startIndex"]
+            self.endIndex = json_obj["endIndex"]
+            self.context = json_obj["context"]
 
 
 def haystack_is_ready():
@@ -48,10 +52,10 @@ def haystack_version():
     Get the Haystack version from the REST API
     """
     url = f"{API_ENDPOINT}/{HS_VERSION}"
-    return requests.get(url, timeout=0.1).json()["hs_version"]
+    return requests.get(url, timeout=0.1).json()
 
 
-def query(query, filters={}, top_k_reader=5, top_k_retriever=5) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
+def query(query, filters={}, top_k_reader=5, top_k_retriever=5, retriever_model=DENSE) -> Tuple[List[Dict[str, Any]], Dict[str, str]]:
     """
     Send a query to the REST API and parse the answer.
     Returns both a ready-to-use representation of the results and the raw JSON.
@@ -64,6 +68,7 @@ def query(query, filters={}, top_k_reader=5, top_k_retriever=5) -> Tuple[List[Di
     query_dict["start_index"] = query.startIndex
     query_dict["end_index"] = query.endIndex
     query_dict["query_coref_link"] = -1
+    query_dict["model"] = retriever_model
 
     url = f"{API_ENDPOINT}/{DOC_REQUEST}"
     print(query_dict)
@@ -90,7 +95,7 @@ def query(query, filters={}, top_k_reader=5, top_k_retriever=5) -> Tuple[List[Di
                 {
                     "context": ans_document["content"],
                     "answer": answer.get("answer", None),
-                    "source": answer["meta"]["goldChain"],
+                    "source": answer["meta"]["title"],
                     "relevance": round(answer["score"] * 100, 2),
                     "document": [doc for doc in response["documents"] if doc["id"] == answer["document_id"]][0],
                     "offset_start_in_doc": answer["offsets_in_document"][0]["start"],

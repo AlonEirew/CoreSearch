@@ -67,7 +67,7 @@ class CreateLabelSerialized(BaseModel):
 
 
 class QueryResponse(BaseModel):
-    query: str
+    query: Dict
     answers: List[AnswerSerialized] = []
     documents: List[DocumentSerialized] = []
     debug: Optional[Dict] = Field(None, alias="_debug")

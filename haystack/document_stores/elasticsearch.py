@@ -134,7 +134,7 @@ class ElasticsearchDocumentStore(BaseDocumentStore):
 
         self.client = self._init_elastic_client(host=host, port=port, username=username, password=password,
                                            api_key=api_key, api_key_id=api_key_id, aws4auth=aws4auth, scheme=scheme,
-                                           ca_certs=ca_certs, verify_certs=verify_certs,timeout=timeout)
+                                           ca_certs=ca_certs, verify_certs=verify_certs, timeout=timeout)
 
         # configure mappings to ES fields that will be used for querying / displaying results
         if type(search_fields) == str:
@@ -175,7 +175,6 @@ class ElasticsearchDocumentStore(BaseDocumentStore):
 
         self.duplicate_documents = duplicate_documents
         self.refresh_type = refresh_type
-
 
     def _init_elastic_client(self,
                              host: Union[str, List[str]],

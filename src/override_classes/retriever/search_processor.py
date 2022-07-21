@@ -12,6 +12,8 @@ from tqdm import tqdm
 from src.data_obj import TrainExample, QueryFeat, Passage, PassageFeat
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 QUERY_SPAN_START = "[QSPAN_START]"
 QUERY_SPAN_END = "[QSPAN_END]"
 

@@ -10,6 +10,7 @@ from src.override_classes.reader.corefqa_head import CorefQuestionAnsweringHead
 from src.override_classes.reader.dpr_head import DPRQuestionAnsweringHead
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class CoreSearchConverter:

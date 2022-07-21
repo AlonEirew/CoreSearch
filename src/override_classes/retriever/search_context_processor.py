@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import List, Tuple
 
@@ -7,6 +8,7 @@ from src.override_classes.retriever.search_processor import CoreSearchSimilarity
     QUERY_SPAN_END
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class CoreSearchContextProcessor(CoreSearchSimilarityProcessor):
@@ -81,7 +83,7 @@ class CoreSearchContextProcessor(CoreSearchSimilarityProcessor):
                     [s.strip('##') for s in
                      query_tokenized[query_feat.query_event_start + 1:query_feat.query_event_end]])
                 if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_obj.id}")
+                    logger.warning(f"Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_obj.id}")
         else:
             assert query_feat.input_ids[
                    query_feat.query_event_start:query_feat.query_event_end + 1] == self.query_tokenizer.convert_tokens_to_ids(
@@ -94,13 +96,15 @@ class CoreSearchContextProcessor(CoreSearchSimilarityProcessor):
                 ]).lower()
 
                 if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower})")
+                    logger.warning(f"Query ({query_lower}) != tokenized query ({token_query_lower})")
 
     def tokenize_query(self, query_obj: TrainExample, max_query_length_exclude: int):
         query_tokenized = list()
         query_event_start_ind = query_event_end_ind = 0
         if self.add_special_tokens and QUERY_SPAN_END not in query_obj.context and QUERY_SPAN_START not in query_obj.context:
             self.add_query_bound(query_obj)
+            # logger.info(f"Boundary tokens added, query after-{' '.join(query_obj.context)}")
+
         for index, word in enumerate(query_obj.context):
             query_tokenized.extend(self.query_tokenizer.tokenize(word))
             if self.add_special_tokens:

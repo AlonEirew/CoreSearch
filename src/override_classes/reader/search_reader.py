@@ -14,6 +14,7 @@ from src.override_classes.reader.search_qa_inferencer import CoreSearchQAInferen
 from src.override_classes.retriever.search_processor import QUERY_SPAN_START, QUERY_SPAN_END
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class CoreSearchReader(FARMReader):

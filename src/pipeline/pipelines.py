@@ -8,6 +8,7 @@ from tqdm import tqdm
 from src.data_obj import QueryResult, Passage, BasicMent
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class CoreSearchPipeline(object):
@@ -24,6 +25,12 @@ class CoreSearchPipeline(object):
 
     def extract_results(self, query: BasicMent, result: Dict) -> QueryResult:
         raise NotImplementedError
+
+    def get_document_store(self):
+        return self.document_store
+
+    def get_embedding_count(self, index):
+        return self.pipeline.get_document_store().get_embedding_count(index)
 
     def run_end_to_end(self, query_examples: List[BasicMent], query_as_dict: bool = True) -> List[QueryResult]:
         predictions = list()
@@ -44,7 +51,7 @@ class CoreSearchPipeline(object):
                 query_result = self.extract_results(query, results)
                 predictions.append(query_result)
             except TypeError:
-                print("Got Error:" + json.dumps(query_examples))
+                logger.error(json.dumps(query_examples))
         return predictions
 
 

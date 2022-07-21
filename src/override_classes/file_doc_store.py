@@ -24,6 +24,9 @@ class FileDocStore(BaseDocumentStore, ABC):
                 documents.append(self.convert_to_document(result))
         return documents[:top_k]
 
+    def get_embedding_count(self, index):
+        return -1
+
     def get_passages_passages(self, query_id: str, top_k: int) -> List[Passage]:
         result_passages: List[Dict] = self.results_dict[query_id]
         top_k = len(result_passages) if top_k > len(result_passages) else top_k

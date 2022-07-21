@@ -7,6 +7,7 @@ from src.data_obj import TrainExample, QueryFeat
 from src.override_classes.retriever.search_processor import CoreSearchSimilarityProcessor
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class CoreSearchBM25Processor(CoreSearchSimilarityProcessor):

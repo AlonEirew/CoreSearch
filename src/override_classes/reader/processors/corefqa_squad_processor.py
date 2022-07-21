@@ -12,6 +12,7 @@ from haystack.modeling.model.tokenization import Tokenizer, _get_start_of_word_Q
 from src.override_classes.retriever.search_processor import QUERY_SPAN_END, QUERY_SPAN_START
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class CorefQASquadProcessor(SquadProcessor):
@@ -374,8 +375,8 @@ class CorefQASquadProcessor(SquadProcessor):
                             [s.strip('Ġ').lower() for s in
                              self.tokenizer.convert_ids_to_tokens(passage_input_ids[start_idx:end_idx])])
                         if answer_text != token_answer_lower:
-                            print(
-                                f"WARNING:Answer ({answer_text}) != tokenized answer ({token_answer_lower}), "
+                            logger.warning(
+                                f"Answer ({answer_text}) != tokenized answer ({token_answer_lower}), "
                                 f"ID={basket.raw['query_id']}")
 
                 # TODO possibly remove these checks after input validation is in place
@@ -514,7 +515,7 @@ class CorefQASquadProcessor(SquadProcessor):
                         query_feat["input_ids"][ment_start:ment_end + 1])
                 ])
                 if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
+                    logger.warning(f"Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
         else:
             # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
             if query_mention:
@@ -525,7 +526,7 @@ class CorefQASquadProcessor(SquadProcessor):
                 ])
 
                 if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
+                    logger.warning(f"Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
 
     @staticmethod
     def add_query_bound(query_ctx: List[str], start_index: int, end_index: int):

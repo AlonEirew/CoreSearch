@@ -12,6 +12,7 @@ from haystack.modeling.model.tokenization import Tokenizer, _get_start_of_word_Q
 from src.override_classes.retriever.search_processor import QUERY_SPAN_END, QUERY_SPAN_START
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class CoreSearchSquadProcessor(SquadProcessor):
@@ -134,7 +135,11 @@ class CoreSearchSquadProcessor(SquadProcessor):
             start_of_words_batch.append(_get_start_of_word_QA(e.words))
 
         for i_doc, d in enumerate(pre_baskets):
-            doc_coref_link = int(d["title"])
+            try:
+                doc_coref_link = int(d["title"])
+            except ValueError:
+                doc_coref_link = d["title"]
+
             document_text = d["context"]
             # # Tokenize questions one by one
             for i_q, q in enumerate(d["qas"]):
@@ -503,7 +508,7 @@ class CoreSearchSquadProcessor(SquadProcessor):
                         query_feat["input_ids"][ment_start:ment_end + 1])
                 ])
                 if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
+                    logger.warning(f"Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
         else:
             # Assert that mention is equal to the tokenized mention (i.e., mention span is currect)
             if query_mention:
@@ -514,7 +519,7 @@ class CoreSearchSquadProcessor(SquadProcessor):
                 ])
 
                 if query_lower != token_query_lower:
-                    print(f"WARNING:Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
+                    logger.warning(f"Query ({query_lower}) != tokenized query ({token_query_lower}), ID={query_id}")
 
     @staticmethod
     def add_query_bound(query_ctx: List[str], start_index: int, end_index: int):

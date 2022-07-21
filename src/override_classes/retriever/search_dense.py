@@ -13,11 +13,12 @@ from haystack.modeling.utils import initialize_device_settings
 from haystack.nodes import DensePassageRetriever
 from torch.nn import DataParallel
 
+from src.override_classes.file_doc_store import FileDocStore
 from src.override_classes.override_language_model import OverrideLanguageModel
 from src.override_classes.retriever.search_processor import CoreSearchSimilarityProcessor
 
 logger = logging.getLogger(__name__)
-logger.setLevel(level=logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 class CoreSearchDensePassageRetriever(DensePassageRetriever):
@@ -155,11 +156,17 @@ class CoreSearchDensePassageRetriever(DensePassageRetriever):
         if isinstance(query, str):
             query = json.loads(query)
 
-        documents = self.document_store.get_passages(query_id=query["query_id"], top_k=top_k)
-        # query_emb = self.embed_queries(texts=[query])
-        # documents = self.document_store.query_by_embedding(query_emb=query_emb[0], top_k=top_k, filters=filters,
-        #                                                    index=index, headers=headers)
-        return documents
+        logger.info(f"Retrieving results for query-{json.dumps(query)}")
+        # adding 1 to top-k in case one of the returned results is the same as query and need to be removed
+        if isinstance(self.document_store, FileDocStore):
+            documents = self.document_store.get_passages(query_id=query["query_id"], top_k=top_k+1)
+        else:
+            query_emb = self.embed_queries(texts=[query])
+            documents = self.document_store.query_by_embedding(query_emb=query_emb[0], top_k=top_k+1, filters=filters,
+                                                               index=index, headers=headers)
+
+        documents = [doc for doc in documents if not doc.id == query['query_id']]
+        return documents[:top_k]
 
     @staticmethod
     def predict_pairwise_cosine(query_rep, passage_rep):

@@ -15,6 +15,7 @@ from haystack.modeling.model.predictions import QACandidate, QAPred
 from haystack.modeling.utils import try_get
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class CorefQuestionAnsweringHead(PredictionHead):
