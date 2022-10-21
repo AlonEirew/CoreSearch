@@ -22,7 +22,7 @@ Training retriever moder require the CoreSearch data in DPR format.
 Full argument description is available in the top of `train_retriever.py` script. 
 ```bash
 python src/train/train_retriever.py \
-    --doc_dir data/resources/dpr/context/ \
+    --doc_dir data/resources/dpr/ \
     --train_filename Train.json \
     --dev_filename Dev.json \
     --checkpoint_dir data/checkpoints/ \
@@ -42,7 +42,7 @@ Training reader moder require the CoreSearch data in SQuAD format.
 Full argument description is available in the top of `train_reader.py` script.
 ```bash
 python src/train/train_reader.py \
-    --doc_dir data/resources/squad/context \ 
+    --doc_dir data/resources/squad/ \ 
     --train_filename Train_squad_format_1pos_23neg.json \ 
     --dev_filename Dev_squad_format_1pos_23neg.json \ 
     --checkpoint_dir data/checkpoints/ \ 
@@ -64,9 +64,9 @@ Information on parameters can be found in the top of `evaluate_retriever.py` scr
 
 ```bash
 python src/evaluation/evaluate_retriever.py \
-    --query_filename data/resources/CoreSearch/train/Dev_queries.json \
-    --passages_filename data/resources/CoreSearch/clean/Dev_all_passages.json \
-    --gold_cluster_filename=data/resources/CoreSearch/clean/Dev_gold_clusters.json \
+    --query_filename data/resources/train/Dev_queries.json \
+    --passages_filename data/resources/clean/Dev_all_passages.json \
+    --gold_cluster_filename=data/resources/clean/Dev_gold_clusters.json \
     --query_model data/checkpoints/Retriever_SpanBERT_notoks_5it/0/query_encoder \
     --passage_model data/checkpoints/Retriever_SpanBERT_notoks_5it/0/passage_encoder \
     --out_index_file file_indexes/Dev_Retriever_spanbert_notoks_5it0_top500.json \
@@ -110,13 +110,13 @@ In case given index already exists, it will be deleted by this process and recre
 **_Prerequisite:_** Pulling elastic image and running it:
 ```bash
 docker pull docker.elastic.co/elasticsearch/elasticsearch:7.9.2
-docker run -d -p 9200:9200 -e "discovery.type=single-node" elasticsearch:7.9.2
+docker run -d -p 9200:9200 -e "discovery.type=single-node" docker.elastic.co/elasticsearch/elasticsearch:7.9.2
 ```
-    
+
 **After Index is up and running:**
 ```bash
 python src/index/elastic_index.py \
-  --input=data/resources/CoreSearch/clean/Train_all_passages.json \
+  --input=data/resources/clean/Train_all_passages.json \
   --index=train
 ```
 
@@ -138,3 +138,4 @@ Generate SQuAD Files from CoreSearch files:<br/>
 6) Run full pipeline on DEV set of retriever/reader -- `src/pipeline/run_e2e_pipeline.py`
 7) Run full pipeline with best model on TEST set
 
+## Run RestAPI
