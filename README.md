@@ -23,12 +23,12 @@ https://huggingface.co/datasets/Intel/CoreSearch </br>
 Then place them under the data/resources folder in the root directory
 
 
-## Download Paper Models
+## Download Already Trained Models
 Below links to models trained on the CoreSearch dataset. </br>
 * Link to CoreSearch retriever model: [retriever](https://huggingface.co/Intel/coresearch-retriever-spanbert)
 * Link to CoreSearch reader model: [reader](https://huggingface.co/Intel/coresearch-reader-roberta)
 
-## Training CoreSearch Models
+## Training Own CoreSearch Models
 ### Retriever training
 Training retriever moder require the CoreSearch data in DPR format.
 Full argument description is available in the top of `train_retriever.py` script. 
@@ -151,4 +151,22 @@ Generate SQuAD Files from CoreSearch files:<br/>
 6) Run full pipeline on DEV set of retriever/reader -- `src/pipeline/run_e2e_pipeline.py`
 7) Run full pipeline with best model on TEST set
 
-[//]: # (## Run RestAPI)
+[//]: # (## Run Demo)
+
+[//]: # (1&#41; Running the Elasticsearch index: </br>)
+
+[//]: # (`#>sudo docker run -d -p 9200:9200 -e "discovery.type=single-node" elasticsearch:7.9.2`)
+
+[//]: # (2&#41; Create elasticsearch index &#40;using BM25 + ElasticSearch or Faiss&#41;)
+
+[//]: # (`#>python src/index/elastic_wiki_index.py --input=../WikipediaToElastic-1.0/file_index --index=wiki`)
+
+[//]: # (3&#41; Running the Rest API Server: </br>)
+
+[//]: # (   * Login to the server and run the Rest API inside a screen instance: )
+
+[//]: # (`#>CUDA_VISIBLE_DEVICES=0 gunicorn --access-logfile - rest_api.application:app -b 0.0.0.0:8081 -k uvicorn.workers.UvicornWorker -t 300`)
+
+[//]: # (5&#41; Running the client: </br>)
+
+[//]: # (   )

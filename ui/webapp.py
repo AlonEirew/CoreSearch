@@ -26,8 +26,8 @@ EVAL_LABELS = os.getenv("EVAL_FILE", str(Path(__file__).parent / "eval_labels_ex
 # Whether the file upload should be enabled or not
 DISABLE_FILE_UPLOAD = bool(os.getenv("DISABLE_FILE_UPLOAD"))
 
-QUERY_EXAMPLES: List[Query] = read_query_file("data/Dev_queries.json")
-QUERY_EXAMPLES.extend(read_query_file("data/Test_queries.json"))
+QUERY_EXAMPLES: List[Query] = read_query_file("data/examples.json")
+# QUERY_EXAMPLES.extend(read_query_file("data/Test_queries.json"))
 
 
 def set_state_if_absent(key, value):
@@ -58,26 +58,26 @@ def main():
 
     # Title
     st.write("# CoreSearch Demo")
-    st.write(markdown('This Demo illustrate an noval event<sup>\*</sup> coreference<sup>\*\*</sup> search application'
-                      ' in a very large document collection. The input to the model is a paragraph where the event '
-                      'of interest is highlighted.'), unsafe_allow_html=True)
-    st.write(markdown('<sup>\*</sup>Event is a word or phrase which denote an activity. Events occur in a specific time and place, '
-             'and usually involve participants (event examples: "earthquake", "accident", "game", "conference", '
-             '"shooting", etc...)'), unsafe_allow_html=True)
-    st.write(markdown(
-        '<sup>\*\*</sup>Coreferring relation between events, indicate if two mentions of an event '
-        'refers to the same underline event. (for examples, the event in the sentence "In April 2010, an **_earthquake_** originated in the Yushu Tibetan"'
-        ' and the event in the sentence "after the 2010 Yushu **tremor** destroyed the old school..", refers to the same earthquake event '
-        'and therefor they corefere. However the earthquake event in the sentence - "The 2010 Chile **earthquake** and '
-        'tsunami occurred off the coast of central Chile on Saturday" referes to a different event, and therefor do not corefere'), unsafe_allow_html=True)
+    # st.write(markdown('This Demo illustrate an noval event<sup>\*</sup> coreference<sup>\*\*</sup> search application'
+    #                   ' in a very large document collection. The input to the model is a paragraph where the event '
+    #                   'of interest is highlighted.'), unsafe_allow_html=True)
+    # st.write(markdown('<sup>\*</sup>Event is a word or phrase which denote an activity. Events occur in a specific time and place, '
+    #          'and usually involve participants (event examples: "earthquake", "accident", "game", "conference", '
+    #          '"shooting", etc...)'), unsafe_allow_html=True)
+    # st.write(markdown(
+    #     '<sup>\*\*</sup>Coreferring relation between events, indicate if two mentions of an event '
+    #     'refers to the same underline event. (for examples, the event in the sentence "In April 2010, an **_earthquake_** originated in the Yushu Tibetan"'
+    #     ' and the event in the sentence "after the 2010 Yushu **tremor** destroyed the old school..", refers to the same earthquake event '
+    #     'and therefor they corefere. However the earthquake event in the sentence - "The 2010 Chile **earthquake** and '
+    #     'tsunami occurred off the coast of central Chile on Saturday" referes to a different event, and therefor do not corefere'), unsafe_allow_html=True)
 
-    st.write("## Search Wikipedia Events ")
+    st.write("## Event Centric Search ")
 
     hs_ver = haystack_version()
 
     # Sidebar
     st.sidebar.header("Options")
-    select_ret = st.sidebar.radio(label="Retriever model for selecting top documents", options=[DENSE, SPARSE], index=1, on_change=reset_results)
+    select_ret = SPARSE # = st.sidebar.radio(label="Retriever model for selecting top documents", options=[DENSE, SPARSE], index=1, on_change=reset_results)
     top_k_retriever = st.sidebar.slider(
         "Max. number of documents from retriever",
         min_value=5,
@@ -95,7 +95,7 @@ def main():
         on_change=reset_results,
     )
 
-    side_text = st.sidebar.text_area("Copy here a passage from Wikipedia to search for:", value=" ", height=400, on_change=reset_results)
+    side_text = st.sidebar.text_area("Copy here a passage to search for:", value=" ", height=400, on_change=reset_results)
     copy_pressed = st.sidebar.button("Copy")
     # eval_mode = st.sidebar.checkbox("Evaluation mode")
     # debug = st.sidebar.checkbox("Show debug info")
@@ -133,6 +133,7 @@ def main():
 
     query_ment = " ".join(query_obj.context[start_index_val:end_index_val + 1])
     context = [f"{word}<span style=\"font-size: .5rem\">({str(i)})</span>" for i, word in enumerate(query_obj.context)]
+    # context = [f"{word}" for i, word in enumerate(query_obj.context)]
     st.write(
         markdown(" ".join(context[:start_index_val]) +
                  str(annotation(query_ment, "MENT", "#808080")) + " ".join(context[end_index_val + 1:])),
@@ -147,7 +148,7 @@ def main():
     run_pressed = col1.button("Run")
 
     # Get next random question from the CSV
-    if col2.button("Random question"):
+    if col2.button("Random query"):
         reset_results()
         # new_row = df.sample(1)
         st.session_state.question = random.choice(QUERY_EXAMPLES)
