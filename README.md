@@ -20,7 +20,13 @@ pip install -e .
 ## Download Dataset Files
 Download CoreSearch dataset files from:</br> 
 https://huggingface.co/datasets/Intel/CoreSearch </br>
-Then place them under the data/resources folder in the root directory
+Then place them under the data/resources folder in the root directory </br>
+
+CoreSearch Dataset folder structure:
+- CoreSearch/**dpr**: Files in DPR format used for training the retriever
+- CoreSearch/**squad**: Files in SQuAD format used for training the reader
+- CoreSearch/**train**: The train used for generating the dpr/squad files
+- CoreSearch/**clean**: The clean dataset files used for evaluation
 
 
 ## Download Already Trained Models
