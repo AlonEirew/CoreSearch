@@ -1,25 +1,18 @@
 # CoreSearch
-This project is following our research paper: Cross-document Event Coreference Search: Task, Dataset and Modeling <LINK-TBD> 
+This project is following our research paper: [Cross-document Event Coreference Search: Task, Dataset and Modeling](https://arxiv.org/abs/2210.12654)
 
-## Features
-1. Dataset
-3. Task
-4. Model Training: 
-   1. Retriever
-   2. Reader
+## Content
+1. [Dataset Files](#coresearch-dataset-files)
+2. [Pre-trained Models](#coresearch-pre-trained-models)
+3. [Models Training](#coresearch-models-training) 
+   1. Project Installation
+   2. Retriever Training
+   3. Reader Training
 
-## Installation
-Installation from the source. Python's virtual or Conda environments are recommended.
-```bash
-git clone https://github.com/AlonEirew/CoreSearch.git
-cd CoreSearch
-pip install -r requirements.txt
-pip install -e .
-```
 
-## Download Dataset Files
+## CoreSearch Dataset Files
 Download CoreSearch dataset files from:</br> 
-https://huggingface.co/datasets/Intel/CoreSearch </br>
+https://huggingface.co/datasets/biu-nlp/CoreSearch </br>
 Then place them under the data/resources folder in the root directory </br>
 
 CoreSearch Dataset folder structure:
@@ -29,14 +22,26 @@ CoreSearch Dataset folder structure:
 - CoreSearch/**clean**: The clean dataset files used for evaluation
 
 
-## Download Already Trained Models
-Below links to models trained on the CoreSearch dataset. </br>
-* Link to CoreSearch retriever model: [retriever](https://huggingface.co/Intel/coresearch-retriever-spanbert)
-* Link to CoreSearch reader model: [reader](https://huggingface.co/Intel/coresearch-reader-roberta)
+## CoreSearch Pre-trained Models
+Below links to models already pre-trained on the CoreSearch dataset. </br>
+* Link to CoreSearch retriever model: [retriever](https://huggingface.co/biu-nlp/coresearch-retriever-spanbert)
+* Link to CoreSearch reader model: [reader](https://huggingface.co/biu-nlp/coresearch-reader-roberta)
 
-## Training Own CoreSearch Models
-### Retriever training
-Training retriever moder require the CoreSearch data in DPR format.
+
+## CoreSearch Models Training
+The instructions below explain how to train the retriever and reader models
+
+### Project Installation
+Installation from the source. Python's virtual or Conda environments are recommended.
+```bash
+git clone https://github.com/AlonEirew/CoreSearch.git
+cd CoreSearch
+pip install -r requirements.txt
+pip install -e .
+```
+
+### Retriever Training
+Training the retriever moder require the CoreSearch data in DPR format (avilable in the dataset huggingface link above).
 Full argument description is available in the top of `train_retriever.py` script. 
 ```bash
 python src/train/train_retriever.py \
@@ -55,7 +60,7 @@ python src/train/train_retriever.py \
     --evaluate_every 500
 ```
 
-### Reader training
+### Reader Training
 Training reader moder require the CoreSearch data in SQuAD format.
 Full argument description is available in the top of `train_reader.py` script.
 ```bash
