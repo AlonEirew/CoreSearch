@@ -32,7 +32,9 @@ Below links to models already pre-trained on the CoreSearch dataset. </br>
 The instructions below explain how to train the retriever and reader models
 
 ### Project Installation
-Installation from the source. Python's virtual or Conda environments are recommended.
+Installation from the source. Python's virtual or Conda environments are recommended.</br>
+Project was tested with `Python 3.9` 
+
 ```bash
 git clone https://github.com/AlonEirew/CoreSearch.git
 cd CoreSearch
