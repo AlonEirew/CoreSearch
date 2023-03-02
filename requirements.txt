@@ -9,7 +9,9 @@ requests
 pydantic
 transformers==4.13.0
 nltk
-pandas
+protobuf==3.20.3
+numpy==1.19.5
+pandas==1.4.4
 
 # Utils
 dill  # pickle extension for (de-)serialization
@@ -42,3 +44,4 @@ elastic-apm
 
 # Not found in repo, to review:
 #uvloop==0.14; sys_platform != 'win32' and sys_platform != 'cygwin'
+

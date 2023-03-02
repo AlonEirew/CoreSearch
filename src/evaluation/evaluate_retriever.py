@@ -22,6 +22,7 @@ Options:
     --top_k=<TopK>                              The Top-K threshold for number of passages to return
 """
 
+import os
 import copy
 import itertools
 import math
@@ -66,6 +67,12 @@ def main():
 
     if num_processes <= 0:
         num_processes = multiprocessing.cpu_count()
+
+    if out_index_file is None or not os.path.exists(os.path.dirname(out_index_file)):
+        raise ValueError(f"--out_index_file file folder-'{os.path.dirname(out_index_file)}' does not exist, create it first.")
+
+    if out_results_file is None or not os.path.exists(os.path.dirname(out_results_file)):
+        raise ValueError(f"--out_results_file file folder-'{os.path.dirname(out_results_file)}' does not exist, create it first.")
 
     model = CoreSearchDensePassageRetriever(document_store=None, query_embedding_model=query_model,
                                             passage_embedding_model=passage_model,

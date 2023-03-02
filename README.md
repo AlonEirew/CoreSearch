@@ -13,9 +13,22 @@ This project is following our research paper: [Cross-document Event Coreference 
 ## CoreSearch Dataset Files
 Download CoreSearch dataset files from:</br> 
 https://huggingface.co/datasets/biu-nlp/CoreSearch </br>
-Then place them under the data/resources folder in the root directory </br>
 
-CoreSearch Dataset folder structure:
+Using the following code snippet will download the dataset to the cache folder:
+
+```python
+In [1]: from huggingface_hub import snapshot_download
+In [2]: snapshot_download(repo_id="biu-nlp/CoreSearch", revision="main", repo_type="dataset")
+```
+* Save the output location of the downloaded CoreSearch snapshot folder
+
+[//]: # (Then place them under the data/resources folder in the root directory </br>)
+[//]: # (```bash)
+[//]: # (mkdir --parents ./data/resources; mv -v data/tmp/datasets--biu-nlp--CoreSearch/snapshots/1aa21e8da4ab4804816ede85d88d3d5e62024401/* $_)
+[//]: # (rm -rf data/tmp/)
+[//]: # (```)
+
+### CoreSearch Dataset folder structure:
 - CoreSearch/**dpr**: Files in DPR format used for training the retriever
 - CoreSearch/**squad**: Files in SQuAD format used for training the reader
 - CoreSearch/**train**: The train used for generating the dpr/squad files
@@ -40,6 +53,9 @@ git clone https://github.com/AlonEirew/CoreSearch.git
 cd CoreSearch
 pip install -r requirements.txt
 pip install -e .
+
+# I set the path to the project in the PYTHONPATH environment variable
+export PYTHONPATH="${PYTHONPATH}:/<replace_with_path>/CoreSearch"
 ```
 
 ### Retriever Training
@@ -47,7 +63,7 @@ Training the retriever moder require the CoreSearch data in DPR format (avilable
 Full argument description is available in the top of `train_retriever.py` script. 
 ```bash
 python src/train/train_retriever.py \
-    --doc_dir data/resources/dpr/ \
+    --doc_dir [replace_with_hubs_cache_path]/dpr/ \
     --train_filename Train.json \
     --dev_filename Dev.json \
     --checkpoint_dir data/checkpoints/ \
@@ -67,7 +83,7 @@ Training reader moder require the CoreSearch data in SQuAD format.
 Full argument description is available in the top of `train_reader.py` script.
 ```bash
 python src/train/train_reader.py \
-    --doc_dir data/resources/squad/ \ 
+    --doc_dir [replace_with_hubs_cache_path]/squad/ \ 
     --train_filename Train_squad_format_1pos_23neg.json \ 
     --dev_filename Dev_squad_format_1pos_23neg.json \ 
     --checkpoint_dir data/checkpoints/ \ 
@@ -78,7 +94,7 @@ python src/train/train_reader.py \
     --n_epochs 5 \
     --max_seq_len 256 \
     --max_seq_len_query 64 \
-    --batch_size 64 \
+    --batch_size 24 \
     --reader_model roberta-base \
     --evaluate_every 750
 ```
@@ -90,9 +106,9 @@ Information on parameters can be found in the top of `evaluate_retriever.py` scr
 
 ```bash
 python src/evaluation/evaluate_retriever.py \
-    --query_filename data/resources/train/Dev_queries.json \
+    --query_filename [replace_with_hubs_cache_path]/train/Dev_queries.json \
     --passages_filename data/resources/clean/Dev_all_passages.json \
-    --gold_cluster_filename=data/resources/clean/Dev_gold_clusters.json \
+    --gold_cluster_filename data/resources/clean/Dev_gold_clusters.json \
     --query_model data/checkpoints/Retriever_SpanBERT_notoks_5it/0/query_encoder \
     --passage_model data/checkpoints/Retriever_SpanBERT_notoks_5it/0/passage_encoder \
     --out_index_file file_indexes/Dev_Retriever_spanbert_notoks_5it0_top500.json \
@@ -124,7 +140,11 @@ python src/pipeline/run_e2e_pipeline.py \
   --passage_model data/checkpoints/Retriever_SpanBERT_5it/1/passage_encoder \
   --reader_model data/checkpoints/Reader-RoBERTa_base_Kenton_special/1 \
   --query_filename data/resources/CoreSearch/train/Dev_queries.json \
-  --passages_filename data/resources/CoreSearch/clean/Dev_all_passages.json --gold_cluster_filename data/resources/WEC-ES/clean/Dev_gold_clusters.json --index_file file_indexes/Dev_Retriever_spanbert_5it1_top500.json --out_results_file results/Dev_Retriever_spanbert_5it1.txt --magnitude all
+  --passages_filename data/resources/CoreSearch/clean/Dev_all_passages.json \
+  --gold_cluster_filename data/resources/WEC-ES/clean/Dev_gold_clusters.json \
+  --index_file file_indexes/Dev_Retriever_spanbert_5it1_top500.json \
+  --out_results_file results/Dev_Retriever_spanbert_5it1.txt \
+  --magnitude all
 ```
 
 ## Elastic Index for BM25 Retriever

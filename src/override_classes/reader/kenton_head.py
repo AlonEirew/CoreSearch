@@ -123,6 +123,8 @@ class KentonQuestionAnsweringHead(QuestionAnsweringHead):
         start_logits, end_logits = logits[0].split(1, dim=-1)
         start_logits = start_logits.squeeze(-1)
         end_logits = end_logits.squeeze(-1)
+        # passage_selection should be of shape [batch_size, 1] since we only have one positive example
+        # NEED TO FIX -- in case batch size contains more than one positive example
         passage_selection = logits[1]
 
         # Squeeze final singleton dimensions
