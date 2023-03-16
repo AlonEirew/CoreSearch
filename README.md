@@ -107,8 +107,8 @@ Information on parameters can be found in the top of `evaluate_retriever.py` scr
 ```bash
 python src/evaluation/evaluate_retriever.py \
     --query_filename [replace_with_hubs_cache_path]/train/Dev_queries.json \
-    --passages_filename data/resources/clean/Dev_all_passages.json \
-    --gold_cluster_filename data/resources/clean/Dev_gold_clusters.json \
+    --passages_filename [replace_with_hubs_cache_path]/clean/Dev_all_passages.json \
+    --gold_cluster_filename [replace_with_hubs_cache_path]/clean/Dev_gold_clusters.json \
     --query_model data/checkpoints/Retriever_SpanBERT_notoks_5it/0/query_encoder \
     --passage_model data/checkpoints/Retriever_SpanBERT_notoks_5it/0/passage_encoder \
     --out_index_file file_indexes/Dev_Retriever_spanbert_notoks_5it0_top500.json \
@@ -139,9 +139,9 @@ python src/pipeline/run_e2e_pipeline.py \
   --query_model data/checkpoints/Retriever_SpanBERT_5it/1/query_encoder \
   --passage_model data/checkpoints/Retriever_SpanBERT_5it/1/passage_encoder \
   --reader_model data/checkpoints/Reader-RoBERTa_base_Kenton_special/1 \
-  --query_filename data/resources/CoreSearch/train/Dev_queries.json \
-  --passages_filename data/resources/CoreSearch/clean/Dev_all_passages.json \
-  --gold_cluster_filename data/resources/WEC-ES/clean/Dev_gold_clusters.json \
+  --query_filename [replace_with_hubs_cache_path]/train/Dev_queries.json \
+  --passages_filename [replace_with_hubs_cache_path]/clean/Dev_all_passages.json \
+  --gold_cluster_filename [replace_with_hubs_cache_path]/clean/Dev_gold_clusters.json \
   --index_file file_indexes/Dev_Retriever_spanbert_5it1_top500.json \
   --out_results_file results/Dev_Retriever_spanbert_5it1.txt \
   --magnitude all
