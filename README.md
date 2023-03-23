@@ -14,6 +14,9 @@ This project is following our research paper: [Cross-document Event Coreference 
 Download CoreSearch dataset files from:</br> 
 https://huggingface.co/datasets/biu-nlp/CoreSearch </br>
 
+**OR** download the cleaner version **CoreSearchV2** dataset files from:</br> 
+https://huggingface.co/datasets/biu-nlp/CoreSearchV2 </br>
+
 Using the following code snippet will download the dataset to the cache folder:
 
 ```python
@@ -143,7 +146,7 @@ python src/pipeline/run_e2e_pipeline.py \
   --passages_filename [replace_with_hubs_cache_path]/clean/Dev_all_passages.json \
   --gold_cluster_filename [replace_with_hubs_cache_path]/clean/Dev_gold_clusters.json \
   --index_file file_indexes/Dev_Retriever_spanbert_5it1_top500.json \
-  --out_results_file results/Dev_Retriever_spanbert_5it1.txt \
+  --out_results_file results/Dev_End2End_5it1.txt \
   --magnitude all
 ```
 

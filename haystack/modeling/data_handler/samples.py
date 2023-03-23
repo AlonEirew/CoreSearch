@@ -172,7 +172,9 @@ def offset_to_token_idx(token_offsets, ch_idx):
 def offset_to_token_idx_vecorized(token_offsets, ch_idx):
     """ Returns the idx of the token at the given character idx"""
     # case ch_idx is at end of tokens
-    if ch_idx >= np.max(token_offsets):
+    if ch_idx == np.max(token_offsets):
+        idx = np.argmax(token_offsets)
+    elif ch_idx > np.max(token_offsets):
         # TODO check "+ 1" (it is needed for making end indices compliant with old offset_to_token_idx() function)
         # check whether end token is incluse or exclusive
         idx = np.argmax(token_offsets) + 1
